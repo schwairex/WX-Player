@@ -1,0 +1,23 @@
+name: Windows build
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Test, publish and package
+        shell: pwsh
+        run: ./tools/build.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WXPlayer-Windows-x64
+          path: |
+            artifacts/WXPlayer.exe
+            artifacts/WXPlayer-win-x64.zip
+            artifacts/SHA256SUMS.txt
+            artifacts/test-results.json

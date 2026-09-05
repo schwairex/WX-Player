@@ -1,0 +1,1 @@
+<Project Sdk="Microsoft.NET.Sdk"><ItemGroup><PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.11"/><PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.11"/></ItemGroup></Project>

@@ -1,0 +1,9 @@
+#EXTM3U
+#EXTINF:-1 group-title="Test yayınları" tvg-id="hls-test",HLS · Örnek yayın
+https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_ts/master.m3u8
+#EXTINF:-1 group-title="Açık filmler" tvg-id="bbb",Big Buck Bunny
+https://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_320x180.mp4
+#EXTINF:-1 group-title="Fragmanlar" tvg-id="sintel",Sintel · Fragman
+https://media.w3.org/2010/05/sintel/trailer.mp4
+#EXTINF:-1 group-title="Açık filmler" tvg-id="elephants",Elephants Dream
+https://archive.org/download/ElephantsDream/ed_1024_512kb.mp4
