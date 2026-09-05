@@ -58,6 +58,7 @@ public sealed record PlaybackTarget(string Url, string UserAgent = "", string Re
 
 public sealed class PlayerSettings
 {
+    public bool FullscreenFill { get; set; } = true;
     public bool HardwareAcceleration { get; set; } = true;
     public string VideoOutput { get; set; } = "direct3d11";
     public int NetworkCacheMs { get; set; } = 1200;

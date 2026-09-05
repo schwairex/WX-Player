@@ -43,7 +43,7 @@ internal static class Launcher
         string overrideRoot=Environment.GetEnvironmentVariable("WXPLAYER_APP_ROOT");
         string root=Path.GetFullPath(string.IsNullOrEmpty(overrideRoot)?Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"WXPlayer","application"):overrideRoot);
         Directory.CreateDirectory(root);
-        string destination=Path.Combine(root,"1.0.0-"+PayloadInfo.Sha256.Substring(0,12));
+        string destination=Path.Combine(root,"1.1.0-"+PayloadInfo.Sha256.Substring(0,12));
         string exe=Path.Combine(destination,"WXPlayer.exe");
         string marker=Path.Combine(destination,".complete");
         string mutexId;using(var hash=SHA256.Create())mutexId=BitConverter.ToString(hash.ComputeHash(Encoding.UTF8.GetBytes(root))).Replace("-","").Substring(0,24);

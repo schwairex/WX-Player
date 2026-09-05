@@ -1,14 +1,26 @@
-# WX Player
+# WX Player 1.1
 
 **Kendi kaynağınız. Kendi kütüphaneniz.** Windows için C# / WPF ile geliştirilmiş yerel IPTV ve medya oynatıcısı. Koyu arayüz, Fluent tasarımından esinlenen kontroller, Direct3D video çıkışı ve SQLite tabanlı yerel veri altyapısı.
 
 ![WX Player](docs/WX-Player-preview.png)
 
+## 1.1 arayüz ve tam ekran güncellemesi
+
+* **Inter** fontu Regular / Medium / SemiBold / Bold ağırlıklarıyla uygulamaya gömülüdür. Font kurulumu veya font için ağ bağlantısı gerekmez.
+* Menü, arama, favori, EPG ve oynatıcı kontrollerinde aynı çizgi kalınlığına sahip özgün **SVG** simgeler kullanılır. SVG dosyaları `Assets/Icons` altındadır ve WPF vektör geometrisi olarak çizilir.
+* Daha okunaklı yazı hiyerarşisi, sade menü, yumuşak yeşil vurgu, daha düzenli satırlar ve küçük pencerelerde simge menüsü.
+* Video artık kendisine ayrılmış **yerel child HWND** içinde çizilir. Önceki LibVLCSharp.WPF saydam yardımcı pencere katmanı kaldırılmıştır; normal oynatımda arayüzün üzerinde karartıcı bir pencere bulunmaz. Video çözme ve Direct3D GPU desteği korunur.
+* **Gerçek tam ekran:** monitörün çalışma alanı yerine fiziksel monitör sınırları kullanılır. Görev çubuğuna ve sabit alt kontrol satırına yer ayrılmaz. Video penceresi yeniden oluşturulmadan büyütülür; yayın kesilmez.
+* Kontroller fare hareketiyle görünür; **2,5 saniye** hareketsizlikte gizlenir. Kontrollerin üzerindeyken görünür kalır. `F`, videoya çift tıklama ve `Esc` desteklenir.
+* **Z** veya oynatıcıdaki sığdır/doldur düğmesi görüntü modunu değiştirir. Tam ekranda varsayılan **ekranı doldur** modudur: en-boy oranı korunur, oran farkı varsa kenarlar kırpılır. **Sığdır** modunda görüntünün tamamı korunur; oran farkında boşluk olabilir. Kaynak dosyaya görüntü olarak gömülmüş siyah şeritler otomatik algılanmaz.
+* Tam ekrandan çıkışta normal veya büyütülmüş önceki pencere durumu geri yüklenir. Kaynaklar, favoriler, EPG, kayıtlar ve kullanıcı ayarları aynı veri klasöründe kalır.
+
+**Güncelleme:** Eski uygulamayı kapatıp yeni EXE'yi çalıştırın. Kütüphaneyi yeniden eklemeniz gerekmez. Tek EXE, yeni bileşenleri ayrı bir sürüm klasörüne çıkarır.
 ## Çalıştırma
 
 Windows 10/11 **x64** içindir. Windows 11 önerilir. Dağıtım .NET 10 çalışma zamanını ve LibVLC'yi içerir; ayrıca VLC veya .NET 10 kurmanız gerekmez. Tek dosya başlatıcısı Windows'un .NET Framework 4.x bileşenini kullanır.
 
-* **WXPlayer.exe**: Tek dosyadır. İlk açılışta bileşenleri `%LOCALAPPDATA%\WXPlayer\application\1.0.0-<paket özeti>` konumuna çıkarır, sonraki açılışlarda bu kopyayı kullanır. Yönetici yetkisi veya sistem kurulumu istemez. İlk açılış için yaklaşık 500 MB boş alan ayırın.
+* **WXPlayer.exe**: Tek dosyadır. İlk açılışta bileşenleri `%LOCALAPPDATA%\WXPlayer\application\1.1.0-<paket özeti>` konumuna çıkarır, sonraki açılışlarda bu kopyayı kullanır. Yönetici yetkisi veya sistem kurulumu istemez. İlk açılış için yaklaşık 500 MB boş alan ayırın.
 * **WXPlayer-win-x64.zip**: Taşınabilir dağıtım. ZIP'in **tamamını** bir klasöre çıkarın ve içindeki `WXPlayer.exe` dosyasını çalıştırın. İçindeki EXE'yi tek başına başka klasöre taşımayın.
 * EXE henüz ticari kod imzalama sertifikasıyla imzalanmamıştır. Paket bütünlüğü `SHA256SUMS.txt` ile doğrulanabilir.
 
@@ -53,6 +65,7 @@ PVR, sağlayıcınızda ikinci bir eşzamanlı bağlantı açar. Bu sürümde za
 | ↑ / ↓ | Ses +5 / −5 (yukarı artırır) |
 | F / Esc | Tam ekranı aç-kapat / tam ekrandan çık |
 | M | Sessiz |
+| Z | Sığdır / ekranı doldur |
 | Page Up / Page Down | Önceki / sonraki içerik; sayfa sınırından devam eder |
 | Ctrl+K | Aramaya odaklan |
 | Video üzerinde tekerlek | Ses seviyesini değiştir |

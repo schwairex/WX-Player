@@ -10,7 +10,7 @@ internal static class Dialogs
 {
     private static StackPanel Form(Window owner,string title,int width,out Window window)
     {
-        window=new Window{Owner=owner,Title=title,Width=width,SizeToContent=SizeToContent.Height,MaxHeight=owner.ActualHeight,WindowStartupLocation=WindowStartupLocation.CenterOwner,ResizeMode=ResizeMode.NoResize,ShowInTaskbar=false};
+        window=new Window{Style=(Style)Application.Current.FindResource("AppWindow"),Owner=owner,Title=title,Width=width,SizeToContent=SizeToContent.Height,MaxHeight=owner.ActualHeight,WindowStartupLocation=WindowStartupLocation.CenterOwner,ResizeMode=ResizeMode.NoResize,ShowInTaskbar=false};
         var panel=new StackPanel{Margin=new Thickness(26)};window.Content=new ScrollViewer{Content=panel,VerticalScrollBarVisibility=ScrollBarVisibility.Auto};
         panel.Children.Add(new TextBlock{Text=title,FontSize=24,FontWeight=FontWeights.SemiBold,Margin=new Thickness(0,0,0,18)});return panel;
     }

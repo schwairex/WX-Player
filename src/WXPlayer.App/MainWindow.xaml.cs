@@ -26,7 +26,11 @@ public partial class MainWindow : Window
     private ContentItem? _current;
     private PlaybackTarget? _target;
     private bool _ready,_suppress,_closing,_closed,_fullscreen;
-    private WindowState _previousState;
+    private readonly FullscreenPlacement _fullscreenPlacement=new();
+    private readonly DispatcherTimer _hideControls=new(){Interval=TimeSpan.FromSeconds(2.5)};
+    private Window? _floatingControls;
+    private bool _windowFill;
+    private string? _appliedCrop;
     private string _section="home";
     private int _offset,_total,_playVersion,_epgVersion,_viewVersion;
     private DateTimeOffset _guideDay=new(DateTime.Today);
@@ -41,6 +45,15 @@ public partial class MainWindow : Window
         SourceInitialized+=(_,_)=>{try{int dark=1;DwmSetWindowAttribute(new WindowInteropHelper(this).Handle,20,ref dark,sizeof(int));}catch{/* Older Windows falls back to the system title bar. */}};
         _search.Tick+=async(_,_)=>{_search.Stop();_offset=0;await SafeAsync(QueryAsync);};
         _clock.Tick+=(_,_)=>Tick();
+        Video.PointerMoved+=RevealFullscreenControls;
+        Video.WheelMoved+=delta=>VolumeSlider.Value=Math.Clamp(VolumeSlider.Value+(delta>0?5:-5),0,100);
+        Video.Clicked+=()=>Focus();
+        Video.DoubleClicked+=ToggleFullscreen;
+        Video.KeyPressed+=key=>HandleShortcut(key);
+        Video.SizeChanged+=(_,_)=>UpdateVideoSizing();
+        _hideControls.Tick+=(_,_)=>{if(_floatingControls?.IsMouseOver==true)return;_hideControls.Stop();_floatingControls?.Hide();};
+        Activated+=(_,_)=>{if(_fullscreen)Topmost=true;};
+        Deactivated+=(_,_)=>{if(_fullscreen&&_floatingControls?.IsActive!=true){Topmost=false;_floatingControls?.Hide();}};
     }
     [DllImport("dwmapi.dll")]private static extern int DwmSetWindowAttribute(IntPtr hwnd,int attr,ref int value,int size);
     private async Task InitializeAsync()
@@ -49,10 +62,10 @@ public partial class MainWindow : Window
         {
             await _store.InitializeAsync();
             _engine=new PlaybackEngine(_settings);Video.MediaPlayer=_engine.Player;
-            _engine.Player.Playing+=(_,_)=>Ui(()=>{PlaybackBadge.Text="OYNATILIYOR";PlayButton.Content="Ⅱ";OverlayText.Text=_current?.Name??"WX PLAYER";});
-            _engine.Player.Paused+=(_,_)=>Ui(()=>{PlaybackBadge.Text="DURAKLATILDI";PlayButton.Content="▶";});
-            _engine.Player.EndReached+=(_,_)=>Ui(()=>{PlaybackBadge.Text="YAYIN BİTTİ";PlayButton.Content="▶";});
-            _engine.Player.EncounteredError+=(_,_)=>Ui(()=>{PlaybackBadge.Text="BAĞLANTI HATASI";Status("Yayın açılamadı. Adres / hesap / bağlantı sınırını kontrol edin; ▶ ile tekrar deneyin.");PlayButton.Content="▶";});
+            _engine.Player.Playing+=(_,_)=>Ui(()=>{PlaybackBadge.Text="OYNATILIYOR";SetButtonIcon(PlayButton,"pause");_appliedCrop=null;UpdateVideoSizing();});
+            _engine.Player.Paused+=(_,_)=>Ui(()=>{PlaybackBadge.Text="DURAKLATILDI";SetButtonIcon(PlayButton,"play");});
+            _engine.Player.EndReached+=(_,_)=>Ui(()=>{PlaybackBadge.Text="YAYIN BİTTİ";SetButtonIcon(PlayButton,"play");});
+            _engine.Player.EncounteredError+=(_,_)=>Ui(()=>{PlaybackBadge.Text="BAĞLANTI HATASI";Status("Yayın açılamadı. Adres / hesap / bağlantı sınırını kontrol edin; oynat düğmesiyle tekrar deneyin.");SetButtonIcon(PlayButton,"play");});
             _engine.RecordingFailed+=message=>Ui(async()=>{await SafeAsync(async()=>{await _engine.StopRecordingAsync();UpdateRecordButton();Status(message);});});
             VolumeSlider.Value=_settings.Volume;_ready=true;await ReloadSourcesAsync();await RefreshViewAsync();SetNav();_clock.Start();
             if(App.Arguments.Contains("--smoke"))await SmokeTest.RunAsync(this,_store,_engine,_providers,_settings);
@@ -146,11 +159,11 @@ public partial class MainWindow : Window
             if(item.Kind==ContentKind.Series&&source.Kind!=SourceKind.Playlist)
             {var episodes=await _providers.EpisodesAsync(source,item,cts.Token);if(cts.IsCancellationRequested)return;if(episodes.Count==0){Status("Bu dizi için bölüm listesi alınamadı. Sağlayıcının API desteğini kontrol edin.");return;}var selected=Dialogs.Episode(this,episodes);if(selected is null)return;item=selected;}
             var target=await _providers.ResolveAsync(source,item,cts.Token);if(version!=_playVersion)return;
-            _current=item;_target=target;NowTitle.Text=item.Name;OverlayText.Text=item.Name;PlaybackBadge.Text="BAĞLANIYOR";ShowVideo();
+            _current=item;_target=target;NowTitle.Text=item.Name;PlaybackBadge.Text="BAĞLANIYOR";ShowVideo();
             await _engine.PlayAsync(target,_settings,cts.Token);if(version!=_playVersion)return;await _store.RememberAsync(historyId);Status($"{item.Name} · Tampon {_engine.CacheMs(_settings)} ms · F: tam ekran");_guideDay=new(DateTime.Today);await LoadGuideAsync();
         }catch(OperationCanceledException){/* A later channel selection wins. */}
     }
-    private void ShowVideo(){WelcomePanel.Visibility=Visibility.Collapsed;Video.Visibility=Visibility.Visible;}
+    private void ShowVideo(){WelcomePanel.Visibility=Visibility.Collapsed;Video.Visibility=Visibility.Visible;UpdateLayout();}
     private async void Favorite_Click(object sender,RoutedEventArgs e)
     {
         e.Handled=true;if(((Button)sender).Tag is not ContentItem item)return;await SafeAsync(async()=>{bool value=!item.IsFavorite;await _store.FavoriteAsync(item.Id,value);item.IsFavorite=value;_suppress=true;ChannelList.Items.Refresh();_suppress=false;var stats=await _store.StatsAsync(SelectedSource?.Id);FavoriteCount.Text=stats.Favorites.ToString("N0");if(_section=="favorites")await QueryAsync();});
@@ -199,12 +212,13 @@ public partial class MainWindow : Window
             finally{RecordButton.IsEnabled=true;}
         });
     }
-    private void UpdateRecordButton(){RecordButton.Content=_engine.Recording?"■":"●";RecordButton.ToolTip=_engine.Recording?"Kaydı bitir":"Kaydı başlat";}
+    private static void SetButtonIcon(Button button,string icon){if(button.Content is SvgIcon svg)svg.Icon=icon;else button.Content=new SvgIcon(icon);}
+    private void UpdateRecordButton(){SetButtonIcon(RecordButton,_engine.Recording?"stop":"record");RecordButton.ToolTip=_engine.Recording?"Kaydı bitir":"Kaydı başlat";}
     private void Tracks_Click(object sender,RoutedEventArgs e){if(_ready)Dialogs.Tracks(this,_engine);}
     private void Settings_Click(object sender,RoutedEventArgs e){if(Dialogs.Settings(this,_settings)){App.SaveSettings(_settings);Status("Ayarlar kaydedildi.");}}
     private void Recordings_Click(object sender,RoutedEventArgs e){try{Directory.CreateDirectory(_settings.RecordingFolder);Process.Start(new ProcessStartInfo{FileName=_settings.RecordingFolder,UseShellExecute=true});}catch{Status("Kayıt klasörü açılamadı.");}}
     private void Volume_Changed(object sender,RoutedPropertyChangedEventArgs<double> e){if(VolumeLabel is not null)VolumeLabel.Text=((int)e.NewValue).ToString();_settings.Volume=(int)e.NewValue;if(_engine is not null)_engine.Player.Volume=_settings.Volume;}
-    private void Mute_Click(object sender,RoutedEventArgs e){if(!_ready)return;_engine.Player.Mute=!_engine.Player.Mute;MuteButton.Content=_engine.Player.Mute?"×":"♪";}
+    private void Mute_Click(object sender,RoutedEventArgs e){if(!_ready)return;_engine.Player.Mute=!_engine.Player.Mute;SetButtonIcon(MuteButton,_engine.Player.Mute?"volume-off":"volume");}
     private void Video_MouseWheel(object sender,MouseWheelEventArgs e){VolumeSlider.Value=Math.Clamp(VolumeSlider.Value+(e.Delta>0?5:-5),0,100);e.Handled=true;}
     private void Video_Click(object sender,MouseButtonEventArgs e){if(e.ClickCount==2)ToggleFullscreen();else Focus();}
     private void Seek_Released(object sender,MouseButtonEventArgs e){if(_ready&&_engine.Player.IsSeekable)_engine.Player.Position=(float)SeekSlider.Value;}
@@ -222,14 +236,57 @@ public partial class MainWindow : Window
     private void ToggleFullscreen()
     {
         _fullscreen=!_fullscreen;
-        if(_fullscreen){_previousState=WindowState;WindowStyle=WindowStyle.None;WindowState=WindowState.Maximized;NavColumn.Width=new GridLength(0);Sidebar.Visibility=TopBar.Visibility=StatsBar.Visibility=FilterBar.Visibility=LibraryPanel.Visibility=GuidePanel.Visibility=BottomBar.Visibility=Visibility.Collapsed;ListColumn.Width=GapColumn.Width=new GridLength(0);MainArea.Margin=new Thickness(0);GuideRow.Height=new GridLength(0);}
-        else{WindowStyle=WindowStyle.SingleBorderWindow;WindowState=_previousState;Sidebar.Visibility=TopBar.Visibility=StatsBar.Visibility=FilterBar.Visibility=LibraryPanel.Visibility=GuidePanel.Visibility=BottomBar.Visibility=Visibility.Visible;SetNav();ApplyLayout();}
+        if(_fullscreen)
+        {
+            NavColumn.Width=new GridLength(0);Sidebar.Visibility=TopBar.Visibility=StatsBar.Visibility=FilterBar.Visibility=LibraryPanel.Visibility=GuidePanel.Visibility=BottomBar.Visibility=Visibility.Collapsed;
+            ListColumn.Width=GapColumn.Width=new GridLength(0);MainArea.Margin=new Thickness(0);GuideRow.Height=new GridLength(0);
+            ViewingPanel.Children.Remove(ControlsBorder);
+            _floatingControls=new Window{Owner=this,Title="WX Player controls",Style=null,WindowStyle=WindowStyle.None,ResizeMode=ResizeMode.NoResize,AllowsTransparency=true,Background=Brushes.Transparent,ShowInTaskbar=false,ShowActivated=false,Width=900,Height=124,FontFamily=(FontFamily)FindResource("AppFont"),Foreground=(Brush)FindResource("Muted"),FontSize=14,Content=ControlsBorder};
+            ControlsBorder.CornerRadius=new CornerRadius(16);ControlsBorder.Background=new SolidColorBrush(Color.FromArgb(244,19,26,36));ControlsBorder.BorderBrush=(Brush)FindResource("Border");ControlsBorder.BorderThickness=new Thickness(1);
+            _floatingControls.MouseMove+=(_,_)=>RestartControlsTimer();_floatingControls.PreviewKeyDown+=Window_KeyDown;
+            VideoBorder.CornerRadius=new CornerRadius(0);VideoBorder.BorderThickness=new Thickness(0);Grid.SetRowSpan(VideoBorder,3);
+            _fullscreenPlacement.Enter(this);UpdateLayout();RevealFullscreenControls();
+        }
+        else
+        {
+            _hideControls.Stop();if(_floatingControls is not null){_floatingControls.Content=null;_floatingControls.Close();_floatingControls=null;}
+            ControlsBorder.CornerRadius=new CornerRadius(0,0,14,14);ControlsBorder.Background=new SolidColorBrush(Color.FromRgb(23,30,40));ControlsBorder.BorderThickness=new Thickness(0);Grid.SetRow(ControlsBorder,1);ViewingPanel.Children.Add(ControlsBorder);
+            VideoBorder.CornerRadius=new CornerRadius(14,14,0,0);VideoBorder.BorderThickness=new Thickness(1);Grid.SetRowSpan(VideoBorder,1);
+            _fullscreenPlacement.Exit(this);Sidebar.Visibility=TopBar.Visibility=StatsBar.Visibility=FilterBar.Visibility=LibraryPanel.Visibility=GuidePanel.Visibility=BottomBar.Visibility=Visibility.Visible;SetNav();ApplyLayout();
+        }
+        UpdateLayout();UpdateVideoSizing();
+    }
+    private void RestartControlsTimer(){_hideControls.Stop();_hideControls.Start();}
+    private void RevealFullscreenControls()
+    {
+        if(!_fullscreen||_floatingControls is null||_closing)return;
+        if(!_floatingControls.IsVisible)_floatingControls.Show();_fullscreenPlacement.PlaceControls(this,_floatingControls);RestartControlsTimer();
+    }
+    private void Fit_Click(object sender,RoutedEventArgs e)
+    {
+        if(_fullscreen)_settings.FullscreenFill=!_settings.FullscreenFill;else _windowFill=!_windowFill;
+        UpdateVideoSizing();Status((_fullscreen?_settings.FullscreenFill:_windowFill)?"Ekranı doldur · Oran korunur; kenarlar kırpılabilir.":"Ekrana sığdır · Görüntünün tamamı korunur.");RevealFullscreenControls();
+    }
+    private void UpdateVideoSizing()
+    {
+        if(_engine is null||Video.ActualWidth<=0||Video.ActualHeight<=0)return;
+        bool fill=_fullscreen?_settings.FullscreenFill:_windowFill;
+        int width=Math.Max(1,(int)Math.Round(Video.ActualWidth)),height=Math.Max(1,(int)Math.Round(Video.ActualHeight));
+        int a=width,b=height;while(b!=0){int next=a%b;a=b;b=next;}
+        string crop=fill?$"{width/a}:{height/a}":"";
+        if(_appliedCrop!=crop){_engine.Player.AspectRatio=null;_engine.Player.Scale=0;_engine.Player.CropGeometry=crop;_appliedCrop=crop;}
+        SetButtonIcon(FitButton,fill?"fit":"fill");FitButton.ToolTip=fill?"Ekranı doldur etkin · Tam görüntüye geç (Z)":"Tam görüntü etkin · Ekranı doldur (Z)";
     }
     private void Window_KeyDown(object sender,KeyEventArgs e)
     {
-        if(!_ready)return;if(e.Key==Key.K&&Keyboard.Modifiers.HasFlag(ModifierKeys.Control)){SearchBox.Focus();SearchBox.SelectAll();e.Handled=true;return;}
+        if(!_ready)return;if(e.Key==Key.K&&Keyboard.Modifiers.HasFlag(ModifierKeys.Control)){if(_fullscreen)ToggleFullscreen();SearchBox.Focus();SearchBox.SelectAll();e.Handled=true;return;}
         if(Keyboard.FocusedElement is TextBoxBase or PasswordBox||Keyboard.FocusedElement is ComboBox)return;
-        switch(e.Key){case Key.Space:PlayPause_Click(this,e);break;case Key.F:ToggleFullscreen();break;case Key.Escape:if(_fullscreen)ToggleFullscreen();else return;break;case Key.M:Mute_Click(this,e);break;case Key.Left:Seek(-10000);break;case Key.Right:Seek(10000);break;case Key.Up:VolumeSlider.Value+=5;break;case Key.Down:VolumeSlider.Value-=5;break;case Key.PageUp:ChangeChannel(-1);break;case Key.PageDown:ChangeChannel(1);break;default:return;}e.Handled=true;
+        e.Handled=HandleShortcut(e.Key);
+    }
+    private bool HandleShortcut(Key key)
+    {
+        if(!_ready)return false;
+        switch(key){case Key.Space:PlayPause_Click(this,new RoutedEventArgs());break;case Key.F:ToggleFullscreen();break;case Key.Escape:if(_fullscreen)ToggleFullscreen();else return false;break;case Key.Z:Fit_Click(this,new RoutedEventArgs());break;case Key.M:Mute_Click(this,new RoutedEventArgs());break;case Key.Left:Seek(-10000);break;case Key.Right:Seek(10000);break;case Key.Up:VolumeSlider.Value+=5;break;case Key.Down:VolumeSlider.Value-=5;break;case Key.PageUp:ChangeChannel(-1);break;case Key.PageDown:ChangeChannel(1);break;default:return false;}return true;
     }
     private void Window_SizeChanged(object sender,SizeChangedEventArgs e){if(MainArea is not null&&!_fullscreen)ApplyLayout();}
     private void ApplyLayout()
@@ -238,8 +295,7 @@ public partial class MainWindow : Window
         Sidebar.Padding=new Thickness(compact?8:18,26,compact?8:18,18);
         BrandWordmark.Visibility=NavLabel.Visibility=PromoCard.Visibility=VersionLabel.Visibility=compact?Visibility.Collapsed:Visibility.Visible;
         var buttons=new[]{HomeNav,LiveNav,MovieNav,SeriesNav,FavoriteNav,EpgNav,RecentNav,RecordingsNav,SettingsNav};
-        var labels=new[]{"⌂    Ana sayfa","▣    Canlı TV","▷    Filmler","▤    Diziler","☆    Favorilerim","▦    Program rehberi","◷    Son izlenenler","●    Kayıtlarım","⚙    Ayarlar"};
-        for(int i=0;i<buttons.Length;i++){buttons[i].Content=compact?labels[i][..1]:labels[i];buttons[i].ToolTip=labels[i][5..];buttons[i].HorizontalContentAlignment=compact?HorizontalAlignment.Center:HorizontalAlignment.Left;System.Windows.Automation.AutomationProperties.SetName(buttons[i],labels[i][5..]);}
+        foreach(var button in buttons){if(button.Content is not IconLabel content)continue;content.Compact=compact;button.ToolTip=content.Label;button.HorizontalContentAlignment=compact?HorizontalAlignment.Center:HorizontalAlignment.Left;System.Windows.Automation.AutomationProperties.SetName(button,content.Label);}
     }
     private void Tick()
     {
@@ -253,9 +309,15 @@ public partial class MainWindow : Window
     {
         if(_closed)return;e.Cancel=true;if(_closing)return;
         if(_engine?.Recording==true&&MessageBox.Show(this,"Devam eden kayıt sonlandırılıp uygulama kapatılsın mı?","Kayıt devam ediyor",MessageBoxButton.YesNo,MessageBoxImage.Question)!=MessageBoxResult.Yes)return;
-        _closing=true;_life.Cancel();_load?.Cancel();_play?.Cancel();_epg?.Cancel();_query?.Cancel();_clock.Stop();_search.Stop();
+        if(_fullscreen)ToggleFullscreen();_closing=true;_life.Cancel();_load?.Cancel();_play?.Cancel();_epg?.Cancel();_query?.Cancel();_clock.Stop();_search.Stop();_hideControls.Stop();
         try{App.SaveSettings(_settings);if(_engine is not null){Video.MediaPlayer=null;await _engine.DisposeAsync();}_providers.Dispose();}finally{_closed=true;Close();}
     }
     internal async Task SmokeRefreshAsync(string id){await ReloadSourcesAsync(id);await RefreshViewAsync();}
     internal void SmokeNavigate(string section){_section=section;SetNav();}
+    internal void SmokeFullscreen()=>ToggleFullscreen();
+    internal bool SmokeControlsVisible=>_floatingControls?.IsVisible==true;
+    internal bool SmokeNoVideoOverlay=>!OwnedWindows.Cast<Window>().Any(w=>w.IsVisible);
+    internal FullscreenPlacement.Rect SmokeMonitorBounds=>_fullscreenPlacement.Bounds;
+    internal void SmokeRevealControls()=>RevealFullscreenControls();
+    internal void SmokeFit()=>Fit_Click(this,new RoutedEventArgs());
 }
