@@ -31,6 +31,9 @@ internal static class SmokeTest
             await store.ImportAsync(source,providers.LoadAsync(source,default),null,default);await window.SmokeRefreshAsync(source.Id);
             await Task.Delay(500);window.UpdateLayout();SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-preview.png"));results["startup"]=true;
             double width=window.Width;window.Width=940;window.UpdateLayout();SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-compact.png"));results["responsive"]=window.ActualWidth<=950;window.Width=width;
+            var settingsWindow=window.CreateSettingsWindow();settingsWindow.Show();await Task.Delay(150);
+            SaveWindow(settingsWindow,Path.Combine(App.DataDirectory,"WX-Player-settings.png"));settingsWindow.SelectTab(1);settingsWindow.UpdateLayout();await Task.Delay(100);SaveWindow(settingsWindow,Path.Combine(App.DataDirectory,"WX-Player-library-settings.png"));settingsWindow.SelectTab(2);settingsWindow.UpdateLayout();SaveWindow(settingsWindow,Path.Combine(App.DataDirectory,"WX-Player-update-settings.png"));settingsWindow.Close();results["settingsPages"]=true;
+            var updateWindow=new UpdateWindow(window,new PreparedUpdate(new Version(1,3,0),"test-only",new string('0',64)),()=>Task.CompletedTask);updateWindow.Show();await Task.Delay(100);SaveWindow(updateWindow,Path.Combine(App.DataDirectory,"WX-Player-update-prompt.png"));updateWindow.Close();results["updatePrompt"]=true;
             int mediaArg=Array.IndexOf(App.Arguments,"--media");
             if(mediaArg>=0&&mediaArg+1<App.Arguments.Length)
             {
@@ -70,6 +73,22 @@ internal static class SmokeTest
                 window.SmokeFullscreen();await Task.Delay(200);window.SmokeFullscreen();await Task.Delay(200);var back=FullscreenPlacement.WindowBounds(window);
                 results["maximizedRoundTrip"]=window.WindowState==WindowState.Maximized&&maximized.Width==back.Width&&maximized.Height==back.Height;
                 if(!Equals(results["maximizedRoundTrip"],true))throw new Exception("Maximized placement regression.");window.WindowState=WindowState.Normal;await Task.Delay(200);
+                var epgSource=new SourceConfig{Id="smoke-epg",Name="EPG testi · Yerel örnek",EpgUrl=Path.Combine(App.DataDirectory,"fixture-epg.xml")};
+                var now=DateTimeOffset.Now;string Stamp(DateTimeOffset d)=>d.ToString("yyyyMMddHHmmss zzz").Replace(":","");
+                File.WriteAllText(epgSource.EpgUrl,$"<!DOCTYPE tv SYSTEM 'xmltv.dtd'><tv><channel id='wx.news'><display-name>WX Haber</display-name></channel><channel id='wx.culture'><display-name>WX Kültür</display-name></channel><programme channel='wx.news' start='{Stamp(now.AddMinutes(-20))}' stop='{Stamp(now.AddMinutes(40))}'><title>Güne Bakış · Test programı</title></programme><programme channel='wx.culture' start='{Stamp(now.AddMinutes(-20))}' stop='{Stamp(now.AddMinutes(40))}'><title>Kültür Atlası · Test programı</title></programme><programme channel='wx.culture' start='{Stamp(now.AddMinutes(40))}' stop='{Stamp(now.AddMinutes(100))}'><title>Sonraki program · Test</title></programme></tv>");
+                var news=new ContentItem{Id="smoke-news",SourceId=epgSource.Id,Name="WX Haber FHD",EpgName="WX Haber",Kind=ContentKind.Live,Url=target.Url};
+                var culture=new ContentItem{Id="smoke-culture",SourceId=epgSource.Id,Name="WX Kültür HD",Kind=ContentKind.Live,Url=target.Url};
+                async IAsyncEnumerable<ContentItem> Channels(){yield return news;yield return culture;await Task.Yield();}
+                await store.ImportAsync(epgSource,Channels(),null,default);await window.SmokeRefreshAsync(epgSource.Id);
+                await window.SmokePlayAsync(news);results["epgAutomaticallyLoaded"]=window.EpgList.Items.Cast<Programme>().Single().Title.StartsWith("Güne Bakış");
+                var first=window.SmokePlayAsync(news);await Task.Delay(10);var second=window.SmokePlayAsync(culture);await Task.WhenAll(first,second);
+                results["epgFollowsLatestChannel"]=window.EpgList.Items.Cast<Programme>().All(p=>p.ChannelId=="wx.culture")&&window.EpgList.Items.Count==2&&window.GuideTitle.Text.Contains("WX Kültür");
+                if(!Equals(results["epgAutomaticallyLoaded"],true)||!Equals(results["epgFollowsLatestChannel"],true))throw new Exception("EPG UI integration failed.");
+                await WaitUntil(()=>engine.Player.IsPlaying,TimeSpan.FromSeconds(15));await Task.Delay(900);
+                SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-epg.png"));
+                var statistics=new StatisticsWindow(window,()=> ("Sintel · Yerel test videosu",target),engine,settings);statistics.Show();await Task.Delay(1200);SaveWindow(statistics,Path.Combine(App.DataDirectory,"WX-Player-statistics.png"));statistics.Close();
+                using(var statsMedia=engine.Player.Media){var tracks=statsMedia!.Tracks;results["statisticsVideoTrack"]=tracks.Any(t=>t.TrackType==LibVLCSharp.Shared.TrackType.Video&&t.Data.Video.Width==854);results["statisticsAudioTrack"]=tracks.Any(t=>t.TrackType==LibVLCSharp.Shared.TrackType.Audio&&t.Data.Audio.Rate>0);}
+                if(!Equals(results["statisticsVideoTrack"],true)||!Equals(results["statisticsAudioTrack"],true))throw new Exception("Statistics metadata missing.");
                 if(engine.Player.IsSeekable){engine.Player.Time=2000;await Task.Delay(400);results["seek"]=engine.Player.Time>=1900;}
                 engine.Player.Pause();await Task.Delay(350);results["pause"]=engine.Player.State==LibVLCSharp.Shared.VLCState.Paused;engine.Player.Pause();
                 results["audioTracks"]=engine.Player.AudioTrackDescription.Count(t=>t.Id>=0);
@@ -80,11 +99,26 @@ internal static class SmokeTest
                 await engine.PlayAsync(new PlaybackTarget(new Uri(recorded).AbsoluteUri),settings,default);await WaitUntil(()=>engine.Player.IsPlaying,TimeSpan.FromSeconds(10));await Task.Delay(1000);using(var media=engine.Player.Media)results["recordDecodedFrames"]=media?.Statistics.DecodedVideo??0;
                 if(Convert.ToInt32(results["decodedFrames"])<=0||Convert.ToInt32(results["recordDecodedFrames"])<=0||Convert.ToInt64(results["recordBytes"])<=0||!Equals(results["pause"],true)||!Equals(results["seek"],true))throw new Exception("Media assertion failed.");
             }
+            int fixtureArg=Array.IndexOf(App.Arguments,"--restart-fixture");
+            if(fixtureArg>=0&&fixtureArg+1<App.Arguments.Length)
+            {
+                byte[] fixture=await File.ReadAllBytesAsync(App.Arguments[fixtureArg+1]);
+                string hash=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(fixture)).ToLowerInvariant();
+                string json=JsonSerializer.Serialize(new{tag_name="v1.3.0",draft=false,prerelease=false,assets=new[]{new{name="WXPlayer.exe",size=fixture.Length,digest="sha256:"+hash,browser_download_url="https://github.com/schwairex/WX-Player/releases/download/v1.3.0/WXPlayer.exe"}}});
+                using var controller=new UpdateController(settings,default,new GitHubUpdater(new UpdateFixtureHandler(json,fixture)));
+                await controller.CheckAsync(true);if(controller.Ready is null)throw new Exception("Fixture update not staged: "+controller.Status);
+                Environment.SetEnvironmentVariable("WXPLAYER_TEST_PARENT",Environment.ProcessId.ToString());
+                await controller.RestartAsync();results["updaterRestartDispatched"]=true;
+            }
             results["success"]=true;
         }
         catch(Exception ex){results["success"]=false;results["error"]=ex.ToString();}
         File.WriteAllText(Path.Combine(App.DataDirectory,"smoke-results.json"),JsonSerializer.Serialize(results,new JsonSerializerOptions{WriteIndented=true}));
         await window.Dispatcher.InvokeAsync(window.Close,DispatcherPriority.ApplicationIdle);
+    }
+    private sealed class UpdateFixtureHandler(string json,byte[] executable):HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,CancellationToken ct)=>Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK){Content=request.RequestUri!.Host=="api.github.com"?new StringContent(json):new ByteArrayContent(executable)});
     }
     private static async Task WaitUntil(Func<bool> condition,TimeSpan timeout){var sw=Stopwatch.StartNew();while(!condition()){if(sw.Elapsed>timeout)throw new TimeoutException("Playback did not start.");await Task.Delay(100);}}
     [DllImport("user32.dll")]private static extern bool PostMessage(IntPtr hwnd,int message,IntPtr wParam,IntPtr lParam);
@@ -97,3 +131,5 @@ internal static class SmokeTest
         window.UpdateLayout();var content=(FrameworkElement)window.Content;var bitmap=new RenderTargetBitmap((int)content.ActualWidth,(int)content.ActualHeight,96,96,PixelFormats.Pbgra32);bitmap.Render(content);var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(bitmap));using var file=File.Create(path);encoder.Save(file);
     }
 }
+
+

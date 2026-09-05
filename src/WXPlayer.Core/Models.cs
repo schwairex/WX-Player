@@ -30,6 +30,7 @@ public sealed record ContentItem
     public string Url { get; init; } = "";
     public string Logo { get; init; } = "";
     public string EpgId { get; init; } = "";
+    public string EpgName { get; init; } = "";
     public string Extension { get; init; } = "mp4";
     public string Catchup { get; init; } = "";
     public int CatchupDays { get; init; }
@@ -58,6 +59,7 @@ public sealed record PlaybackTarget(string Url, string UserAgent = "", string Re
 
 public sealed class PlayerSettings
 {
+    public bool AutoUpdate { get; set; } = true;
     public bool FullscreenFill { get; set; } = true;
     public bool HardwareAcceleration { get; set; } = true;
     public string VideoOutput { get; set; } = "direct3d11";
@@ -85,3 +87,4 @@ public static class AddressPolicy
     public static bool IsPlayable(string address) => Uri.TryCreate(address, UriKind.Absolute, out var uri) && new[] { "https", "http", "rtsp", "rtmp", "udp", "rtp", "file" }.Contains(uri.Scheme);
     public static string Header(string text) => text.Replace("\r", "").Replace("\n", "");
 }
+

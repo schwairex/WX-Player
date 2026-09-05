@@ -54,7 +54,7 @@
           <Button x:Name="SettingsNav" Style="{StaticResource Nav}" Click="Settings_Click">
             <ui:IconLabel Icon="settings" Label="Ayarlar" />
           </Button>
-          <TextBlock x:Name="VersionLabel" Text="WX PLAYER  /  1.1.0" FontSize="9" Foreground="#5F6D81" Margin="14,14,0,0" />
+          <TextBlock x:Name="VersionLabel" Text="WX PLAYER  /  1.2.0" FontSize="9" Foreground="#5F6D81" Margin="14,14,0,0" />
         </StackPanel>
         <Grid />
       </DockPanel>
@@ -283,6 +283,7 @@
                   <Button x:Name="RecordButton" Foreground="#FF8C91" Click="Record_Click" ToolTip="Kaydı başlat / bitir" Padding="9,5" Background="Transparent" BorderThickness="0" MinWidth="32" MinHeight="32">
                     <ui:SvgIcon Icon="record" />
                   </Button>
+                  <Button Click="Statistics_Click" ToolTip="Yayın istatistikleri · I" Padding="8,5" Background="Transparent" BorderThickness="0"><ui:SvgIcon Icon="statistics" /></Button>
                   <Button Click="Tracks_Click" ToolTip="Ses ve altyazı parçaları" FontSize="10" Padding="9,5" Background="Transparent" BorderThickness="0" MinWidth="32" MinHeight="32">
                     <ui:SvgIcon Icon="subtitles" />
                   </Button>
@@ -308,11 +309,12 @@
                   <Button Click="NextDay_Click" Padding="7,0" Background="Transparent" BorderThickness="0" MinWidth="32" MinHeight="32">
                     <ui:SvgIcon Icon="chevron-right" />
                   </Button>
+                  <Button Click="MatchEpg_Click" Padding="7,0" Background="Transparent" BorderThickness="0" ToolTip="EPG kanalını eşleştir" MinWidth="32" MinHeight="32"><ui:SvgIcon Icon="epg" /></Button>
                   <Button Click="RefreshEpg_Click" Padding="7,0" Background="Transparent" BorderThickness="0" ToolTip="XMLTV rehberini güncelle" MinWidth="32" MinHeight="32">
                     <ui:SvgIcon Icon="refresh" />
                   </Button>
                 </StackPanel>
-                <TextBlock Text="Yayın akışı" FontSize="13" FontWeight="SemiBold" />
+                <TextBlock x:Name="GuideTitle" Text="Yayın akışı" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
               </DockPanel>
               <ListBox x:Name="EpgList" Grid.Row="1" Margin="0,9,0,0" MouseDoubleClick="Epg_DoubleClick">
                 <ListBox.ItemTemplate>
@@ -326,7 +328,7 @@
                       <TextBlock Text="{Binding TimeLabel}" FontSize="10" Foreground="#A4B4C9" VerticalAlignment="Center" />
                       <StackPanel Grid.Column="1">
                         <TextBlock Text="{Binding Title}" FontSize="11" TextTrimming="CharacterEllipsis" ToolTip="{Binding Description}" />
-                        <ProgressBar Value="{Binding Progress}" Maximum="100" Height="2" Margin="0,7,12,0" />
+                        <ProgressBar Value="{Binding Progress, Mode=OneWay}" Maximum="100" Height="2" Margin="0,7,12,0" />
                       </StackPanel>
                       <TextBlock Grid.Column="2" Text="{Binding StateLabel}" Foreground="{StaticResource Accent}" FontSize="9" VerticalAlignment="Center" />
                     </Grid>
@@ -351,3 +353,4 @@
     </Grid>
   </Grid>
 </Window>
+

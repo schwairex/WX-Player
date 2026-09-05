@@ -48,21 +48,6 @@ internal static class Dialogs
         },true);
         return w.ShowDialog()==true?result:null;
     }
-    public static bool Settings(Window owner,PlayerSettings settings)
-    {
-        var p=Form(owner,"Oynatıcı ayarları",540,out var w);
-        var gpu=new CheckBox{Content="GPU donanım ivmesini kullan (D3D11VA)",IsChecked=settings.HardwareAcceleration};p.Children.Add(gpu);
-        Label(p,"Windows video çıkışı");var output=new ComboBox{ItemsSource=new[]{"Direct3D 11 (önerilen)","Direct3D 9 (uyumluluk)","Otomatik"},SelectedIndex=settings.VideoOutput=="direct3d11"?0:settings.VideoOutput=="direct3d9"?1:2};p.Children.Add(output);
-        var adaptive=new CheckBox{Content="Akıllı önbellek: kesintilerde sonraki yayının tamponunu artır",IsChecked=settings.AdaptiveCache};p.Children.Add(adaptive);
-        var cache=Field(p,"Ağ önbelleği · milisaniye (200 – 10000)",settings.NetworkCacheMs.ToString());
-        var folder=Field(p,"Kayıt klasörü",settings.RecordingFolder);
-        Button(p,"Klasör seç…",(_,_)=>{var d=new OpenFolderDialog{Title="Kayıt klasörünü seçin"};if(d.ShowDialog(w)==true)folder.Text=d.FolderName;});
-        Note(p,"Video çıkışı değişikliği yeniden başlatmada; donanım ve önbellek değişikliği sonraki oynatmada uygulanır. Kayıt, sağlayıcıda ikinci bir bağlantı kullanır.");
-        Note(p,"Kısayollar: Space oynat/duraklat · ← / → 10 sn · ↑ / ↓ ses\nF tam ekran · M sessiz · Page Up / Down kanal · Ctrl+K arama · Esc çıkış\nVideo üzerinde fare tekerleği sesi değiştirir; liste üzerinde içerikleri kaydırır.");
-        var error=new TextBlock{Foreground=Brushes.LightSalmon};p.Children.Add(error);
-        Button(p,"Ayarları kaydet",(_,_)=>{if(!int.TryParse(cache.Text,out var n)||n<200||n>10000){error.Text="Önbellek 200 – 10000 aralığında olmalı.";return;}try{var full=Path.GetFullPath(folder.Text);if(full.Contains('\''))throw new ArgumentException();Directory.CreateDirectory(full);settings.RecordingFolder=full;}catch{error.Text="Kayıt klasörü geçerli ve yazılabilir olmalı.";return;}settings.NetworkCacheMs=n;settings.HardwareAcceleration=gpu.IsChecked==true;settings.AdaptiveCache=adaptive.IsChecked==true;settings.VideoOutput=output.SelectedIndex==0?"direct3d11":output.SelectedIndex==1?"direct3d9":"any";w.DialogResult=true;},true);
-        return w.ShowDialog()==true;
-    }
     public static ContentItem? Episode(Window owner,IReadOnlyList<ContentItem> episodes)
     {
         var p=Form(owner,"Bölümler",650,out var w);var list=new ListBox{ItemsSource=episodes,DisplayMemberPath="Name",Height=380};p.Children.Add(list);ContentItem? result=null;
@@ -82,3 +67,4 @@ internal static class Dialogs
         var p=Form(owner,"DirectShow aygıtını aç",500,out var w);Note(p,"Windows'taki kamera / yakalama aygıtının tam adını girin. Boş video adı varsayılan aygıtı seçer; 'none' bir girişi kapatır.");var video=Field(p,"Video aygıtı");var audio=Field(p,"Ses aygıtı","none");Button(p,"Aygıtı aç",(_,_)=>w.DialogResult=true,true);return w.ShowDialog()==true?(video.Text,audio.Text):null;
     }
 }
+

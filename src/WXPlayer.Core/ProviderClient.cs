@@ -7,13 +7,13 @@ using System.Text.Json;
 
 namespace WXPlayer.Core;
 
-public sealed class ProviderClient : IDisposable
+public sealed partial class ProviderClient : IDisposable
 {
     private readonly HttpClient _http;
     public ProviderClient(HttpMessageHandler? handler=null)
     {
         _http=handler is null?new HttpClient(new SocketsHttpHandler{AutomaticDecompression=DecompressionMethods.All,ConnectTimeout=TimeSpan.FromSeconds(15),PooledConnectionLifetime=TimeSpan.FromMinutes(5)}):new HttpClient(handler);
-        _http.Timeout=TimeSpan.FromMinutes(5);_http.DefaultRequestHeaders.UserAgent.ParseAdd("WXPlayer/1.0");
+        _http.Timeout=TimeSpan.FromMinutes(5);_http.DefaultRequestHeaders.UserAgent.ParseAdd("WXPlayer/1.2");
     }
     public IAsyncEnumerable<ContentItem> LoadAsync(SourceConfig s,CancellationToken ct) => s.Kind switch
     { SourceKind.Xtream=>XtreamAsync(s,ct),SourceKind.Stalker=>StalkerAsync(s,ct),_=>PlaylistAsync(s,ct) };
@@ -94,36 +94,6 @@ public sealed class ProviderClient : IDisposable
         var type=item.Kind switch{ContentKind.Movie=>"movie",ContentKind.Episode=>"series",_=>"live"};
         var ext=item.Kind==ContentKind.Live?"ts":item.Extension.TrimStart('.');if(!System.Text.RegularExpressions.Regex.IsMatch(ext,"^[a-zA-Z0-9]{1,8}$"))ext="mp4";
         return new($"{s.Address.TrimEnd('/')}/{type}/{E(s.Username)}/{E(s.Password)}/{E(item.ProviderId)}.{ext}");
-    }
-    public async Task<List<Programme>> ShortEpgAsync(SourceConfig s,ContentItem item,CancellationToken ct)
-    {
-        if(s.Kind!=SourceKind.Xtream)return [];
-        using var doc=await JsonAsync(Api(s,"get_short_epg","&stream_id="+E(item.ProviderId)+"&limit=30"),ct);var list=new List<Programme>();
-        if(doc.RootElement.TryGetProperty("epg_listings",out var rows)&&rows.ValueKind==JsonValueKind.Array)
-            foreach(var r in rows.EnumerateArray())
-            {
-                if(!long.TryParse(Str(r,"start_timestamp"),out var a)||!long.TryParse(Str(r,"stop_timestamp",Str(r,"end_timestamp")),out var b)||b<=a)continue;
-                list.Add(new(item.EpgId,Decode(Str(r,"title")),Decode(Str(r,"description")),DateTimeOffset.FromUnixTimeSeconds(a),DateTimeOffset.FromUnixTimeSeconds(b)));
-            }
-        return list;
-    }
-    private static string Decode(string value){try{return Encoding.UTF8.GetString(Convert.FromBase64String(value));}catch(FormatException){return value;}}
-    public async Task<int> LoadEpgAsync(SourceConfig source,LibraryStore store,CancellationToken ct)
-    {
-        string address=source.EpgUrl;
-        if(address.Length==0&&source.Kind==SourceKind.Xtream)address=$"{source.Address.TrimEnd('/')}/xmltv.php?username={E(source.Username)}&password={E(source.Password)}";
-        if(address.Length==0)throw new InvalidOperationException("Kaynağı düzenleyerek XMLTV rehber adresini ekleyin.");
-        if(File.Exists(address))
-        {
-            await using var file=File.OpenRead(address);return await ReadEpgStreamAsync(address,file,source.Id,store,ct);
-        }
-        using var response=await _http.GetAsync(AddressPolicy.Http(address),HttpCompletionOption.ResponseHeadersRead,ct);response.EnsureSuccessStatusCode();
-        await using var stream=await response.Content.ReadAsStreamAsync(ct);return await ReadEpgStreamAsync(address,stream,source.Id,store,ct);
-    }
-    private static async Task<int> ReadEpgStreamAsync(string address,Stream stream,string id,LibraryStore store,CancellationToken ct)
-    {
-        if(address.Split('?')[0].EndsWith(".gz",StringComparison.OrdinalIgnoreCase)){await using var gzip=new GZipStream(stream,CompressionMode.Decompress,true);return await store.ImportEpgAsync(id,XmlTvParser.ParseAsync(gzip,ct),ct);}
-        return await store.ImportEpgAsync(id,XmlTvParser.ParseAsync(stream,ct),ct);
     }
     public static PlaybackTarget CatchupTarget(SourceConfig s,ContentItem item,Programme p)
     {
@@ -208,3 +178,4 @@ public sealed class ProviderClient : IDisposable
     }
     public void Dispose()=>_http.Dispose();
 }
+

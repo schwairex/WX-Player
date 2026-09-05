@@ -6,6 +6,8 @@ namespace WXPlayer.App;
 public sealed class PlaybackEngine : IAsyncDisposable
 {
     public LibVLC Vlc { get; }
+    public string ConfiguredVideoOutput {get;}
+    public float BufferPercent {get;private set;}
     public MediaPlayer Player { get; }
     private MediaPlayer? _recorder;
     private readonly SemaphoreSlim _gate=new(1,1);
@@ -17,10 +19,10 @@ public sealed class PlaybackEngine : IAsyncDisposable
 
     public PlaybackEngine(PlayerSettings settings)
     {
-        LibVLCSharp.Shared.Core.Initialize();
+        ConfiguredVideoOutput=settings.VideoOutput;LibVLCSharp.Shared.Core.Initialize();
         Vlc=new LibVLC("--no-video-title-show","--no-osd","--no-snapshot-preview","--no-metadata-network-access","--no-lua", "--vout="+settings.VideoOutput);
         Player=new MediaPlayer(Vlc){EnableHardwareDecoding=settings.HardwareAcceleration,EnableKeyInput=false,EnableMouseInput=false,Volume=settings.Volume};
-        Player.Buffering+=(_,e)=>{if(e.Cache<30&&(DateTime.UtcNow-_lastBuffer).TotalSeconds>8){_extraCache=Math.Min(4800,_extraCache+400);_lastBuffer=DateTime.UtcNow;}};
+        Player.Buffering+=(_,e)=>{BufferPercent=e.Cache;if(e.Cache<30&&(DateTime.UtcNow-_lastBuffer).TotalSeconds>8){_extraCache=Math.Min(4800,_extraCache+400);_lastBuffer=DateTime.UtcNow;}};
     }
     public int CacheMs(PlayerSettings settings)=>Math.Clamp(settings.NetworkCacheMs+(settings.AdaptiveCache?_extraCache:0),200,10000);
     private Media MakeMedia(PlaybackTarget target,PlayerSettings settings)
@@ -36,6 +38,7 @@ public sealed class PlaybackEngine : IAsyncDisposable
     {
         await _gate.WaitAsync(ct);try{await Task.Run(()=>{ct.ThrowIfCancellationRequested();Player.Stop();ct.ThrowIfCancellationRequested();using var media=MakeMedia(target,settings);Player.EnableHardwareDecoding=settings.HardwareAcceleration;if(!Player.Play(media))throw new InvalidOperationException("Oynatma başlatılamadı.");Player.Volume=settings.Volume;},ct);}finally{_gate.Release();}
     }
+    public async Task StopAsync(){await _gate.WaitAsync();try{await Task.Run(Player.Stop);}finally{_gate.Release();}}
     public async Task PlayCaptureAsync(string video,string audio,PlayerSettings settings)
     {
         await _gate.WaitAsync();try{await Task.Run(()=>{Player.Stop();using var media=new Media(Vlc,"dshow://",FromType.FromLocation);media.AddOption(":dshow-vdev="+AddressPolicy.Header(video));media.AddOption(":dshow-adev="+AddressPolicy.Header(audio));media.AddOption(":live-caching="+settings.NetworkCacheMs);if(!Player.Play(media))throw new InvalidOperationException("DirectShow aygıtı başlatılamadı.");});}finally{_gate.Release();}
@@ -61,3 +64,4 @@ public sealed class PlaybackEngine : IAsyncDisposable
     }
     public async ValueTask DisposeAsync(){await StopRecordingAsync();await _gate.WaitAsync();try{await Task.Run(()=>{Player.Stop();Player.Dispose();Vlc.Dispose();});}finally{_gate.Release();}}
 }
+

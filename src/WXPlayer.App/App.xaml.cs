@@ -12,7 +12,8 @@ public partial class App : Application
     {
         base.OnStartup(e);Arguments=e.Args;int index=Array.IndexOf(e.Args,"--data-dir");if(index>=0&&index+1<e.Args.Length)DataDirectory=Path.GetFullPath(e.Args[index+1]);
         Directory.CreateDirectory(DataDirectory);
-        DispatcherUnhandledException+=(_,args)=>{File.AppendAllText(Path.Combine(DataDirectory,"errors.log"),$"{DateTime.UtcNow:O} {args.Exception.GetType().Name}\n");MessageBox.Show("İşlem tamamlanamadı. Kaynağı veya dosya erişimini kontrol ederek yeniden deneyin.","WX Player");args.Handled=true;};
+        try{if(UpdateController.Redirect(e.Args)){Shutdown();return;}}catch{/* A failed redirect keeps this version available. */}
+        DispatcherUnhandledException+=(_,args)=>{if(Arguments.Contains("--smoke")){File.WriteAllText(Path.Combine(DataDirectory,"smoke-unhandled.txt"),args.Exception.ToString());args.Handled=true;Shutdown(1);return;}File.AppendAllText(Path.Combine(DataDirectory,"errors.log"),$"{DateTime.UtcNow:O} {args.Exception.GetType().Name}\n");MessageBox.Show("İşlem tamamlanamadı. Kaynağı veya dosya erişimini kontrol ederek yeniden deneyin.","WX Player");args.Handled=true;};
         try {var window=new MainWindow();MainWindow=window;window.Show();}
         catch(Exception ex){File.WriteAllText(Path.Combine(DataDirectory,"startup-error.log"),ex.ToString());MessageBox.Show("WX Player başlatılamadı. Uygulama paketini yeniden çıkarın. Ayrıntı: "+ex.GetType().Name,"WX Player");Shutdown(1);}
     }
@@ -23,3 +24,5 @@ public partial class App : Application
     public static void SaveSettings(Core.PlayerSettings settings)
     {string path=Path.Combine(DataDirectory,"settings.json");File.WriteAllText(path+".tmp",JsonSerializer.Serialize(settings,new JsonSerializerOptions{WriteIndented=true}));File.Move(path+".tmp",path,true);}
 }
+
+

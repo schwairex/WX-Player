@@ -64,9 +64,11 @@ await Test("Stalker mocked handshake, paginated lists, create_link",async()=>
     var s=new SourceConfig{Kind=SourceKind.Stalker,Address="https://example.test/stalker_portal/c/",Mac="00:1A:79:00:00:01"};var items=await Collect(client.LoadAsync(s,default));Assert(items.Count==2&&livePages==2,"pagination");var target=await client.ResolveAsync(s,items[0],default);Assert(target.Url=="https://example.test/live.ts","resolved command; never executes shell");
 });
 await Test("Source deletion removes its content, favorites and guide",async()=>{await store.DeleteSourceAsync(source.Id);Assert((await store.StatsAsync(source.Id)).Total==0&&(await store.SourcesAsync()).Count==0,"source deletion");});
+await RegressionTests.RunAsync(Test,Assert,folder);
 Console.WriteLine($"{results.Count-failures}/{results.Count} passed");
 string output=args.Length>0?Path.GetFullPath(args[0]):Path.Combine(folder,"results.json");Directory.CreateDirectory(Path.GetDirectoryName(output)!);File.WriteAllText(output,JsonSerializer.Serialize(new{passed=results.Count-failures,total=results.Count,results},new JsonSerializerOptions{WriteIndented=true}));
 return failures==0?0:1;
 
 sealed class FixtureHandler(Func<HttpRequestMessage,string> responder):HttpMessageHandler
 {protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,CancellationToken cancellationToken)=>Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK){Content=new StringContent(responder(request),Encoding.UTF8,"application/json")});}
+

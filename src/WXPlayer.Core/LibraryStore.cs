@@ -2,7 +2,7 @@ using Microsoft.Data.Sqlite;
 
 namespace WXPlayer.Core;
 
-public sealed class LibraryStore(string path)
+public sealed partial class LibraryStore(string path)
 {
     private readonly SemaphoreSlim _writer = new(1, 1);
     private SqliteConnection Open()
@@ -23,8 +23,14 @@ public sealed class LibraryStore(string path)
             CREATE TABLE IF NOT EXISTS history(id TEXT PRIMARY KEY,played INTEGER NOT NULL);
             CREATE TABLE IF NOT EXISTS epg(source TEXT,channel TEXT,title TEXT,description TEXT,start INTEGER,end INTEGER);
             CREATE INDEX IF NOT EXISTS ix_epg ON epg(source,channel,start);
+            CREATE TABLE IF NOT EXISTS epg_aliases(source TEXT,channel TEXT,key TEXT,kind INTEGER,PRIMARY KEY(source,channel,key,kind));
+            CREATE INDEX IF NOT EXISTS ix_epg_aliases ON epg_aliases(source,kind,key);
+            CREATE TABLE IF NOT EXISTS epg_state(source TEXT PRIMARY KEY,updated INTEGER);
+            CREATE TABLE IF NOT EXISTS epg_matches(item TEXT PRIMARY KEY,channel TEXT);
             """;
         cmd.ExecuteNonQuery();
+        cmd.CommandText="SELECT COUNT(*) FROM pragma_table_info('items') WHERE name='epg_name'";
+        if(Convert.ToInt32(cmd.ExecuteScalar())==0){cmd.CommandText="ALTER TABLE items ADD COLUMN epg_name TEXT NOT NULL DEFAULT ''";cmd.ExecuteNonQuery();}
         cmd.CommandText="SELECT COUNT(*) FROM pragma_table_info('items') WHERE name='search_text'";
         if(Convert.ToInt32(cmd.ExecuteScalar())==0)
         {
@@ -49,13 +55,13 @@ public sealed class LibraryStore(string path)
                 using var c = Open(); using var tx = c.BeginTransaction();
                 using (var del = c.CreateCommand()) { del.Transaction = tx; del.CommandText = "DELETE FROM items WHERE source=$s"; del.Parameters.AddWithValue("$s", source.Id); del.ExecuteNonQuery(); }
                 using var insert = c.CreateCommand(); insert.Transaction = tx;
-                insert.CommandText = "INSERT OR REPLACE INTO items VALUES($id,$s,$p,$n,$c,$k,$u,$l,$e,$x,$a,$d,$ua,$r,$search)";
-                foreach (var key in new[] { "$id", "$s", "$p", "$n", "$c", "$k", "$u", "$l", "$e", "$x", "$a", "$d", "$ua", "$r", "$search" }) insert.Parameters.Add(new SqliteParameter(key, ""));
+                insert.CommandText = "INSERT OR REPLACE INTO items(id,source,provider,name,category,kind,url,logo,epg,extension,catchup,days,ua,referrer,search_text,epg_name) VALUES($id,$s,$p,$n,$c,$k,$u,$l,$e,$x,$a,$d,$ua,$r,$search,$epgname)";
+                foreach (var key in new[] { "$id", "$s", "$p", "$n", "$c", "$k", "$u", "$l", "$e", "$x", "$a", "$d", "$ua", "$r", "$search", "$epgname" }) insert.Parameters.Add(new SqliteParameter(key, ""));
                 insert.Prepare(); int count = 0;
                 await foreach (var item in input.WithCancellation(ct))
                 {
                     ct.ThrowIfCancellationRequested();
-                    object[] values = [item.Id, source.Id, item.ProviderId, item.Name, item.Category, (int)item.Kind, item.Url, item.Logo, item.EpgId, item.Extension, item.Catchup, item.CatchupDays, item.UserAgent, item.Referrer, ContentItem.SearchKey(item.Name+" "+item.Category)];
+                    object[] values = [item.Id, source.Id, item.ProviderId, item.Name, item.Category, (int)item.Kind, item.Url, item.Logo, item.EpgId, item.Extension, item.Catchup, item.CatchupDays, item.UserAgent, item.Referrer, ContentItem.SearchKey(item.Name+" "+item.Category), item.EpgName];
                     for (int i = 0; i < values.Length; i++) insert.Parameters[i].Value = values[i];
                     insert.ExecuteNonQuery(); count++;
                     if (count % 500 == 0) progress?.Report(new(count, $"{count:N0} içerik işleniyor…"));
@@ -83,10 +89,10 @@ public sealed class LibraryStore(string path)
         cmd.Parameters.AddWithValue("$q", search.Length == 0 ? "" : "%" + ContentItem.SearchKey(search).Replace("~", "~~").Replace("%", "~%").Replace("_", "~_") + "%");
         cmd.CommandText = "SELECT COUNT(*)" + from + where;
         int total = Convert.ToInt32(cmd.ExecuteScalar()); ct.ThrowIfCancellationRequested();
-        cmd.CommandText = "SELECT i.id,i.source,i.provider,i.name,i.category,i.kind,i.url,i.logo,i.epg,i.extension,i.catchup,i.days,i.ua,i.referrer,f.id IS NOT NULL" + from + where + (recent ? " ORDER BY h.played DESC" : " ORDER BY i.name COLLATE NOCASE") + " LIMIT $limit OFFSET $offset";
+        cmd.CommandText = "SELECT i.id,i.source,i.provider,i.name,i.category,i.kind,i.url,i.logo,i.epg,i.extension,i.catchup,i.days,i.ua,i.referrer,f.id IS NOT NULL,i.epg_name" + from + where + (recent ? " ORDER BY h.played DESC" : " ORDER BY i.name COLLATE NOCASE") + " LIMIT $limit OFFSET $offset";
         cmd.Parameters.AddWithValue("$limit", limit); cmd.Parameters.AddWithValue("$offset", offset);
         using var r = cmd.ExecuteReader(); var list = new List<ContentItem>();
-        while (r.Read()) { ct.ThrowIfCancellationRequested(); list.Add(new ContentItem { Id=r.GetString(0),SourceId=r.GetString(1),ProviderId=r.GetString(2),Name=r.GetString(3),Category=r.GetString(4),Kind=(ContentKind)r.GetInt32(5),Url=r.GetString(6),Logo=r.GetString(7),EpgId=r.GetString(8),Extension=r.GetString(9),Catchup=r.GetString(10),CatchupDays=r.GetInt32(11),UserAgent=r.GetString(12),Referrer=r.GetString(13),IsFavorite=r.GetBoolean(14) }); }
+        while (r.Read()) { ct.ThrowIfCancellationRequested(); list.Add(new ContentItem { Id=r.GetString(0),SourceId=r.GetString(1),ProviderId=r.GetString(2),Name=r.GetString(3),Category=r.GetString(4),Kind=(ContentKind)r.GetInt32(5),Url=r.GetString(6),Logo=r.GetString(7),EpgId=r.GetString(8),Extension=r.GetString(9),Catchup=r.GetString(10),CatchupDays=r.GetInt32(11),UserAgent=r.GetString(12),Referrer=r.GetString(13),IsFavorite=r.GetBoolean(14),EpgName=r.GetString(15) }); }
         return new Page(list,total);
     }, ct);
     public Task<LibraryStats> StatsAsync(string? source) => Task.Run(() =>
@@ -107,32 +113,11 @@ public sealed class LibraryStore(string path)
     public async Task DeleteSourceAsync(string id) => await WriteAsync(c =>
     {
         using var tx=c.BeginTransaction(); using var cmd=c.CreateCommand(); cmd.Transaction=tx;cmd.Parameters.AddWithValue("$s",id);
-        cmd.CommandText="DELETE FROM favorites WHERE id IN(SELECT id FROM items WHERE source=$s); DELETE FROM history WHERE id IN(SELECT id FROM items WHERE source=$s); DELETE FROM items WHERE source=$s; DELETE FROM epg WHERE source=$s; DELETE FROM sources WHERE id=$s;";cmd.ExecuteNonQuery();tx.Commit();
+        cmd.CommandText="DELETE FROM epg_matches WHERE item IN(SELECT id FROM items WHERE source=$s); DELETE FROM epg_aliases WHERE source=$s; DELETE FROM epg_state WHERE source=$s; DELETE FROM favorites WHERE id IN(SELECT id FROM items WHERE source=$s); DELETE FROM history WHERE id IN(SELECT id FROM items WHERE source=$s); DELETE FROM items WHERE source=$s; DELETE FROM epg WHERE source=$s; DELETE FROM sources WHERE id=$s;";cmd.ExecuteNonQuery();tx.Commit();
     });
     private async Task WriteAsync(Action<SqliteConnection> action)
     {
         await _writer.WaitAsync();try { await Task.Run(()=>{using var c=Open();action(c);}); } finally { _writer.Release(); }
     }
-    public async Task<int> ImportEpgAsync(string source,IAsyncEnumerable<Programme> programmes,CancellationToken ct)
-    {
-        await _writer.WaitAsync(ct);try { return await Task.Run(async()=>
-        {
-            using var c=Open();using var tx=c.BeginTransaction();using var cmd=c.CreateCommand();cmd.Transaction=tx;
-            cmd.CommandText="DELETE FROM epg WHERE source=$s";cmd.Parameters.AddWithValue("$s",source);cmd.ExecuteNonQuery();
-            cmd.CommandText="INSERT INTO epg VALUES($s,$c,$t,$d,$start,$end)";
-            foreach(var p in new[]{"$c","$t","$d","$start","$end"})cmd.Parameters.AddWithValue(p,"");cmd.Prepare();int count=0;
-            await foreach(var p in programmes.WithCancellation(ct))
-            {
-                ct.ThrowIfCancellationRequested();cmd.Parameters["$c"].Value=p.ChannelId;cmd.Parameters["$t"].Value=p.Title;cmd.Parameters["$d"].Value=p.Description;cmd.Parameters["$start"].Value=p.Start.ToUnixTimeSeconds();cmd.Parameters["$end"].Value=p.End.ToUnixTimeSeconds();cmd.ExecuteNonQuery();count++;
-            }
-            if(count==0)throw new InvalidOperationException("XMLTV program verisi içermiyor; önceki rehber korundu.");
-            ct.ThrowIfCancellationRequested();tx.Commit();return count;
-        },ct); }finally{_writer.Release();}
-    }
-    public Task<List<Programme>> EpgAsync(ContentItem item,DateTimeOffset date) => Task.Run(()=>
-    {
-        using var c=Open();using var cmd=c.CreateCommand();cmd.CommandText="SELECT channel,title,description,start,end FROM epg WHERE source=$s AND (channel=$c OR channel=$n) AND end>$from AND start<$to ORDER BY start LIMIT 200";
-        cmd.Parameters.AddWithValue("$s",item.SourceId);cmd.Parameters.AddWithValue("$c",string.IsNullOrEmpty(item.EpgId)?item.Name:item.EpgId);cmd.Parameters.AddWithValue("$n",item.Name);cmd.Parameters.AddWithValue("$from",date.ToUnixTimeSeconds());cmd.Parameters.AddWithValue("$to",date.AddDays(1).ToUnixTimeSeconds());
-        using var r=cmd.ExecuteReader();var list=new List<Programme>();while(r.Read())list.Add(new(r.GetString(0),r.GetString(1),r.GetString(2),DateTimeOffset.FromUnixTimeSeconds(r.GetInt64(3)),DateTimeOffset.FromUnixTimeSeconds(r.GetInt64(4))));return list;
-    });
 }
+

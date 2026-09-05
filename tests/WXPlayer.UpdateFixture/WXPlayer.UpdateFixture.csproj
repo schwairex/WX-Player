@@ -1,0 +1,1 @@
+<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><AssemblyName>WXPlayer</AssemblyName><Version>1.3.0</Version><RuntimeIdentifier>win-x64</RuntimeIdentifier></PropertyGroup><ItemGroup><ProjectReference Include="../../src/WXPlayer.Core/WXPlayer.Core.csproj"/></ItemGroup></Project>

@@ -10,7 +10,7 @@ public static partial class PlaylistParser
 
     public static async IAsyncEnumerable<ContentItem> ParseAsync(TextReader reader, SourceConfig source, [EnumeratorCancellation] CancellationToken ct = default)
     {
-        string name = "", group = "Genel", logo = "", epg = "", catchup = "", ua = "", refer = "";
+        string name = "", group = "Genel", logo = "", epg = "", epgName = "", catchup = "", ua = "", refer = "";
         int days = 0, index = 0;
         bool manifest = false;
         while (await reader.ReadLineAsync(ct) is { } raw)
@@ -27,8 +27,8 @@ public static partial class PlaylistParser
             if (line.StartsWith("#EXTM3U", StringComparison.OrdinalIgnoreCase))
             {
                 foreach (Match m in Attributes().Matches(line))
-                    if (m.Groups[1].Value is "url-tvg" or "x-tvg-url" && string.IsNullOrWhiteSpace(source.EpgUrl))
-                        source.EpgUrl = Value(m).Split(',')[0];
+                    if (m.Groups[1].Value.ToLowerInvariant() is "url-tvg" or "x-tvg-url" or "tvg-url" && string.IsNullOrWhiteSpace(source.EpgUrl))
+                        source.EpgUrl = Resolve(Value(m).Split(',')[0].Trim(), source.Address);
             }
             else if (line.StartsWith("#EXTINF:", StringComparison.OrdinalIgnoreCase))
             {
@@ -42,6 +42,7 @@ public static partial class PlaylistParser
                 var attrs = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                 foreach (Match m in Attributes().Matches(comma >= 0 ? line[..comma] : line)) attrs[m.Groups[1].Value] = Value(m);
                 if (name.Length == 0) name = attrs.GetValueOrDefault("tvg-name", "");
+                epgName = attrs.GetValueOrDefault("tvg-name", "");
                 group = attrs.GetValueOrDefault("group-title", "Genel");
                 logo = attrs.GetValueOrDefault("tvg-logo", ""); epg = attrs.GetValueOrDefault("tvg-id", "");
                 catchup = attrs.GetValueOrDefault("catchup-source", "");
@@ -60,8 +61,8 @@ public static partial class PlaylistParser
                 if (label.Length == 0) label = $"Kanal {index}";
                 string lower = (group + " " + label).ToLowerInvariant();
                 var kind = lower.Contains("series") || lower.Contains("dizi") ? ContentKind.Series : lower.Contains("film") || lower.Contains("movie") || lower.Contains("vod") || new[] { ".mp4", ".mkv", ".avi" }.Contains(Path.GetExtension(uri.AbsolutePath).ToLowerInvariant()) ? ContentKind.Movie : ContentKind.Live;
-                yield return new ContentItem { Id = ContentItem.Key(source.Id, url), SourceId = source.Id, ProviderId = index.ToString(), Name = label, Category = string.IsNullOrWhiteSpace(group) ? "Genel" : group, Kind = kind, Url = url, Logo = logo, EpgId = epg, Catchup = catchup, CatchupDays = days, UserAgent = ua, Referrer = refer };
-                name = ""; group = "Genel"; logo = ""; epg = ""; catchup = ""; ua = ""; refer = ""; days = 0;
+                yield return new ContentItem { Id = ContentItem.Key(source.Id, url), SourceId = source.Id, ProviderId = index.ToString(), Name = label, Category = string.IsNullOrWhiteSpace(group) ? "Genel" : group, Kind = kind, Url = url, Logo = logo, EpgId = epg, EpgName = epgName, Catchup = catchup, CatchupDays = days, UserAgent = ua, Referrer = refer };
+                name = ""; group = "Genel"; logo = ""; epg = ""; epgName = ""; catchup = ""; ua = ""; refer = ""; days = 0;
             }
         }
         _ = manifest;
@@ -74,3 +75,4 @@ public static partial class PlaylistParser
         return new Uri(Path.GetFullPath(Path.Combine(Path.GetDirectoryName(origin) ?? ".", address))).AbsoluteUri;
     }
 }
+
