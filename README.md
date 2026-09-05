@@ -101,9 +101,3 @@ Başlangıç ve medya testleri izole veri klasörüyle çalıştırılabilir:
 ```
 
 Bu test gerçek WPF penceresini oluşturur, PNG önizlemeleri ve JSON sonuç dosyası yazar; yerel MP4 ile video, seek, pause, ses parçaları, harici altyazı ve PVR/yeniden oynatma işlemlerini dener. `--stress`, içe aktarma sırasında UI zamanlayıcısının çalıştığını ölçer. Medya testi dosyanın desteklenen ve seek edilebilir olmasını gerektirir. Başlatıcıyı izole denemek için `WXPLAYER_APP_ROOT` ortam değişkeni çıkarma klasörünü değiştirebilir.
-
-## GitHub'a yükleme
-
-Kaynak ZIP'i çıkarın; **içindeki proje dosyalarını** yeni GitHub deponuza yükleyin. ZIP'in kendisini kaynak ağacı yerine yüklemeyin. EXE/taşınabilir ZIP, büyük dosya olduklarından deponun **Releases** bölümüne eklenebilir. Depoda özel kullanıcı bilgileri, gerçek abonelik URL'leri veya veritabanı bulunmaz. GitHub'a yükleme bu teslimat sırasında yapılmadı.
-
-Uygulama kodu MIT lisanslıdır. Dahil edilen codec bileşenlerinin lisansları ayrıdır; `THIRD-PARTY-NOTICES.md` ve `licenses/` dosyalarını koruyun. Özel multimedya motoru sıfırdan yazılmış değildir; WX Player kendi uygulama ve veri katmanları üzerinde açık kaynak LibVLC'yi kullanır.
