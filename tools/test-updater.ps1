@@ -12,7 +12,7 @@ $zip=Join-Path $root 'fixture.zip'
 [IO.Compression.ZipFile]::CreateFromDirectory($payload,$zip,[IO.Compression.CompressionLevel]::Optimal,$false)
 $hash=(Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
 $info=Join-Path $root 'PayloadInfo.cs'
-[IO.File]::WriteAllText($info,('internal static class PayloadInfo { public const string Sha256="'+$hash+'"; public const string Version="1.3.0"; }'))
+[IO.File]::WriteAllText($info,('internal static class PayloadInfo { public const string Sha256="'+$hash+'"; public const string Version="1.4.0"; }'))
 $framework=Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319'
 $fixture=Join-Path $root 'future-WXPlayer.exe'
 & (Join-Path $framework 'csc.exe') /nologo /target:winexe /platform:x64 /optimize+ "/out:$fixture" /r:System.Windows.Forms.dll /r:System.Drawing.dll "/r:$(Join-Path $framework 'System.IO.Compression.dll')" "/r:$(Join-Path $framework 'System.IO.Compression.FileSystem.dll')" "/resource:$zip,WXPlayer.Payload.zip" (Join-Path $repo 'tools\Launcher.cs') $info
@@ -39,3 +39,4 @@ try {
     [pscustomobject]@{success=$true;verifiedDownload=$true;waitedForOldProcess=$activated.previousExited;activatedNewVersion=$activated.version;oldShortcutForwarded=$true;libraryPreserved=$activated.dataPreserved;releaseWasLocalFixture=$true} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $root 'updater-integration-results.json') -Encoding utf8
     Get-Content -LiteralPath (Join-Path $root 'updater-integration-results.json')
 } finally {$env:WXPLAYER_APP_ROOT=$oldRoot}
+

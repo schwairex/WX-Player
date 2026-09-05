@@ -31,9 +31,19 @@ internal static class SmokeTest
             await store.ImportAsync(source,providers.LoadAsync(source,default),null,default);await window.SmokeRefreshAsync(source.Id);
             await Task.Delay(500);window.UpdateLayout();SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-preview.png"));results["startup"]=true;
             double width=window.Width;window.Width=940;window.UpdateLayout();SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-compact.png"));results["responsive"]=window.ActualWidth<=950;window.Width=width;
+            window.SearchBox.Text="Sintel";await WaitUntil(()=>window.ChannelList.Items.Count==1,TimeSpan.FromSeconds(4));window.UpdateLayout();
+            var caret=window.SearchBox.GetRectFromCharacterIndex(0);results["searchTextVisible"]=caret.Height>=14&&window.SearchBox.ActualHeight>=24&&window.SearchHint.Visibility==Visibility.Collapsed;
+            results["searchFiltersChannels"]=window.ChannelList.Items.Cast<ContentItem>().Single().Name.Contains("Sintel");
+            SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-search.png"));window.SearchBox.Clear();await Task.Delay(400);
+            results["unifiedLibraryPanel"]=window.LibraryPanel.IsAncestorOf(window.SearchBox)&&window.LibraryPanel.IsAncestorOf(window.CategoryPicker)&&window.LibraryPanel.IsAncestorOf(window.ChannelList);
+            results["summaryInSidebar"]=window.Sidebar.IsAncestorOf(window.StatsBar);
+            double oldWidth=window.Width,oldHeight=window.Height;window.Width=900;window.Height=650;await Task.Delay(150);window.UpdateLayout();
+            results["smallWindowGuideVisible"]=window.GuidePanel.ActualHeight>=175&&window.GuidePanel.TranslatePoint(new Point(0,window.GuidePanel.ActualHeight),window.Root).Y<=window.Root.ActualHeight;
+            SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-small.png"));window.Width=oldWidth;window.Height=oldHeight;await Task.Delay(150);
+            foreach(string key in new[]{"searchTextVisible","searchFiltersChannels","unifiedLibraryPanel","summaryInSidebar","smallWindowGuideVisible"})if(!Equals(results[key],true))throw new Exception("1.3 layout regression: "+key);
             var settingsWindow=window.CreateSettingsWindow();settingsWindow.Show();await Task.Delay(150);
             SaveWindow(settingsWindow,Path.Combine(App.DataDirectory,"WX-Player-settings.png"));settingsWindow.SelectTab(1);settingsWindow.UpdateLayout();await Task.Delay(100);SaveWindow(settingsWindow,Path.Combine(App.DataDirectory,"WX-Player-library-settings.png"));settingsWindow.SelectTab(2);settingsWindow.UpdateLayout();SaveWindow(settingsWindow,Path.Combine(App.DataDirectory,"WX-Player-update-settings.png"));settingsWindow.Close();results["settingsPages"]=true;
-            var updateWindow=new UpdateWindow(window,new PreparedUpdate(new Version(1,3,0),"test-only",new string('0',64)),()=>Task.CompletedTask);updateWindow.Show();await Task.Delay(100);SaveWindow(updateWindow,Path.Combine(App.DataDirectory,"WX-Player-update-prompt.png"));updateWindow.Close();results["updatePrompt"]=true;
+            var updateWindow=new UpdateWindow(window,new PreparedUpdate(new Version(1,4,0),"test-only",new string('0',64)),()=>Task.CompletedTask);updateWindow.Show();await Task.Delay(100);SaveWindow(updateWindow,Path.Combine(App.DataDirectory,"WX-Player-update-prompt.png"));updateWindow.Close();results["updatePrompt"]=true;
             int mediaArg=Array.IndexOf(App.Arguments,"--media");
             if(mediaArg>=0&&mediaArg+1<App.Arguments.Length)
             {
@@ -89,6 +99,12 @@ internal static class SmokeTest
                 var statistics=new StatisticsWindow(window,()=> ("Sintel · Yerel test videosu",target),engine,settings);statistics.Show();await Task.Delay(1200);SaveWindow(statistics,Path.Combine(App.DataDirectory,"WX-Player-statistics.png"));statistics.Close();
                 using(var statsMedia=engine.Player.Media){var tracks=statsMedia!.Tracks;results["statisticsVideoTrack"]=tracks.Any(t=>t.TrackType==LibVLCSharp.Shared.TrackType.Video&&t.Data.Video.Width==854);results["statisticsAudioTrack"]=tracks.Any(t=>t.TrackType==LibVLCSharp.Shared.TrackType.Audio&&t.Data.Audio.Rate>0);}
                 if(!Equals(results["statisticsVideoTrack"],true)||!Equals(results["statisticsAudioTrack"],true))throw new Exception("Statistics metadata missing.");
+                var trackWindow=new TracksWindow(window,engine);trackWindow.Show();await Task.Delay(250);SaveWindow(trackWindow,Path.Combine(App.DataDirectory,"WX-Player-tracks.png"));results["modernTracksPopulated"]=trackWindow.AudioPicker.Items.Count>0&&trackWindow.SubtitlePicker.Items.Count>0;trackWindow.Close();
+                bool FullHit(MediaSlider slider){for(int y=2;y<slider.ActualHeight;y+=6)if(slider.InputHitTest(new Point(slider.ActualWidth*.6,y)) is null)return false;return slider.ActualHeight>=36;}
+                results["largeSliderHitTargets"]=FullHit(window.SeekSlider)&&FullHit(window.VolumeSlider);
+                int originalVolume=engine.Player.Volume;window.VolumeSlider.SmokeCommitAt(10+(window.VolumeSlider.ActualWidth-20)*.6);await Task.Delay(250);results["volumeSliderValue"]=window.VolumeSlider.Value;results["volumeEngineValue"]=engine.Player.Volume;results["volumeSliderApplies"]=Math.Abs(engine.Player.Volume-60)<=1;window.VolumeSlider.Value=originalVolume;
+                window.SeekSlider.SmokeCommitAt(10+(window.SeekSlider.ActualWidth-20)*.5);await Task.Delay(300);results["timelineCommitSeeks"]=Math.Abs(engine.Player.Position-.5)<.08;
+                foreach(string key in new[]{"modernTracksPopulated","largeSliderHitTargets","volumeSliderApplies","timelineCommitSeeks"})if(!Equals(results[key],true))throw new Exception("1.3 player regression: "+key);
                 if(engine.Player.IsSeekable){engine.Player.Time=2000;await Task.Delay(400);results["seek"]=engine.Player.Time>=1900;}
                 engine.Player.Pause();await Task.Delay(350);results["pause"]=engine.Player.State==LibVLCSharp.Shared.VLCState.Paused;engine.Player.Pause();
                 results["audioTracks"]=engine.Player.AudioTrackDescription.Count(t=>t.Id>=0);
@@ -104,7 +120,7 @@ internal static class SmokeTest
             {
                 byte[] fixture=await File.ReadAllBytesAsync(App.Arguments[fixtureArg+1]);
                 string hash=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(fixture)).ToLowerInvariant();
-                string json=JsonSerializer.Serialize(new{tag_name="v1.3.0",draft=false,prerelease=false,assets=new[]{new{name="WXPlayer.exe",size=fixture.Length,digest="sha256:"+hash,browser_download_url="https://github.com/schwairex/WX-Player/releases/download/v1.3.0/WXPlayer.exe"}}});
+                string json=JsonSerializer.Serialize(new{tag_name="v1.4.0",draft=false,prerelease=false,assets=new[]{new{name="WXPlayer.exe",size=fixture.Length,digest="sha256:"+hash,browser_download_url="https://github.com/schwairex/WX-Player/releases/download/v1.4.0/WXPlayer.exe"}}});
                 using var controller=new UpdateController(settings,default,new GitHubUpdater(new UpdateFixtureHandler(json,fixture)));
                 await controller.CheckAsync(true);if(controller.Ready is null)throw new Exception("Fixture update not staged: "+controller.Status);
                 Environment.SetEnvironmentVariable("WXPLAYER_TEST_PARENT",Environment.ProcessId.ToString());
@@ -131,5 +147,6 @@ internal static class SmokeTest
         window.UpdateLayout();var content=(FrameworkElement)window.Content;var bitmap=new RenderTargetBitmap((int)content.ActualWidth,(int)content.ActualHeight,96,96,PixelFormats.Pbgra32);bitmap.Render(content);var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(bitmap));using var file=File.Create(path);encoder.Save(file);
     }
 }
+
 
 

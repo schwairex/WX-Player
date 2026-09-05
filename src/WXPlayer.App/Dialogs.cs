@@ -54,14 +54,6 @@ internal static class Dialogs
         void Choose(){if(list.SelectedItem is ContentItem item){result=item;w.DialogResult=true;}}
         list.MouseDoubleClick+=(_,_)=>Choose();Button(p,"Seçili bölümü oynat",(_,_)=>Choose(),true);w.ShowDialog();return result;
     }
-    public static void Tracks(Window owner,PlaybackEngine engine)
-    {
-        var p=Form(owner,"Ses ve altyazılar",490,out var w);
-        Label(p,"Ses parçası");var audio=new ComboBox{ItemsSource=engine.Player.AudioTrackDescription,DisplayMemberPath="Name",SelectedValuePath="Id",SelectedValue=engine.Player.AudioTrack};p.Children.Add(audio);audio.SelectionChanged+=(_,_)=>{if(audio.SelectedValue is int id)engine.Player.SetAudioTrack(id);};
-        Label(p,"Altyazı parçası");var sub=new ComboBox{ItemsSource=engine.Player.SpuDescription,DisplayMemberPath="Name",SelectedValuePath="Id",SelectedValue=engine.Player.Spu};p.Children.Add(sub);sub.SelectionChanged+=(_,_)=>{if(sub.SelectedValue is int id)engine.Player.SetSpu(id);};
-        Button(p,"Harici altyazı yükle…",(_,_)=>{var d=new OpenFileDialog{Filter="Altyazı|*.srt;*.ass;*.ssa;*.vtt;*.sub"};if(d.ShowDialog(w)==true){if(engine.Player.AddSlave(LibVLCSharp.Shared.MediaSlaveType.Subtitle,new Uri(d.FileName).AbsoluteUri,true))w.Close();else MessageBox.Show(w,"Altyazı eklenemedi.","WX Player");}});
-        Note(p,"Parça listeleri yayın başladıktan sonra görünür. Birden fazla parça için kaynağın bunları sunması gerekir.");Button(p,"Tamam",(_,_)=>w.Close(),true);w.ShowDialog();
-    }
     public static (string Video,string Audio)? Capture(Window owner)
     {
         var p=Form(owner,"DirectShow aygıtını aç",500,out var w);Note(p,"Windows'taki kamera / yakalama aygıtının tam adını girin. Boş video adı varsayılan aygıtı seçer; 'none' bir girişi kapatır.");var video=Field(p,"Video aygıtı");var audio=Field(p,"Ses aygıtı","none");Button(p,"Aygıtı aç",(_,_)=>w.DialogResult=true,true);return w.ShowDialog()==true?(video.Text,audio.Text):null;

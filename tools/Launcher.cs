@@ -12,6 +12,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
+[assembly: AssemblyTitle("WX Player")]
+[assembly: AssemblyProduct("WX Player")]
+[assembly: AssemblyVersion(PayloadInfo.Version)]
+[assembly: AssemblyFileVersion(PayloadInfo.Version)]
+[assembly: AssemblyInformationalVersion(PayloadInfo.Version)]
+
 internal static class Launcher
 {
     [STAThread]

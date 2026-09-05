@@ -1,10 +1,21 @@
-# WX Player 1.2
+# WX Player 1.3
 
 **Kendi kaynağınız. Kendi kütüphaneniz.** Windows için C# / WPF ile geliştirilmiş yerel IPTV ve medya oynatıcısı. Koyu arayüz, Fluent tasarımından esinlenen kontroller, Direct3D video çıkışı ve SQLite tabanlı yerel veri altyapısı.
 
 ![WX Player](docs/WX-Player-preview.png)
 
-## 1.2 — Rehber, istatistikler ve otomatik güncelleme
+## 1.3 — Daha düzenli bir izleme alanı
+
+* Arama, kategori ve kanal listesi aynı **Kütüphane** panelinde. Arama yazısı görünürlüğü düzeltildi; tek tuşla temizleme ve Ctrl+K erişimi var.
+* Canlı kanal, film, dizi ve favori sayıları sol menüdeki **Kütüphane özeti** kartında. Küçük pencerelerde üstteki kütüphane simgesinden açılır.
+* Timeline ve ses çubuğunun tamamında **36 px tıklama/sürükleme alanı**, daha belirgin tutamaçlar ve sürüklerken hedef zaman gösterimi. Timeline bırakıldığında seçilen konuma gider; yayın ileri sarmayı desteklemiyorsa kontrol devre dışıdır.
+* **Yayın akışı** ayrı, okunaklı kartlarla gösterilir. İzlenen kanal adı, gün seçimi, Şimdi/Sıradaki bilgisi ve ilerleme görünür. Oynatıcı ile rehber arasındaki tutamaç sürüklenebilir; rehber başlığındaki genişlet düğmesi alanı büyütür.
+* **Ses ve altyazılar** ayarlarla uyumlu kart tasarımına taşındı. Parça listesi açıkken yenilenir; ses/altyazı seçimi anında uygulanır, harici altyazı ekleme aynı pencerededir.
+* Daha küçük pencerelerde sade karşılama alanı ve simge menüsü; tam ekran, EPG eşleştirme, kayıt ve otomatik güncelleme altyapısı korunur.
+
+[1.3 sürüm notları](docs/RELEASE-NOTES-1.3.0.md) · [Test raporu](docs/TEST-REPORT-1.3.md) · [GitHub yayını](docs/GITHUB-RELEASES.md)
+
+## Korunan 1.2 özellikleri — Rehber, istatistikler ve otomatik güncelleme
 
 * **XMLTV EPG Parser & Channel Matcher:** WX Player'ın kendi akış tabanlı ayrıştırıcısı ve kaynak bazında indekslenmiş kanal eşleştiricisi. Harici bir servis ya da bu isimde doğrulanmamış bir paket bağımlılığı kullanılmaz. Standart XMLTV DOCTYPE satırı dış kaynağa erişmeden işlenir; gzip içerik uzantı yerine imzasından tanınır. `tvg-id`, `tvg-name` ve XMLTV `display-name` bilgileri eşleştirilir. HD/FHD gibi kalite ekleri ad karşılaştırmasında ayıklanır; belirsiz eşleşme tahmin edilmez, elle seçim sunulur.
 * Rehber, kaynak yüklendiğinde ve canlı kanal seçildiğinde otomatik hazırlanır. Geçerli önbellek 6 saat kullanılır; başarısız bağlantı 5 dakika sonra yeniden denenebilir. Aynı kaynak için eşzamanlı indirmeler birleştirilir. Hatalı/boş XMLTV önceki rehberi silmez. İzlenen kanalın rehberi gösterilir; hızlı kanal değişiminde eski yanıt yeni kanala uygulanmaz.
@@ -35,7 +46,7 @@ Güncelleme mevcut EXE'nin üzerine yazmaz. Doğrulanan yeni başlatıcı `updat
 
 Windows 10/11 **x64** içindir. Windows 11 önerilir. Dağıtım .NET 10 çalışma zamanını ve LibVLC'yi içerir; ayrıca VLC veya .NET 10 kurmanız gerekmez. Tek dosya başlatıcısı Windows'un .NET Framework 4.x bileşenini kullanır.
 
-* **WXPlayer.exe**: Tek dosyadır. İlk açılışta bileşenleri `%LOCALAPPDATA%\WXPlayer\application\1.2.0-<paket özeti>` konumuna çıkarır, sonraki açılışlarda bu kopyayı kullanır. Yönetici yetkisi veya sistem kurulumu istemez. İlk açılış için yaklaşık 500 MB boş alan ayırın.
+* **WXPlayer.exe**: Tek dosyadır. İlk açılışta bileşenleri `%LOCALAPPDATA%\WXPlayer\application\1.3.0-<paket özeti>` konumuna çıkarır, sonraki açılışlarda bu kopyayı kullanır. Yönetici yetkisi veya sistem kurulumu istemez. İlk açılış için yaklaşık 500 MB boş alan ayırın.
 * **WXPlayer-win-x64.zip**: Taşınabilir dağıtım. ZIP'in **tamamını** bir klasöre çıkarın ve içindeki `WXPlayer.exe` dosyasını çalıştırın. İçindeki EXE'yi tek başına başka klasöre taşımayın.
 * EXE henüz ticari kod imzalama sertifikasıyla imzalanmamıştır. Paket bütünlüğü `SHA256SUMS.txt` ile doğrulanabilir.
 

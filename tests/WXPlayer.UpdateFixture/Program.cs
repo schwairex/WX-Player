@@ -13,8 +13,9 @@ string? pending=Environment.GetEnvironmentVariable("WXPLAYER_PENDING_VERSION");
 if(pending is not null)
 {
     var update=new PreparedUpdate(Version.Parse(pending),Environment.GetEnvironmentVariable("WXPLAYER_PENDING_EXE")!,Environment.GetEnvironmentVariable("WXPLAYER_PENDING_HASH")!);
-    await UpdateActivation.ActivateAsync(data,update,new Version(1,3,0));
+    await UpdateActivation.ActivateAsync(data,update,new Version(1,4,0));
 }
 string counter=Path.Combine(data,"fixture-launch-count.txt");int runs=File.Exists(counter)?int.Parse(File.ReadAllText(counter)):0;await File.WriteAllTextAsync(counter,(runs+1).ToString());
-await File.WriteAllTextAsync(Path.Combine(data,"fixture-activated.json"),JsonSerializer.Serialize(new{previousExited,version="1.3.0",runs=runs+1,pointer=File.Exists(UpdateActivation.Pointer(data)),dataPreserved=File.Exists(Path.Combine(data,"library.db"))}));
+await File.WriteAllTextAsync(Path.Combine(data,"fixture-activated.json"),JsonSerializer.Serialize(new{previousExited,version="1.4.0",runs=runs+1,pointer=File.Exists(UpdateActivation.Pointer(data)),dataPreserved=File.Exists(Path.Combine(data,"library.db"))}));
 return 0;
+
