@@ -1,20 +1,20 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Window x:Class="WXPlayer.App.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="WX Player" Width="1440" Height="920" MinWidth="900" MinHeight="650" Style="{StaticResource AppWindow}" UseLayoutRounding="True" WindowStartupLocation="CenterScreen" PreviewKeyDown="Window_KeyDown" SizeChanged="Window_SizeChanged" Closing="Window_Closing" xmlns:ui="clr-namespace:WXPlayer.App" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType">
   <Grid x:Name="Root" Background="{StaticResource Bg}">
     <Grid.ColumnDefinitions>
       <ColumnDefinition x:Name="NavColumn" Width="210" />
       <ColumnDefinition Width="*" />
     </Grid.ColumnDefinitions>
-    <Border x:Name="Sidebar" Background="#10141C" BorderBrush="#242B36" BorderThickness="0,0,1,0" Padding="18,26,18,18">
+    <Border x:Name="Sidebar" Background="#111920" BorderBrush="#28383C" BorderThickness="1" CornerRadius="20" Margin="10,10,0,10" Padding="18,26,18,18">
       <DockPanel>
         <StackPanel DockPanel.Dock="Top">
           <StackPanel Orientation="Horizontal" Margin="5,0,0,33">
-            <Border Background="{StaticResource Accent}" CornerRadius="10" Width="42" Height="42">
+            <Border Background="{StaticResource Accent}" CornerRadius="14" Width="42" Height="42">
               <TextBlock Text="W" FontWeight="Black" Foreground="#18240B" FontSize="27" HorizontalAlignment="Center" VerticalAlignment="Center" />
             </Border>
             <StackPanel x:Name="BrandWordmark" Margin="11,0,0,0" VerticalAlignment="Center">
               <TextBlock Text="WX Player" FontSize="20" FontWeight="Bold" />
-              <TextBlock Text="YOUR WORLD. YOUR PLAY." FontSize="8.5" Foreground="{StaticResource Muted}" Margin="0,3,0,0" />
+              <TextBlock Text="İZLEME ALANINIZ" FontSize="8.5" Foreground="{StaticResource Muted}" Margin="0,3,0,0" />
             </StackPanel>
           </StackPanel>
           <TextBlock x:Name="NavLabel" Text="KÜTÜPHANE" Foreground="#69778D" FontSize="10" FontWeight="SemiBold" Margin="14,0,0,10" />
@@ -79,7 +79,7 @@
           <Button x:Name="SettingsNav" Style="{StaticResource Nav}" Click="Settings_Click">
             <ui:IconLabel Icon="settings" Label="Ayarlar" />
           </Button>
-          <TextBlock x:Name="VersionLabel" Text="WX PLAYER  /  1.3.0" FontSize="9" Foreground="#5F6D81" Margin="14,14,0,0" />
+          <TextBlock x:Name="VersionLabel" Text="WX PLAYER  /  1.4.0" FontSize="9" Foreground="#5F6D81" Margin="14,14,0,0" />
         </StackPanel>
         <Grid />
       </DockPanel>
@@ -139,7 +139,7 @@
                     <ColumnDefinition Width="32" />
                   </Grid.ColumnDefinitions>
                   <Border Background="#2A3442" CornerRadius="9" Width="42" Height="42">
-                    <TextBlock Text="{Binding Initials}" Foreground="#C9D6E8" FontSize="14" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <ui:ChannelLogo Url="{Binding Logo}" Initials="{Binding Initials}" />
                   </Border>
                   <StackPanel Grid.Column="1" Margin="10,1,6,0" VerticalAlignment="Center">
                     <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" FontWeight="SemiBold" ToolTip="{Binding Name}" />
@@ -247,7 +247,7 @@
           <Border Grid.Row="1" x:Name="ControlsBorder" Background="#171D27" CornerRadius="0,0,14,14" Padding="18,14">
             <StackPanel>
               <DockPanel>
-                <TextBlock x:Name="PlaybackBadge" DockPanel.Dock="Right" Text="HAZIR" Foreground="{StaticResource Accent}" FontSize="11" VerticalAlignment="Center" />
+                <Button x:Name="LiveEdgeButton" DockPanel.Dock="Right" Content="● CANLI" Visibility="Collapsed" Click="GoLive_Click" Padding="10,4" Margin="8,0,0,0" FontSize="10" ToolTip="Canlı yayına dön" /><TextBlock x:Name="PlaybackBadge" DockPanel.Dock="Right" Text="HAZIR" Foreground="{StaticResource Accent}" FontSize="11" VerticalAlignment="Center" />
                 <TextBlock x:Name="NowTitle" Text="Bir içerik seçin" FontSize="15" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
               </DockPanel>
               <ui:MediaSlider x:Name="SeekSlider" Minimum="0" Maximum="1" Value="0" Margin="0,2,0,2" IsEnabled="False" ToolTip="Yayın konumu" Height="36" Style="{StaticResource MediaSliderStyle}" SmallChange="0.01" />

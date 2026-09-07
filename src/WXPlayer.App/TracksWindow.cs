@@ -9,8 +9,8 @@ namespace WXPlayer.App;
 internal sealed class TracksWindow : PremiumWindow
 {
     internal sealed record Choice(int Id,string Label){public override string ToString()=>Label;}
-    internal readonly ComboBox AudioPicker=new(){MinHeight=44};
-    internal readonly ComboBox SubtitlePicker=new(){MinHeight=44};
+    internal readonly ComboBox AudioPicker=new(){MinHeight=48};
+    internal readonly ComboBox SubtitlePicker=new(){MinHeight=48};
     private readonly TextBlock _status=Text("Seçimler oynatılan yayına anında uygulanır.",12,"#A3B5C8");
     private readonly DispatcherTimer _refresh=new(){Interval=TimeSpan.FromSeconds(1)};
     private readonly PlaybackEngine _engine;
@@ -19,11 +19,11 @@ internal sealed class TracksWindow : PremiumWindow
     internal TracksWindow(Window owner,PlaybackEngine engine):base(owner,"Ses ve altyazılar","Yayının dilini ve altyazı tercihlerini düzenleyin.","subtitles",700,680)
     {
         _engine=engine;var panel=new StackPanel();Body.Children.Add(new ScrollViewer{Content=panel,VerticalScrollBarVisibility=ScrollBarVisibility.Auto});
-        var audio=Card(panel,"Ses dili","Yayının sunduğu ses parçalarından birini seçin.");audio.Children.Add(AudioPicker);
-        var sub=Card(panel,"Altyazı","Yerleşik altyazıları seçin veya kendi dosyanızı ekleyin.");sub.Children.Add(SubtitlePicker);
+        var audio=Card(panel,"Dinleme dili","SES PARÇASI  /  Tercihiniz anında uygulanır.");audio.Children.Add(AudioPicker);
+        var sub=Card(panel,"Altyazı tercihleri","YERLEŞİK VEYA HARİCİ  /  İzleme dilinizi seçin.");sub.Children.Add(SubtitlePicker);
         var external=Action("Altyazı dosyası ekle",()=>Browse(),true);external.HorizontalAlignment=HorizontalAlignment.Left;external.Margin=new(0,16,0,0);sub.Children.Add(external);
         sub.Children.Add(new TextBlock{Text="SRT · ASS · SSA · VTT · SUB",Foreground=Brush("#7D91A8"),FontSize=10,Margin=new(0,10,0,0)});
-        var info=new Border{Background=Brush("#17271F"),BorderBrush=Brush("#314A37"),BorderThickness=new(1),Padding=new(16),CornerRadius=new(10),Child=_status};panel.Children.Add(info);
+        var info=new Border{Background=Brush("#14212A"),BorderBrush=Brush("#31424E"),BorderThickness=new(1),Padding=new(16),CornerRadius=new(10),Child=_status};panel.Children.Add(info);
         foreach(var picker in new[]{AudioPicker,SubtitlePicker}){picker.DisplayMemberPath="Label";picker.SelectedValuePath="Id";}
         AudioPicker.SelectionChanged+=(_,_)=>{if(!_sync&&AudioPicker.SelectedValue is int id){_status.Text=engine.Player.SetAudioTrack(id)?"Ses tercihiniz uygulandı.":"Bu ses parçası şu anda seçilemiyor.";}};
         SubtitlePicker.SelectionChanged+=(_,_)=>{if(!_sync&&SubtitlePicker.SelectedValue is int id){_status.Text=engine.Player.SetSpu(id)?id<0?"Altyazılar kapatıldı.":"Altyazı tercihiniz uygulandı.":"Bu altyazı şu anda seçilemiyor.";}};

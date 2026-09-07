@@ -25,12 +25,24 @@ internal sealed class StatisticsWindow : PremiumWindow
     }
     private void Render(string title,PlaybackTarget? target,PlaybackEngine engine,PlayerSettings settings)
     {
-        _cards.Children.Clear();var stream=Card(_cards,title.Length>0?title:"Oynatıcı",SafeAddress(target?.Url));
+        _cards.Children.Clear();
+        using var media=engine.Player.Media;
+        var metrics=new System.Windows.Controls.Primitives.UniformGrid{Columns=3,Margin=new(0,0,0,16)};
+        var videoTrack=media?.Tracks.FirstOrDefault(t=>t.TrackType==TrackType.Video);
+        var audioTrack=media?.Tracks.FirstOrDefault(t=>t.TrackType==TrackType.Audio);
+        var vinfo=videoTrack?.TrackType==TrackType.Video?videoTrack?.Data.Video:null;
+        foreach(var (label,value) in new[]{("ÇÖZÜNÜRLÜK",vinfo.HasValue?$"{vinfo.Value.Width} × {vinfo.Value.Height}":"—"),("KAYNAK FPS",vinfo.HasValue&&vinfo.Value.FrameRateDen>0?((double)vinfo.Value.FrameRateNum/vinfo.Value.FrameRateDen).ToString("0.##"):"—"),("SES",audioTrack?.TrackType==TrackType.Audio?audioTrack.Value.Data.Audio.Rate/1000d+" kHz":"—")})
+        {
+            var tile=new StackPanel();tile.Children.Add(Text(label,10,"#8DA69C"));var number=Text(value,19);number.FontWeight=FontWeights.SemiBold;number.Margin=new(0,10,0,0);tile.Children.Add(number);
+            metrics.Children.Add(new Border{Background=Brush("#192B2B"),BorderBrush=Brush("#365049"),BorderThickness=new(1),CornerRadius=new(13),Padding=new(15),Margin=new(0,0,8,0),Child=tile});
+        }
+        _cards.Children.Add(metrics);var stream=Card(_cards,title.Length>0?title:"Oynatıcı",SafeAddress(target?.Url));
         void Value(Panel panel,string key,string value)=>Row(panel,key,Text(value));
         Value(stream,"Durum",engine.Player.State.ToString());Value(stream,"Motor / video çıkışı","LibVLC · "+engine.ConfiguredVideoOutput);
         Value(stream,"Donanım çözme tercihi",settings.HardwareAcceleration?"D3D11VA · GPU istenir":"Yazılım");
         Value(stream,"Ağ önbelleği",engine.CacheMs(settings)+" ms");Value(stream,"Tampon doluluğu",engine.BufferPercent.ToString("0")+" %");
-        using var media=engine.Player.Media;if(media is null)return;
+        if(engine.HasLiveBuffer)Value(stream,"Canlı tampon",$"{engine.BufferedSeconds:0} sn · "+(engine.IsReplay?$"{engine.BehindLive:0} sn geride":"Canlı"));
+        if(media is null)return;
         foreach(var track in media.Tracks)
         {
             string codec=Encoding.ASCII.GetString(BitConverter.GetBytes(track.Codec)).Trim('\0',' ');

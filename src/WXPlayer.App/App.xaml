@@ -29,7 +29,7 @@
 <Track.DecreaseRepeatButton><RepeatButton Focusable="False"><RepeatButton.Template><ControlTemplate TargetType="RepeatButton"><Grid Background="Transparent"><Border Height="6" CornerRadius="3" Background="{StaticResource Accent}" VerticalAlignment="Center"/></Grid></ControlTemplate></RepeatButton.Template></RepeatButton></Track.DecreaseRepeatButton>
 <Track.Thumb><Thumb Width="20" Height="36"><Thumb.Template><ControlTemplate TargetType="Thumb"><Grid Background="Transparent"><Ellipse Width="14" Height="14" Fill="#ECF8DE" Stroke="{StaticResource Accent}" StrokeThickness="2" VerticalAlignment="Center"/></Grid></ControlTemplate></Thumb.Template></Thumb></Track.Thumb>
 <Track.IncreaseRepeatButton><RepeatButton Focusable="False"><RepeatButton.Template><ControlTemplate TargetType="RepeatButton"><Grid Background="Transparent"><Border Height="6" CornerRadius="3" Background="#415063" VerticalAlignment="Center"/></Grid></ControlTemplate></RepeatButton.Template></RepeatButton></Track.IncreaseRepeatButton>
-</Track></Grid><ControlTemplate.Triggers><Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.3"/></Trigger><Trigger Property="IsKeyboardFocused" Value="True"><Setter Property="Background" Value="#1F3029"/></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter>
+</Track></Grid><ControlTemplate.Triggers><Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.3"/></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter>
 </Style>
  </Application.Resources>
 </Application>

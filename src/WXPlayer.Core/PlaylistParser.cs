@@ -61,7 +61,7 @@ public static partial class PlaylistParser
                 if (label.Length == 0) label = $"Kanal {index}";
                 string lower = (group + " " + label).ToLowerInvariant();
                 var kind = lower.Contains("series") || lower.Contains("dizi") ? ContentKind.Series : lower.Contains("film") || lower.Contains("movie") || lower.Contains("vod") || new[] { ".mp4", ".mkv", ".avi" }.Contains(Path.GetExtension(uri.AbsolutePath).ToLowerInvariant()) ? ContentKind.Movie : ContentKind.Live;
-                yield return new ContentItem { Id = ContentItem.Key(source.Id, url), SourceId = source.Id, ProviderId = index.ToString(), Name = label, Category = string.IsNullOrWhiteSpace(group) ? "Genel" : group, Kind = kind, Url = url, Logo = logo, EpgId = epg, EpgName = epgName, Catchup = catchup, CatchupDays = days, UserAgent = ua, Referrer = refer };
+                yield return new ContentItem { Id = ContentItem.Key(source.Id, url), SourceId = source.Id, ProviderId = index.ToString(), Name = label, Category = string.IsNullOrWhiteSpace(group) ? "Genel" : group, Kind = kind, Url = url, Logo = logo.Length>0?Resolve(logo,source.Address):"", EpgId = epg, EpgName = epgName, Catchup = catchup, CatchupDays = days, UserAgent = ua, Referrer = refer };
                 name = ""; group = "Genel"; logo = ""; epg = ""; epgName = ""; catchup = ""; ua = ""; refer = ""; days = 0;
             }
         }

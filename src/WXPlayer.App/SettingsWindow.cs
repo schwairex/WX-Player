@@ -29,8 +29,13 @@ internal sealed class SettingsWindow : PremiumWindow
         var fill=new CheckBox{Content="Tam ekranda görüntüyü doldur",IsChecked=settings.FullscreenFill};video.Children.Add(fill);
         var record=Card(playback,"Kayıtlar","Video çıkışı değişikliği yeniden başlatmada uygulanır.");
         var folder=new TextBox{Text=settings.RecordingFolder};record.Children.Add(folder);var browse=Action("Klasör seç",()=>{var d=new OpenFolderDialog();if(d.ShowDialog(this)==true)folder.Text=d.FolderName;});browse.HorizontalAlignment=HorizontalAlignment.Left;browse.Margin=new(0,12,0,0);record.Children.Add(browse);
-        var keys=Card(playback,"Kısayollar");keys.Children.Add(Text("Space · oynat/duraklat     F · tam ekran     Z · sığdır/doldur\nM · sessiz     I · istatistikler     Ctrl+K · arama",12,"#98A3B6"));
-        var sources=Card(library,"Bağlı kaynaklar","Kayıtlı kaynakları düzenleyin veya tek tek kaldırın.");
+        var keys=Card(playback,"Klavye ile daha hızlı","Sık kullandığınız kontroller elinizin altında.");
+        foreach(var (key,label) in new[]{("Space","Oynat / duraklat"),("F / Esc","Tam ekran / çıkış"),("← / →","10 saniye geri / ileri"),("↑ / ↓","Ses seviyesi"),("M","Sesi kapat / aç"),("Z","Görüntüyü sığdır / doldur"),("I","Yayın istatistikleri"),("Ctrl + K","Kütüphanede ara"),("PgUp / PgDn","Önceki / sonraki kanal")})
+        {
+            var row=new Grid{Margin=new(0,4,0,4)};row.ColumnDefinitions.Add(new(){Width=new GridLength(1,GridUnitType.Star)});row.ColumnDefinitions.Add(new(){Width=GridLength.Auto});
+            var description=Text(label,12,"#ACBDCA");description.VerticalAlignment=VerticalAlignment.Center;row.Children.Add(description);
+            var cap=new Border{Background=Brush("#101B24"),BorderBrush=Brush("#40515F"),BorderThickness=new(1,1,1,3),CornerRadius=new(7),Padding=new(12,6,12,6),MinWidth=66,Child=Text(key,11)};Grid.SetColumn(cap,1);row.Children.Add(cap);keys.Children.Add(row);
+        }        var sources=Card(library,"Bağlı kaynaklar","Kayıtlı kaynakları düzenleyin veya tek tek kaldırın.");
         var sourceRows=new StackPanel();sources.Children.Add(sourceRows);
         var message=Text("",12,"#C1EC8B");library.Children.Add(message);
         async Task Execute(Func<Task> task){IsEnabled=false;try{await task();await LoadSources();message.Text="İşlem tamamlandı.";}catch{message.Text="İşlem tamamlanamadı. Devam eden yüklemeyi bitirip tekrar deneyin.";}finally{IsEnabled=true;}}
@@ -67,6 +72,7 @@ internal sealed class SettingsWindow : PremiumWindow
         },true));
         SelectTab(0);Loaded+=async(_,_)=>{try{await LoadSources();}catch{message.Text="Kaynaklar okunamadı.";}};
     }
+    internal void SmokeShowShortcuts(){SelectTab(0);_tabs[0].Page.Children.OfType<Border>().Last().BringIntoView();}
     internal void SelectTab(int index){for(int i=0;i<_tabs.Count;i++){_tabs[i].Page.Visibility=i==index?Visibility.Visible:Visibility.Collapsed;_tabs[i].Button.Background=Brush(i==index?"#2D3D26":"#202734");_tabs[i].Button.Foreground=Brush(i==index?"#C1EC8B":"#A8B5C7");}}
 }
 

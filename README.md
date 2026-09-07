@@ -1,10 +1,20 @@
-# WX Player 1.3
+# WX Player 1.4
 
 **Kendi kaynağınız. Kendi kütüphaneniz.** Windows için C# / WPF ile geliştirilmiş yerel IPTV ve medya oynatıcısı. Koyu arayüz, Fluent tasarımından esinlenen kontroller, Direct3D video çıkışı ve SQLite tabanlı yerel veri altyapısı.
 
 ![WX Player](docs/WX-Player-preview.png)
 
-## 1.3 — Daha düzenli bir izleme alanı
+## 1.4 — Canlıya dönün, izlemeyi kesmeyin
+
+60 saniyeye kadar yerel canlı geri sarma, tam ekranda kategori/kanal seçimi, asenkron kanal logoları ve yenilenen masaüstü panelleri.
+
+[1.4 sürüm notları ve kapsam](docs/RELEASE-NOTES-1.4.0.md) · [Test raporu](docs/TEST-REPORT-1.4.md) · [GitHub yayını](docs/GITHUB-RELEASES.md)
+
+Tampon kanalı açınca birikir. Timeline veya sol/sağ ok ile geçmişe gidin; **CANLIYA DÖN** ile güncel yayına geçin. HTTP/HTTPS canlı yayınlar desteklenir; ilk hazırlık birkaç saniye sürebilir. Desteklenmeyen akışta doğrudan oynatma korunur. Ayrıntılar sürüm notlarındadır.
+
+Tam ekranda fareyi hareket ettirin: kategori, arama ve kanal kartları alt kontrollerin üzerinde açılır. Aynı panelden film ve dizilere de geçilebilir. Logo yüklemeleri en fazla altı eşzamanlı istek ve 256 görsellik bellek önbelleği kullanır. PNG/JPEG/GIF/BMP/ICO gibi WPF'nin okuyabildiği görseller desteklenir; hatalı/çok büyük/okunamayan logolarda harf simgesi kalır.
+
+## Korunan 1.3 özellikleri — Daha düzenli bir izleme alanı
 
 * Arama, kategori ve kanal listesi aynı **Kütüphane** panelinde. Arama yazısı görünürlüğü düzeltildi; tek tuşla temizleme ve Ctrl+K erişimi var.
 * Canlı kanal, film, dizi ve favori sayıları sol menüdeki **Kütüphane özeti** kartında. Küçük pencerelerde üstteki kütüphane simgesinden açılır.
@@ -46,7 +56,7 @@ Güncelleme mevcut EXE'nin üzerine yazmaz. Doğrulanan yeni başlatıcı `updat
 
 Windows 10/11 **x64** içindir. Windows 11 önerilir. Dağıtım .NET 10 çalışma zamanını ve LibVLC'yi içerir; ayrıca VLC veya .NET 10 kurmanız gerekmez. Tek dosya başlatıcısı Windows'un .NET Framework 4.x bileşenini kullanır.
 
-* **WXPlayer.exe**: Tek dosyadır. İlk açılışta bileşenleri `%LOCALAPPDATA%\WXPlayer\application\1.3.0-<paket özeti>` konumuna çıkarır, sonraki açılışlarda bu kopyayı kullanır. Yönetici yetkisi veya sistem kurulumu istemez. İlk açılış için yaklaşık 500 MB boş alan ayırın.
+* **WXPlayer.exe**: Tek dosyadır. İlk açılışta bileşenleri `%LOCALAPPDATA%\WXPlayer\application\1.4.0-<paket özeti>` konumuna çıkarır, sonraki açılışlarda bu kopyayı kullanır. Yönetici yetkisi veya sistem kurulumu istemez. İlk açılış için yaklaşık 500 MB boş alan ayırın.
 * **WXPlayer-win-x64.zip**: Taşınabilir dağıtım. ZIP'in **tamamını** bir klasöre çıkarın ve içindeki `WXPlayer.exe` dosyasını çalıştırın. İçindeki EXE'yi tek başına başka klasöre taşımayın.
 * EXE henüz ticari kod imzalama sertifikasıyla imzalanmamıştır. Paket bütünlüğü `SHA256SUMS.txt` ile doğrulanabilir.
 
@@ -78,9 +88,9 @@ Uygulama abonelik, ücretli kanal, hesap veya içerik sunmaz. Örnek kütüphane
 | EPG | Kanal/gün rehberi, şimdi/sıradaki/geçmiş, ilerleme çizgisi, XMLTV ve XMLTV.gz, program açıklaması araç ipucu |
 | Arayüz | Kategorili ana sayfa, sayaçlar, canlı TV / film / dizi / favoriler, kompakt simge menüsü, tam ekran, koyu başlık çubuğu |
 
-**Sağlayıcıya bağlı sınırlar:** Gerçek Xtream/Stalker aboneliği verilmediği için bu entegrasyonlar kontrollü API yanıtlarıyla test edildi. Portal sürümleri; MAC dışında seri numarası, device ID, ek kimlik doğrulama veya farklı dizi uç noktaları isteyebilir. Bu sürüm bunların hepsini kapsamaz. Stalker'a özel arşiv protokolü desteklenmez; Stalker kanallarında XMLTV rehberi kullanılabilir. Xtream Catch-Up URL'si UTC saatinden üretilir; farklı sunucu saat dilimi bekleyen sağlayıcılar için uyarlama gerekir. Catch-Up için sağlayıcı arşivi gerekir; canlı yayında ileri/geri sarma ancak akış seek destekliyorsa mümkündür.
+**Sağlayıcıya bağlı sınırlar:** Gerçek Xtream/Stalker aboneliği verilmediği için bu entegrasyonlar kontrollü API yanıtlarıyla test edildi. Portal sürümleri; MAC dışında seri numarası, device ID, ek kimlik doğrulama veya farklı dizi uç noktaları isteyebilir. Bu sürüm bunların hepsini kapsamaz. Stalker'a özel arşiv protokolü desteklenmez; Stalker kanallarında XMLTV rehberi kullanılabilir. Xtream Catch-Up URL'si UTC saatinden üretilir; farklı sunucu saat dilimi bekleyen sağlayıcılar için uyarlama gerekir. Catch-Up için sağlayıcı arşivi gerekir; HTTP/HTTPS canlı yayınlarda yerel geri sarma 1.4 tamponunu kullanır. Diğer kaynaklarda seek desteği gerekir.
 
-PVR, sağlayıcınızda ikinci bir eşzamanlı bağlantı açar. Bu sürümde zamanlanmış kayıt, kapalı uygulamada kayıt, yerel timeshift halkası, DRM/Widevine/PlayReady ve abonelik yönetim sunucusu yoktur. Kayıt TS kabına yeniden paketlenir; uyumsuz codec/kaynaklar kaydedilemeyebilir. DirectShow aygıt keşfi otomatik değildir; Windows aygıtının tam adı girilir. Bu teslimat kendi istemci/veri altyapınızı sağlar, bir IPTV içerik sunucusu kurmaz.
+PVR, sağlayıcınızda ikinci bir eşzamanlı bağlantı açar. Bu sürümde zamanlanmış kayıt, kapalı uygulamada kayıt, DRM/Widevine/PlayReady ve abonelik yönetim sunucusu yoktur. Kayıt TS kabına yeniden paketlenir; uyumsuz codec/kaynaklar kaydedilemeyebilir. DirectShow aygıt keşfi otomatik değildir; Windows aygıtının tam adı girilir. Bu teslimat kendi istemci/veri altyapınızı sağlar, bir IPTV içerik sunucusu kurmaz.
 
 ## Kısayollar
 

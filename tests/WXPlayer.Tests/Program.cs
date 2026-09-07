@@ -16,6 +16,15 @@ await Test("M3U attributes, quoted commas, Unicode, headers, category and relati
     var text="\uFEFF#EXTM3U x-tvg-url=\"https://example.test/epg.xml\"\n#EXTINF:-1 tvg-id=\"trt1\" group-title=\"Haber, Türkiye\" tvg-name=\"Türkçe\",TRT, Örnek\n#EXTVLCOPT:http-user-agent=WX Test\n#EXTVLCOPT:http-referrer=https://example.test/\nstream.ts\n";
     var s=source with{};var items=await Collect(PlaylistParser.ParseAsync(new StringReader(text),s));Assert(items.Count==1,"count");var i=items[0];Assert(i.Name=="TRT, Örnek"&&i.Category=="Haber, Türkiye"&&i.EpgId=="trt1","metadata");Assert(i.UserAgent=="WX Test"&&i.Referrer=="https://example.test/","headers");Assert(i.Url=="https://example.test/stream.ts","relative URL");Assert(s.EpgUrl.EndsWith("epg.xml"),"epg discovery");
 });
+await Test("M3U logo URLs resolve relative to source and survive storage",async()=>
+{
+    var list=await Collect(PlaylistParser.ParseAsync(new StringReader("#EXTM3U\n#EXTINF:-1 tvg-logo=\"logos/news.png\",News\nnews.ts\n"),source));
+    Assert(list[0].Logo=="https://example.test/logos/news.png","relative logo");
+    var database=new LibraryStore(Path.Combine(folder,"logos.db"));await database.InitializeAsync();
+    async IAsyncEnumerable<ContentItem> Items(){yield return list[0];await Task.Yield();}
+    await database.ImportAsync(source,Items(),null,default);var page=await database.QueryAsync(source.Id,null,null,"",false,false,0);
+    Assert(page.Items[0].Logo==list[0].Logo,"logo survives category/list query");
+});
 await Test("TXT lists ignore unsafe protocols",async()=>{var i=await Collect(PlaylistParser.ParseAsync(new StringReader("https://example.test/a.ts\nftp://example.test/file\nrtsp://example.test/b\n"),source));Assert(i.Count==2,"unsafe protocol filtered");});
 await Test("M3U8 HLS media and master manifest each produce one item",async()=>{foreach(var tag in new[]{"#EXT-X-TARGETDURATION:10","#EXT-X-STREAM-INF:BANDWIDTH=1200000"}){var i=await Collect(PlaylistParser.ParseAsync(new StringReader("#EXTM3U\n"+tag+"\n#EXTINF:10,\nseg1.ts\n#EXTINF:10,\nseg2.ts"),source));Assert(i.Count==1&&i[0].Url==source.Address,"manifest treated as stream");}});
 await Test("Xtream get.php credentials and prefix parsing",()=>{var s=ProviderClient.ParseXtreamAddress(new SourceConfig{Address="https://example.test/iptv/get.php?username=u%2B1&password=p%26word&type=m3u_plus"});Assert(s.Username=="u+1"&&s.Password=="p&word"&&s.Address=="https://example.test/iptv","decoded credentials");return Task.CompletedTask;});
