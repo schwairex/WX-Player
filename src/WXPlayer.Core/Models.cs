@@ -59,6 +59,7 @@ public sealed record PlaybackTarget(string Url, string UserAgent = "", string Re
 
 public sealed class PlayerSettings
 {
+    public bool? SidebarExpanded { get; set; }
     public bool AutoUpdate { get; set; } = true;
     public bool FullscreenFill { get; set; } = true;
     public bool HardwareAcceleration { get; set; } = true;

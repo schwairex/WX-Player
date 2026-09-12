@@ -30,7 +30,7 @@ internal sealed class SettingsWindow : PremiumWindow
         var record=Card(playback,"Kayıtlar","Video çıkışı değişikliği yeniden başlatmada uygulanır.");
         var folder=new TextBox{Text=settings.RecordingFolder};record.Children.Add(folder);var browse=Action("Klasör seç",()=>{var d=new OpenFolderDialog();if(d.ShowDialog(this)==true)folder.Text=d.FolderName;});browse.HorizontalAlignment=HorizontalAlignment.Left;browse.Margin=new(0,12,0,0);record.Children.Add(browse);
         var keys=Card(playback,"Klavye ile daha hızlı","Sık kullandığınız kontroller elinizin altında.");
-        foreach(var (key,label) in new[]{("Space","Oynat / duraklat"),("F / Esc","Tam ekran / çıkış"),("← / →","10 saniye geri / ileri"),("↑ / ↓","Ses seviyesi"),("M","Sesi kapat / aç"),("Z","Görüntüyü sığdır / doldur"),("I","Yayın istatistikleri"),("Ctrl + K","Kütüphanede ara"),("PgUp / PgDn","Önceki / sonraki kanal")})
+        foreach(var (key,label) in new[]{("Space","Oynat / duraklat"),("F / Esc","Tam ekran / çıkış"),("← / →","10 saniye geri / ileri"),("↑ / ↓","Ses seviyesi"),("M","Sesi kapat / aç"),("Z","Görüntüyü sığdır / doldur"),("I","Yayın istatistikleri"),("Ctrl + K","Kütüphanede ara"),("Ctrl + B","Menüyü daralt / genişlet"),("PgUp / PgDn","Önceki / sonraki kanal")})
         {
             var row=new Grid{Margin=new(0,4,0,4)};row.ColumnDefinitions.Add(new(){Width=new GridLength(1,GridUnitType.Star)});row.ColumnDefinitions.Add(new(){Width=GridLength.Auto});
             var description=Text(label,12,"#ACBDCA");description.VerticalAlignment=VerticalAlignment.Center;row.Children.Add(description);

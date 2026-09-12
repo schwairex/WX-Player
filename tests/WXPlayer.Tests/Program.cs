@@ -9,6 +9,7 @@ async Task Test(string name,Func<Task> test){var sw=Stopwatch.StartNew();try{awa
 void Assert(bool value,string why){if(!value)throw new Exception(why);}
 async Task<List<T>> Collect<T>(IAsyncEnumerable<T> input){var list=new List<T>();await foreach(var x in input)list.Add(x);return list;}
 var folder=Path.Combine(Path.GetTempPath(),"WXPlayer-Tests-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(folder);
+await Test("1.4 settings migrate and manual sidebar preference persists",()=>{var old=JsonSerializer.Deserialize<PlayerSettings>("{\"Volume\":46,\"NetworkCacheMs\":1200}")!;Assert(old.SidebarExpanded is null&&old.Volume==46,"old settings use responsive default");foreach(bool expanded in new[]{true,false}){old.SidebarExpanded=expanded;var restored=JsonSerializer.Deserialize<PlayerSettings>(JsonSerializer.Serialize(old))!;Assert(restored.SidebarExpanded==expanded&&restored.Volume==46,"explicit preference retained");}return Task.CompletedTask;});
 await Test("Turkish search normalization",()=>{Assert(ContentItem.SearchKey("İSTANBUL ışık ŞÖLEN ÇAĞRI") == "istanbul isik solen cagri","Turkish insensitive search");return Task.CompletedTask;});
 var source=new SourceConfig{Id="test",Name="Fixture",Address="https://example.test/list.m3u"};
 await Test("M3U attributes, quoted commas, Unicode, headers, category and relative URL",async()=>

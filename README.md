@@ -1,10 +1,20 @@
-# WX Player 1.4
+# WX Player 1.5
 
 **Kendi kaynağınız. Kendi kütüphaneniz.** Windows için C# / WPF ile geliştirilmiş yerel IPTV ve medya oynatıcısı. Koyu arayüz, Fluent tasarımından esinlenen kontroller, Direct3D video çıkışı ve SQLite tabanlı yerel veri altyapısı.
 
 ![WX Player](docs/WX-Player-preview.png)
 
-## 1.4 — Canlıya dönün, izlemeyi kesmeyin
+## 1.5 — Kütüphanenize yeni bir ana sayfa
+
+Seçili M3U / Xtream kaynağından gelen afişler, büyük bir öne çıkan içerik alanı ve yatay **Son izlenenler / Favorilerin / Film gecesi / Bir sonraki dizin / Şimdi canlı** sıraları. Boş sıralar gizlenir; her sırada en fazla 12 kart yüklenir. **Tümünü gör** ilgili tam listeyi açar. Kaynağın kapak görseli yoksa içerik adıyla sade bir kapak kullanılır. Harici katalogdan içerik veya puan üretilmez.
+
+Sol menüyü başlığın yanındaki menü düğmesiyle, W simgesiyle veya **Ctrl+B** ile daraltıp genişletebilirsiniz. Tercih sonraki açılışta korunur. Küçük pencerede geniş menü içerik üzerine açılır; sol üstteki okla kapanır. **Ctrl+K** ana sayfadayken ana sayfa aramasına gider.
+
+Tam ekran kategori paneli ve oynatma çubuğu aynı genişliktedir. İçerik türü, kategori ve arama etiketleri; daha sade kanal kartları ve sayfa düğmeleriyle seçim alanı yenilendi. Fare hareketiyle açılma ve otomatik gizlenme korunur.
+
+[1.5 sürüm notları](docs/RELEASE-NOTES-1.5.0.md) · [Test raporu](docs/TEST-REPORT-1.5.md) · [GitHub yayını](docs/GITHUB-RELEASES.md)
+
+## Korunan 1.4 özellikleri — Canlıya dönün, izlemeyi kesmeyin
 
 60 saniyeye kadar yerel canlı geri sarma, tam ekranda kategori/kanal seçimi, asenkron kanal logoları ve yenilenen masaüstü panelleri.
 
@@ -12,7 +22,7 @@
 
 Tampon kanalı açınca birikir. Timeline veya sol/sağ ok ile geçmişe gidin; **CANLIYA DÖN** ile güncel yayına geçin. HTTP/HTTPS canlı yayınlar desteklenir; ilk hazırlık birkaç saniye sürebilir. Desteklenmeyen akışta doğrudan oynatma korunur. Ayrıntılar sürüm notlarındadır.
 
-Tam ekranda fareyi hareket ettirin: kategori, arama ve kanal kartları alt kontrollerin üzerinde açılır. Aynı panelden film ve dizilere de geçilebilir. Logo yüklemeleri en fazla altı eşzamanlı istek ve 256 görsellik bellek önbelleği kullanır. PNG/JPEG/GIF/BMP/ICO gibi WPF'nin okuyabildiği görseller desteklenir; hatalı/çok büyük/okunamayan logolarda harf simgesi kalır.
+Tam ekranda fareyi hareket ettirin: kategori, arama ve kanal kartları alt kontrollerin üzerinde açılır. Aynı panelden film ve dizilere de geçilebilir. Logo yüklemeleri en fazla altı eşzamanlı istek ve 96 çözünürlük/adres girdilik bellek önbelleği kullanır. PNG/JPEG/GIF/BMP/ICO gibi WPF'nin okuyabildiği görseller desteklenir; hatalı/çok büyük/okunamayan logolarda harf simgesi kalır.
 
 ## Korunan 1.3 özellikleri — Daha düzenli bir izleme alanı
 
@@ -56,7 +66,7 @@ Güncelleme mevcut EXE'nin üzerine yazmaz. Doğrulanan yeni başlatıcı `updat
 
 Windows 10/11 **x64** içindir. Windows 11 önerilir. Dağıtım .NET 10 çalışma zamanını ve LibVLC'yi içerir; ayrıca VLC veya .NET 10 kurmanız gerekmez. Tek dosya başlatıcısı Windows'un .NET Framework 4.x bileşenini kullanır.
 
-* **WXPlayer.exe**: Tek dosyadır. İlk açılışta bileşenleri `%LOCALAPPDATA%\WXPlayer\application\1.4.0-<paket özeti>` konumuna çıkarır, sonraki açılışlarda bu kopyayı kullanır. Yönetici yetkisi veya sistem kurulumu istemez. İlk açılış için yaklaşık 500 MB boş alan ayırın.
+* **WXPlayer.exe**: Tek dosyadır. İlk açılışta bileşenleri `%LOCALAPPDATA%\WXPlayer\application\1.5.0-<paket özeti>` konumuna çıkarır, sonraki açılışlarda bu kopyayı kullanır. Yönetici yetkisi veya sistem kurulumu istemez. İlk açılış için yaklaşık 500 MB boş alan ayırın.
 * **WXPlayer-win-x64.zip**: Taşınabilir dağıtım. ZIP'in **tamamını** bir klasöre çıkarın ve içindeki `WXPlayer.exe` dosyasını çalıştırın. İçindeki EXE'yi tek başına başka klasöre taşımayın.
 * EXE henüz ticari kod imzalama sertifikasıyla imzalanmamıştır. Paket bütünlüğü `SHA256SUMS.txt` ile doğrulanabilir.
 
@@ -86,7 +96,7 @@ Uygulama abonelik, ücretli kanal, hesap veya içerik sunmaz. Örnek kütüphane
 | PVR | Ayrı oynatıcıyla TS remux kaydı, kayıt sırasında kanal değiştirme, kayıt klasörünü açma, kapanışta dosyayı tamamlama |
 | Catch-Up | XMLTV geçmiş programını çift tıklama; Xtream timeshift ve `{utc}`, `{utcend}`, `{duration}`, `${start}`, `${end}` M3U şablonları |
 | EPG | Kanal/gün rehberi, şimdi/sıradaki/geçmiş, ilerleme çizgisi, XMLTV ve XMLTV.gz, program açıklaması araç ipucu |
-| Arayüz | Kategorili ana sayfa, sayaçlar, canlı TV / film / dizi / favoriler, kompakt simge menüsü, tam ekran, koyu başlık çubuğu |
+| Arayüz | Afişli ana sayfa, kaynak bazında içerik sıraları, daraltılabilir menü, canlı TV / film / dizi / favoriler, tam ekran içerik seçimi |
 
 **Sağlayıcıya bağlı sınırlar:** Gerçek Xtream/Stalker aboneliği verilmediği için bu entegrasyonlar kontrollü API yanıtlarıyla test edildi. Portal sürümleri; MAC dışında seri numarası, device ID, ek kimlik doğrulama veya farklı dizi uç noktaları isteyebilir. Bu sürüm bunların hepsini kapsamaz. Stalker'a özel arşiv protokolü desteklenmez; Stalker kanallarında XMLTV rehberi kullanılabilir. Xtream Catch-Up URL'si UTC saatinden üretilir; farklı sunucu saat dilimi bekleyen sağlayıcılar için uyarlama gerekir. Catch-Up için sağlayıcı arşivi gerekir; HTTP/HTTPS canlı yayınlarda yerel geri sarma 1.4 tamponunu kullanır. Diğer kaynaklarda seek desteği gerekir.
 

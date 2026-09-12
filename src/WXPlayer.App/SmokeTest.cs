@@ -30,7 +30,18 @@ internal static class SmokeTest
             var source=new SourceConfig{Id="smoke-demo",Name="Örnek · Açık filmler",Address=Path.Combine(AppContext.BaseDirectory,"samples","open-films.m3u")};
             await store.ImportAsync(source,providers.LoadAsync(source,default),null,default);await window.SmokeRefreshAsync(source.Id);
             await Task.Delay(500);window.UpdateLayout();SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-preview.png"));results["startup"]=true;
-            double width=window.Width;window.Width=940;window.UpdateLayout();SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-compact.png"));results["responsive"]=window.ActualWidth<=950;window.Width=width;
+            results["homeUsesSelectedSource"]=window.HomeHost.IsVisible&&!window.ContentGrid.IsVisible&&window.SmokeHome.Items.Count==4&&window.SmokeHome.Items.All(i=>i.SourceId==source.Id)&&window.SmokeHome.Featured?.Kind==ContentKind.Movie;
+            window.SmokeHome.Search.Text="Sintel";await WaitUntil(()=>window.SmokeHome.Items.Count==1,TimeSpan.FromSeconds(5));
+            window.UpdateLayout();results["homeSearchVisible"]=window.SmokeHome.Search.GetRectFromCharacterIndex(0).Height>=14&&window.SmokeHome.Items.Single().Name.Contains("Sintel");SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-home-search.png"));
+            window.SmokeHome.Search.Text="no-match-9853";await WaitUntil(()=>window.SmokeHome.Empty&&window.SmokeHome.Featured is null,TimeSpan.FromSeconds(5));results["homeEmptySearch"]=window.SmokeHome.Items.Count==0;
+            window.SmokeHome.Search.Clear();await WaitUntil(()=>window.SmokeHome.Items.Count==4,TimeSpan.FromSeconds(5));
+            window.SmokeSidebar();window.UpdateLayout();results["sidebarCollapses"]=window.NavColumn.Width.Value==82&&window.Sidebar.ActualWidth==72&&App.ReadSettings().SidebarExpanded==false;SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-sidebar-collapsed.png"));
+            window.SmokeSidebar();window.UpdateLayout();results["sidebarExpands"]=window.NavColumn.Width.Value==224&&window.Sidebar.ActualWidth==214&&App.ReadSettings().SidebarExpanded==true;
+            double width=window.Width;window.Width=940;window.UpdateLayout();SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-compact.png"));results["responsive"]=window.ActualWidth<=950;results["sidebarSmallDrawer"]=window.NavColumn.Width.Value==82&&window.Sidebar.ActualWidth==214&&window.BrandToggle.IsVisible;
+            window.SmokeSidebar();window.UpdateLayout();SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-home-small.png"));window.Width=width;window.SmokeSidebar();
+            foreach(string key in new[]{"homeUsesSelectedSource","homeSearchVisible","homeEmptySearch","sidebarCollapses","sidebarExpands","sidebarSmallDrawer"})if(!Equals(results[key],true))throw new Exception("1.5 home regression: "+key);
+            await window.SmokeBrowseAsync("live");
+            await window.SmokeBrowseAsync("movie");
             window.SearchBox.Text="Sintel";await WaitUntil(()=>window.ChannelList.Items.Count==1,TimeSpan.FromSeconds(4));window.UpdateLayout();
             var caret=window.SearchBox.GetRectFromCharacterIndex(0);results["searchTextVisible"]=caret.Height>=14&&window.SearchBox.ActualHeight>=24&&window.SearchHint.Visibility==Visibility.Collapsed;
             results["searchFiltersChannels"]=window.ChannelList.Items.Cast<ContentItem>().Single().Name.Contains("Sintel");
@@ -44,7 +55,7 @@ internal static class SmokeTest
             var sourceWindow=new SourceWindow(window);sourceWindow.Show();await Task.Delay(150);SaveWindow(sourceWindow,Path.Combine(App.DataDirectory,"WX-Player-source.png"));sourceWindow.Close();
             var settingsWindow=window.CreateSettingsWindow();settingsWindow.Show();await Task.Delay(150);
             SaveWindow(settingsWindow,Path.Combine(App.DataDirectory,"WX-Player-settings.png"));settingsWindow.SelectTab(1);settingsWindow.UpdateLayout();await Task.Delay(100);SaveWindow(settingsWindow,Path.Combine(App.DataDirectory,"WX-Player-library-settings.png"));settingsWindow.SelectTab(2);settingsWindow.UpdateLayout();SaveWindow(settingsWindow,Path.Combine(App.DataDirectory,"WX-Player-update-settings.png"));settingsWindow.SmokeShowShortcuts();await Task.Delay(150);SaveWindow(settingsWindow,Path.Combine(App.DataDirectory,"WX-Player-shortcuts.png"));settingsWindow.Close();results["settingsPages"]=true;
-            var updateWindow=new UpdateWindow(window,new PreparedUpdate(new Version(1,5,0),"test-only",new string('0',64)),()=>Task.CompletedTask);updateWindow.Show();await Task.Delay(100);SaveWindow(updateWindow,Path.Combine(App.DataDirectory,"WX-Player-update-prompt.png"));updateWindow.Close();results["updatePrompt"]=true;
+            var updateWindow=new UpdateWindow(window,new PreparedUpdate(new Version(1,6,0),"test-only",new string('0',64)),()=>Task.CompletedTask);updateWindow.Show();await Task.Delay(100);SaveWindow(updateWindow,Path.Combine(App.DataDirectory,"WX-Player-update-prompt.png"));updateWindow.Close();results["updatePrompt"]=true;
             int mediaArg=Array.IndexOf(App.Arguments,"--media");
             if(mediaArg>=0&&mediaArg+1<App.Arguments.Length)
             {
@@ -72,7 +83,12 @@ internal static class SmokeTest
                 await Task.Delay(3000);results["fullscreenControlsAutoHide"]=!window.SmokeControlsVisible;
                 SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-fullscreen-layout.png"));
                 results["fullscreenWindowCaptured"]=WindowCapture.Save(window,Path.Combine(App.DataDirectory,"WX-Player-fullscreen-native.png"));
-                PostMessage(window.Video.Handle,0x0200,IntPtr.Zero,new IntPtr((30<<16)|40));await Task.Delay(150);results["fullscreenControlsReveal"]=window.SmokeControlsVisible;results["fullscreenBrowser"]=window.FullscreenChannels?.Items.Count==window.ChannelList.Items.Count;SaveWindow(Window.GetWindow(window.FullscreenChannels)!,Path.Combine(App.DataDirectory,"WX-Player-fullscreen-controls.png"));
+                PostMessage(window.Video.Handle,0x0200,IntPtr.Zero,new IntPtr((30<<16)|40));await Task.Delay(150);results["fullscreenControlsReveal"]=window.SmokeControlsVisible;results["fullscreenBrowser"]=window.FullscreenChannels?.Items.Count==window.ChannelList.Items.Count;
+                var floating=Window.GetWindow(window.FullscreenChannels)!;floating.UpdateLayout();var browser=window.FullscreenBrowser!;
+                results["fullscreenPanelWidthsMatch"]=Math.Abs(browser.ActualWidth-window.ControlsBorder.ActualWidth)<1&&Math.Abs(browser.TranslatePoint(new Point(),floating).X-window.ControlsBorder.TranslatePoint(new Point(),floating).X)<1;
+                results["fullscreenPanelsNotClipped"]=window.ControlsBorder.TranslatePoint(new Point(0,window.ControlsBorder.ActualHeight),floating).Y<=floating.ActualHeight;
+                if(!Equals(results["fullscreenPanelWidthsMatch"],true)||!Equals(results["fullscreenPanelsNotClipped"],true))throw new Exception("Fullscreen panel bounds mismatch");
+                SaveWindow(floating,Path.Combine(App.DataDirectory,"WX-Player-fullscreen-controls.png"));
                 window.SmokeFit();results["fitPreservesAspectRatio"]=string.IsNullOrEmpty(engine.Player.CropGeometry)&&string.IsNullOrEmpty(engine.Player.AspectRatio);window.SmokeFit();
                 window.SmokeFullscreen();await Task.Delay(500);window.UpdateLayout();
                 var restored=FullscreenPlacement.WindowBounds(window);results["windowPlacementRestored"]=original.Left==restored.Left&&original.Top==restored.Top&&original.Width==restored.Width&&original.Height==restored.Height;
@@ -91,7 +107,7 @@ internal static class SmokeTest
                 var news=new ContentItem{Id="smoke-news",SourceId=epgSource.Id,Name="WX Haber FHD",Category="Haber",Logo=logos.Url,EpgName="WX Haber",Kind=ContentKind.Live,Url=target.Url};
                 var culture=new ContentItem{Id="smoke-culture",SourceId=epgSource.Id,Name="WX Kültür HD",Category="Kültür",Logo=logos.Url,Kind=ContentKind.Live,Url=target.Url};
                 async IAsyncEnumerable<ContentItem> Channels(){yield return news;yield return culture;await Task.Yield();}
-                await store.ImportAsync(epgSource,Channels(),null,default);await window.SmokeRefreshAsync(epgSource.Id);
+                await store.ImportAsync(epgSource,Channels(),null,default);window.SmokeNavigate("live");await window.SmokeRefreshAsync(epgSource.Id);
                 await window.SmokePlayAsync(news);results["epgAutomaticallyLoaded"]=window.EpgList.Items.Cast<Programme>().Single().Title.StartsWith("Güne Bakış");
                 var first=window.SmokePlayAsync(news);await Task.Delay(10);var second=window.SmokePlayAsync(culture);await Task.WhenAll(first,second);
                 results["epgFollowsLatestChannel"]=window.EpgList.Items.Cast<Programme>().All(p=>p.ChannelId=="wx.culture")&&window.EpgList.Items.Count==2&&window.GuideTitle.Text.Contains("WX Kültür");
@@ -125,6 +141,18 @@ internal static class SmokeTest
                 results["recordFile"]=recorded;
                 await engine.PlayAsync(new PlaybackTarget(new Uri(recorded).AbsoluteUri),settings,default);await WaitUntil(()=>engine.Player.IsPlaying,TimeSpan.FromSeconds(10));await Task.Delay(1000);using(var media=engine.Player.Media)results["recordDecodedFrames"]=media?.Statistics.DecodedVideo??0;
                 if(Convert.ToInt32(results["decodedFrames"])<=0||Convert.ToInt32(results["recordDecodedFrames"])<=0||Convert.ToInt64(results["recordBytes"])<=0||!Equals(results["pause"],true)||!Equals(results["seek"],true))throw new Exception("Media assertion failed.");
+                var homeSource=new SourceConfig{Id="smoke-home",Name="Ana sayfa testi · Yerel katalog"};
+                async IAsyncEnumerable<ContentItem> HomeItems(){for(int i=0;i<36;i++){yield return new ContentItem{Id="home-"+i,SourceId=homeSource.Id,Name="Test içeriği "+i.ToString("D2"),Category=i<24?"Filmler":"Diziler",Kind=i<24?ContentKind.Movie:ContentKind.Series,Logo=logos.Url,Url=target.Url};await Task.Yield();}}
+                await store.ImportAsync(homeSource,HomeItems(),null,default);await store.FavoriteAsync("home-1",true);await store.RememberAsync("home-2");
+                await window.SmokeRefreshAsync(homeSource.Id);await window.SmokeBrowseAsync("home");window.UpdateLayout();
+                results["homeShelvesBoundedAndIsolated"]=window.SmokeHome.Items.Count==24&&window.SmokeHome.Items.All(i=>i.SourceId==homeSource.Id);
+                results["homeFavoritesAndHistory"]=window.SmokeHome.Items.Any(i=>i.Id=="home-1"&&i.IsFavorite)&&window.SmokeHome.Items.Any(i=>i.Id=="home-2");
+                await WaitUntil(()=>Descendants<ChannelLogo>(window.SmokeHome).Any(l=>l.DecodeWidth>=480&&l.HasImage),TimeSpan.FromSeconds(6));results["homeProviderPostersLoaded"]=true;
+                var homeItem=window.SmokeHome.Featured!;await window.SmokeOpenHomeAsync(homeItem);await WaitUntil(()=>engine.Player.IsPlaying,TimeSpan.FromSeconds(12));await Task.Delay(400);
+                results["homeCardStartsPlayback"]=window.NowTitle.Text==homeItem.Name&&window.ContentGrid.IsVisible&&!window.HomeHost.IsVisible;
+                var homeHandle=window.Video.Handle;await window.SmokeBrowseAsync("home");await Task.Delay(200);results["homeNavigationKeepsPlayback"]=engine.Player.IsPlaying&&engine.Player.Hwnd==homeHandle&&window.HomeHost.IsVisible;
+                await window.SmokeBrowseAsync("movie");results["homeReturnKeepsPlayer"]=engine.Player.IsPlaying&&window.Video.Handle==homeHandle&&window.Video.IsVisible;
+                foreach(string key in new[]{"homeShelvesBoundedAndIsolated","homeFavoritesAndHistory","homeProviderPostersLoaded","homeCardStartsPlayback","homeNavigationKeepsPlayback","homeReturnKeepsPlayer"})if(!Equals(results[key],true))throw new Exception("Home integration: "+key);
             }
             if(App.Arguments.Contains("--timeshift")&&mediaArg>=0)
             {
@@ -150,7 +178,7 @@ internal static class SmokeTest
             {
                 byte[] fixture=await File.ReadAllBytesAsync(App.Arguments[fixtureArg+1]);
                 string hash=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(fixture)).ToLowerInvariant();
-                string json=JsonSerializer.Serialize(new{tag_name="v1.5.0",draft=false,prerelease=false,assets=new[]{new{name="WXPlayer.exe",size=fixture.Length,digest="sha256:"+hash,browser_download_url="https://github.com/schwairex/WX-Player/releases/download/v1.5.0/WXPlayer.exe"}}});
+                string json=JsonSerializer.Serialize(new{tag_name="v1.6.0",draft=false,prerelease=false,assets=new[]{new{name="WXPlayer.exe",size=fixture.Length,digest="sha256:"+hash,browser_download_url="https://github.com/schwairex/WX-Player/releases/download/v1.6.0/WXPlayer.exe"}}});
                 using var controller=new UpdateController(settings,default,new GitHubUpdater(new UpdateFixtureHandler(json,fixture)));
                 await controller.CheckAsync(true);if(controller.Ready is null)throw new Exception("Fixture update not staged: "+controller.Status);
                 Environment.SetEnvironmentVariable("WXPLAYER_TEST_PARENT",Environment.ProcessId.ToString());
