@@ -39,9 +39,9 @@ public sealed class ChannelLogo : Grid
         try
         {
             using var response=await Client.GetAsync(uri,HttpCompletionOption.ResponseHeadersRead);response.EnsureSuccessStatusCode();
-            if(response.Content.Headers.ContentLength>2*1024*1024)return null;
+            if(response.Content.Headers.ContentLength>8*1024*1024)return null;
             using var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(7));await using var input=await response.Content.ReadAsStreamAsync(timeout.Token);using var data=new MemoryStream();byte[] bytes=new byte[16384];int count;
-            while((count=await input.ReadAsync(bytes,timeout.Token))>0){if(data.Length+count>2*1024*1024)return null;data.Write(bytes,0,count);}
+            while((count=await input.ReadAsync(bytes,timeout.Token))>0){if(data.Length+count>8*1024*1024)return null;data.Write(bytes,0,count);}
             return await Task.Run(()=>{data.Position=0;var bitmap=new BitmapImage();bitmap.BeginInit();bitmap.CacheOption=BitmapCacheOption.OnLoad;bitmap.DecodePixelWidth=width;bitmap.StreamSource=data;bitmap.EndInit();bitmap.Freeze();return (BitmapSource)bitmap;});
         }catch{return null;}finally{Slots.Release();}
     }

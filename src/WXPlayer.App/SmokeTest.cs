@@ -16,6 +16,8 @@ internal static class SmokeTest
         var results=new Dictionary<string,object>();
         try
         {
+            var selectionTest=new EpisodeWindow(window,new ContentItem{Name="Seçim testi",Kind=ContentKind.Series},Enumerable.Range(1,3).Select(n=>new ContentItem{Id="selection-"+n,Name="Bölüm "+n,Kind=ContentKind.Episode,Season=1,Episode=n}).ToArray());
+            selectionTest.Show();await Task.Delay(150);selectionTest.Episodes.SelectedIndex=1;int selectedIndex=selectionTest.Episodes.SelectedIndex;selectionTest.Close();if(selectedIndex!=1)throw new Exception("Episode selection changed unexpectedly to "+selectedIndex);
             if(App.Arguments.Contains("--stress"))
             {
                 var stressSource=new SourceConfig{Id="smoke-stress",Name="Performans testi",Address="https://example.test/list.m3u"};
@@ -85,6 +87,13 @@ internal static class SmokeTest
                 results["fullscreenWindowCaptured"]=WindowCapture.Save(window,Path.Combine(App.DataDirectory,"WX-Player-fullscreen-native.png"));
                 PostMessage(window.Video.Handle,0x0200,IntPtr.Zero,new IntPtr((30<<16)|40));await Task.Delay(150);results["fullscreenControlsReveal"]=window.SmokeControlsVisible;results["fullscreenBrowser"]=window.FullscreenChannels?.Items.Count==window.ChannelList.Items.Count;
                 var floating=Window.GetWindow(window.FullscreenChannels)!;floating.UpdateLayout();var browser=window.FullscreenBrowser!;
+                var star=Descendants<System.Windows.Controls.Button>(window.FullscreenChannels!).First(b=>b.Tag is ContentItem);
+                var starred=(ContentItem)star.Tag;string titleBeforeStar=window.NowTitle.Text;
+                star.RaiseEvent(new System.Windows.Input.MouseButtonEventArgs(System.Windows.Input.Mouse.PrimaryDevice,0,System.Windows.Input.MouseButton.Left){RoutedEvent=UIElement.PreviewMouseLeftButtonDownEvent});
+                await WaitUntil(()=>starred.IsFavorite,TimeSpan.FromSeconds(4));await Task.Delay(100);
+                results["fullscreenFavoriteUpdatesWithoutSwitching"]=window.NowTitle.Text==titleBeforeStar&&Descendants<SvgIcon>(star).Any(i=>i.Icon=="star-filled")&&(await store.FindAsync(starred.Id))?.IsFavorite==true;
+                star.RaiseEvent(new System.Windows.Input.MouseButtonEventArgs(System.Windows.Input.Mouse.PrimaryDevice,0,System.Windows.Input.MouseButton.Left){RoutedEvent=UIElement.PreviewMouseLeftButtonDownEvent});await WaitUntil(()=>!starred.IsFavorite,TimeSpan.FromSeconds(4));
+                if(!Equals(results["fullscreenFavoriteUpdatesWithoutSwitching"],true))throw new Exception("Fullscreen favorite interaction failed");
                 results["fullscreenPanelWidthsMatch"]=Math.Abs(browser.ActualWidth-window.ControlsBorder.ActualWidth)<1&&Math.Abs(browser.TranslatePoint(new Point(),floating).X-window.ControlsBorder.TranslatePoint(new Point(),floating).X)<1;
                 results["fullscreenPanelsNotClipped"]=window.ControlsBorder.TranslatePoint(new Point(0,window.ControlsBorder.ActualHeight),floating).Y<=floating.ActualHeight;
                 if(!Equals(results["fullscreenPanelWidthsMatch"],true)||!Equals(results["fullscreenPanelsNotClipped"],true))throw new Exception("Fullscreen panel bounds mismatch");
@@ -148,11 +157,29 @@ internal static class SmokeTest
                 results["homeShelvesBoundedAndIsolated"]=window.SmokeHome.Items.Count==24&&window.SmokeHome.Items.All(i=>i.SourceId==homeSource.Id);
                 results["homeFavoritesAndHistory"]=window.SmokeHome.Items.Any(i=>i.Id=="home-1"&&i.IsFavorite)&&window.SmokeHome.Items.Any(i=>i.Id=="home-2");
                 await WaitUntil(()=>Descendants<ChannelLogo>(window.SmokeHome).Any(l=>l.DecodeWidth>=480&&l.HasImage),TimeSpan.FromSeconds(6));results["homeProviderPostersLoaded"]=true;
-                var homeItem=window.SmokeHome.Featured!;await window.SmokeOpenHomeAsync(homeItem);await WaitUntil(()=>engine.Player.IsPlaying,TimeSpan.FromSeconds(12));await Task.Delay(400);
+                var homeItem=window.SmokeHome.Items.First(i=>i.Kind==ContentKind.Movie);await window.SmokeOpenHomeAsync(homeItem);await WaitUntil(()=>engine.Player.IsPlaying,TimeSpan.FromSeconds(12));await Task.Delay(400);
                 results["homeCardStartsPlayback"]=window.NowTitle.Text==homeItem.Name&&window.ContentGrid.IsVisible&&!window.HomeHost.IsVisible;
                 var homeHandle=window.Video.Handle;await window.SmokeBrowseAsync("home");await Task.Delay(200);results["homeNavigationKeepsPlayback"]=engine.Player.IsPlaying&&engine.Player.Hwnd==homeHandle&&window.HomeHost.IsVisible;
                 await window.SmokeBrowseAsync("movie");results["homeReturnKeepsPlayer"]=engine.Player.IsPlaying&&window.Video.Handle==homeHandle&&window.Video.IsVisible;
                 foreach(string key in new[]{"homeShelvesBoundedAndIsolated","homeFavoritesAndHistory","homeProviderPostersLoaded","homeCardStartsPlayback","homeNavigationKeepsPlayback","homeReturnKeepsPlayer"})if(!Equals(results[key],true))throw new Exception("Home integration: "+key);
+                await Task.Delay(500);engine.Player.Time=12000;await Task.Delay(800);await window.SmokeSaveProgressAsync();
+                var checkpoint=await store.ProgressAsync(homeItem.Id);results["moviePositionStored"]=checkpoint is{PositionMs:>=11500,Completed:false};
+                await window.SmokePlayAsync(culture);await window.SmokePlayAsync(homeItem);await WaitUntil(()=>engine.Player.IsPlaying&&engine.Player.Time>=11500,TimeSpan.FromSeconds(15));results["movieResumesFromStoredPosition"]=true;
+                var seriesSource=new SourceConfig{Id="smoke-series151",Name="Dizi kitaplığı · Yerel test"};
+                async IAsyncEnumerable<ContentItem> Episodes151(){for(int i=1;i<=3;i++){yield return new ContentItem{Id="series151-"+i,SourceId=seriesSource.Id,Name=$"500T (2021) S01 500T - {i}. Bölüm - Başlık - S01.E{i:00}",Category="TR ✦ Gain",Logo=logos.Url,Kind=ContentKind.Movie,Url=target.Url};await Task.Yield();}}
+                await store.ImportAsync(seriesSource,Episodes151(),null,default);await window.SmokeRefreshAsync(seriesSource.Id);await window.SmokeBrowseAsync("home");
+                var show=window.SmokeHome.Items.Single();results["homeSeriesHasOneCard"]=show.Kind==ContentKind.Series&&show.Name=="500T (2021)";
+                var choices=await window.SmokeEpisodesAsync(seriesSource,show);var picker=new EpisodeWindow(window,show,choices);picker.Show();await Task.Delay(200);SaveWindow(picker,Path.Combine(App.DataDirectory,"WX-Player-episodes.png"));picker.Close();
+                async Task ChooseEpisode(int index)
+                {
+                    var timer=new DispatcherTimer{Interval=TimeSpan.FromMilliseconds(150)};timer.Tick+=(_,_)=>{var dialog=window.OwnedWindows.OfType<EpisodeWindow>().FirstOrDefault();if(dialog is null)return;timer.Stop();dialog.Episodes.SelectedIndex=index;results["episodeSelectionIndex"]=dialog.Episodes.SelectedIndex;results["episodeSelectionName"]=((ContentItem?)dialog.Episodes.SelectedItem)?.Name??"none";dialog.Footer.Children.OfType<System.Windows.Controls.Button>().Last().RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));};timer.Start();try{await window.SmokeOpenHomeAsync(show);}finally{timer.Stop();}
+                }
+                await ChooseEpisode(1);results["episodePlayedName"]=window.NowTitle.Text;await WaitUntil(()=>engine.Player.IsPlaying,TimeSpan.FromSeconds(15));await Task.Delay(700);engine.Player.Time=16000;await Task.Delay(800);await window.SmokeSaveProgressAsync();
+                await window.SmokeBrowseAsync("home");var watched=window.SmokeHome.Items.Single();results["seriesLastEpisodeAndTimeVisible"]=watched.Progress is{PositionMs:>=15500}&&watched.ProgressLabel.Contains("B02");
+                window.UpdateLayout();SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-watch-progress.png"));
+                var updatedChoices=await window.SmokeEpisodesAsync(seriesSource,watched);var progressPicker=new EpisodeWindow(window,watched,updatedChoices);progressPicker.Show();await Task.Delay(150);results["episodePickerSelectsLastEpisode"]=((ContentItem?)progressPicker.Episodes.SelectedItem)?.Episode==2;SaveWindow(progressPicker,Path.Combine(App.DataDirectory,"WX-Player-episode-progress.png"));progressPicker.Close();
+                await window.SmokePlayAsync(culture);await ChooseEpisode(1);await WaitUntil(()=>engine.Player.IsPlaying&&engine.Player.Time>=15500,TimeSpan.FromSeconds(15));results["episodeResumesFromStoredPosition"]=true;
+                foreach(string key in new[]{"moviePositionStored","movieResumesFromStoredPosition","homeSeriesHasOneCard","seriesLastEpisodeAndTimeVisible","episodePickerSelectsLastEpisode","episodeResumesFromStoredPosition"})if(!Equals(results[key],true))throw new Exception("1.5.1 playback progress: "+key);
             }
             if(App.Arguments.Contains("--timeshift")&&mediaArg>=0)
             {

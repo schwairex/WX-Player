@@ -19,8 +19,18 @@ public sealed record SourceConfig
     public DateTimeOffset? UpdatedAt { get; set; }
     public override string ToString() => Name;
 }
-public sealed record ContentItem
+public sealed record ContentItem : System.ComponentModel.INotifyPropertyChanged
 {
+    // WPF tracks items in hashed collections. Binding listeners and favorite changes must not alter identity.
+    public bool Equals(ContentItem? other)=>ReferenceEquals(this,other)||(Id.Length>0&&other is not null&&Id==other.Id&&SourceId==other.SourceId);
+    public override int GetHashCode()=>Id.Length==0?System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(this):HashCode.Combine(Id,SourceId);
+    public string SeriesId { get; init; } = "";
+    public string SeriesName { get; init; } = "";
+    public int Season { get; init; }
+    public int Episode { get; init; }
+    public string EpisodeLabel => Episode>0?(Season>0?$"Sezon {Season} · Bölüm {Episode}":$"Bölüm {Episode}"):"Bölüm";
+    public WatchProgress? Progress { get; init; }
+    public string ProgressLabel => Progress is null ? "" : (Kind==ContentKind.Series ? Progress.Name+" · " : "")+Progress.Label;
     public string Id { get; init; } = "";
     public string SourceId { get; init; } = "";
     public string ProviderId { get; init; } = "";
@@ -36,7 +46,9 @@ public sealed record ContentItem
     public int CatchupDays { get; init; }
     public string UserAgent { get; init; } = "";
     public string Referrer { get; init; } = "";
-    public bool IsFavorite { get; set; }
+    private bool _isFavorite;
+    public bool IsFavorite { get=>_isFavorite; set { if(_isFavorite==value)return;_isFavorite=value;PropertyChanged?.Invoke(this,new(nameof(IsFavorite)));PropertyChanged?.Invoke(this,new(nameof(FavoriteGlyph))); } }
+    public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
     public string FavoriteGlyph => IsFavorite ? "★" : "☆";
     public string Initials => string.Concat(Name.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(x => x[0])).ToUpperInvariant();
     public string KindLabel => Kind switch { ContentKind.Movie => "FİLM", ContentKind.Series => "DİZİ", ContentKind.Episode => "BÖLÜM", _ => "CANLI" };
@@ -59,6 +71,7 @@ public sealed record PlaybackTarget(string Url, string UserAgent = "", string Re
 
 public sealed class PlayerSettings
 {
+    public Dictionary<string,string> LastRecommendation { get; set; } = new();
     public bool? SidebarExpanded { get; set; }
     public bool AutoUpdate { get; set; } = true;
     public bool FullscreenFill { get; set; } = true;

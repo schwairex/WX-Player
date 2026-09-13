@@ -11,8 +11,8 @@ public sealed partial class LibraryStore
         using var tx=c.BeginTransaction();using var cmd=c.CreateCommand();cmd.Transaction=tx;
         cmd.CommandText=kind switch{
             LibraryCleanup.Favorites=>"DELETE FROM favorites",
-            LibraryCleanup.History=>"DELETE FROM history",
-            LibraryCleanup.Sources=>"DELETE FROM favorites;DELETE FROM history;DELETE FROM epg_matches;DELETE FROM epg_aliases;DELETE FROM epg_state;DELETE FROM epg;DELETE FROM items;DELETE FROM sources;",
+            LibraryCleanup.History=>"DELETE FROM history;DELETE FROM playback_progress",
+            LibraryCleanup.Sources=>"DELETE FROM playback_progress;DELETE FROM favorites;DELETE FROM history;DELETE FROM epg_matches;DELETE FROM epg_aliases;DELETE FROM epg_state;DELETE FROM epg;DELETE FROM items;DELETE FROM sources;",
             _=>throw new ArgumentOutOfRangeException(nameof(kind))};
         cmd.ExecuteNonQuery();tx.Commit();
     });

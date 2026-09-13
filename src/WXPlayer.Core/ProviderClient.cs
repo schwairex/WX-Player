@@ -83,7 +83,7 @@ public sealed partial class ProviderClient : IDisposable
             foreach(var row in episodes.EnumerateArray())
             {
                 var id=Str(row,"id");if(id.Length==0)continue;
-                list.Add(new ContentItem{Id=ContentItem.Key(s.Id,"episode:"+id),SourceId=s.Id,ProviderId=id,Name=$"S{season.PadLeft(2,'0')} · B{Str(row,"episode_num").PadLeft(2,'0')}   {Str(row,"title",series.Name)}",Category=series.Name,Kind=ContentKind.Episode,Extension=Str(row,"container_extension","mp4")});
+                list.Add(new ContentItem{Id=ContentItem.Key(s.Id,"episode:"+id),SourceId=s.Id,ProviderId=id,Name=$"S{season.PadLeft(2,'0')} · B{Str(row,"episode_num").PadLeft(2,'0')}   {Str(row,"title",series.Name)}",Category=series.Name,Kind=ContentKind.Episode,SeriesId=series.Id,SeriesName=series.Name,Logo=series.Logo,Season=int.TryParse(season,out int sn)?sn:0,Episode=Num(row,"episode_num"),Extension=Str(row,"container_extension","mp4")});
             }
         }return list;
     }

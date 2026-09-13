@@ -52,7 +52,7 @@ internal sealed class SettingsWindow : PremiumWindow
             }
         }
         var clean=Card(library,"Kütüphaneyi temizle","Bu işlemler seçtiğiniz kayıtları tüm kaynaklardan kaldırır.");
-        foreach(var (label,kind,description) in new[]{("Favorileri temizle",LibraryCleanup.Favorites,"Tüm favori işaretleri kaldırılacak."),("Son izlenenleri temizle",LibraryCleanup.History,"İzleme geçmişiniz temizlenecek."),("Tüm kaynakları kaldır",LibraryCleanup.Sources,"Kaynaklar, kanal listeleri, rehber, favoriler ve izleme geçmişi kaldırılacak.")})
+        foreach(var (label,kind,description) in new[]{("Favorileri temizle",LibraryCleanup.Favorites,"Tüm favori işaretleri kaldırılacak."),("Son izlenenleri temizle",LibraryCleanup.History,"İzleme geçmişiniz ve kayıtlı bölüm/dakika bilgileriniz temizlenecek."),("Tüm kaynakları kaldır",LibraryCleanup.Sources,"Kaynaklar, kanal listeleri, rehber, favoriler ve izleme geçmişi kaldırılacak.")})
         {
             var b=Action(label,async()=>{if(Confirm(this,label,description))await Execute(()=>clear(kind));});b.Margin=new(0,5,0,5);b.HorizontalAlignment=HorizontalAlignment.Stretch;clean.Children.Add(b);
         }

@@ -1,12 +1,22 @@
-# WX Player 1.5
+# WX Player 1.5.1
 
 **Kendi kaynağınız. Kendi kütüphaneniz.** Windows için C# / WPF ile geliştirilmiş yerel IPTV ve medya oynatıcısı. Koyu arayüz, Fluent tasarımından esinlenen kontroller, Direct3D video çıkışı ve SQLite tabanlı yerel veri altyapısı.
 
 ![WX Player](docs/WX-Player-preview.png)
 
-## 1.5 — Kütüphanenize yeni bir ana sayfa
+## 1.5.1 — Diziler tek kartta, kaldığınız yer kayıtlı
 
-Seçili M3U / Xtream kaynağından gelen afişler, büyük bir öne çıkan içerik alanı ve yatay **Son izlenenler / Favorilerin / Film gecesi / Bir sonraki dizin / Şimdi canlı** sıraları. Boş sıralar gizlenir; her sırada en fazla 12 kart yüklenir. **Tümünü gör** ilgili tam listeyi açar. Kaynağın kapak görseli yoksa içerik adıyla sade bir kapak kullanılır. Harici katalogdan içerik veya puan üretilmez.
+**Filmler** ve **Diziler** ayrımı düzeltildi. M3U bölüm/sezon işaretleri tanınır; aynı dizinin bölümleri afiş ve isimle tek kartta toplanır. Kart sezon/bölüm penceresini açar. Kayıtlı 1.5 kütüphanesi ilk açılışta arka planda dönüştürülür; favori ve geçmiş korunur.
+
+Üst öneri her açılışta kaynak kataloğundan seçilir. Alternatif varsa önceki öneri tekrarlanmaz. Film/seri afişleri ve kanal logoları oranları korunarak daha düzenli kartlarda gösterilir. Tam ekranda favori yıldızına basmak yayını değiştirmez.
+
+Filmin dakikası ve dizinin son izlenen bölümü/dakikası kaydedilir. İçerik yeniden oynatıldığında, akış seek destekliyorsa kayıtlı konuma gidilir. Bölüm penceresinde **Baştan oynat** seçeneği vardır. Eski sürümler dakika bilgisi tutmadığı için bu bilgi 1.5.1'den itibaren birikir. Ayarlar'dan izleme geçmişini temizlemek konumları da temizler.
+
+[1.5.1 sürüm notları](docs/RELEASE-NOTES-1.5.1.md) · [Test raporu](docs/TEST-REPORT-1.5.1.md) · [GitHub yayını](docs/GITHUB-RELEASES.md)
+
+## Korunan 1.5 özellikleri — Kütüphanenize yeni bir ana sayfa
+
+Seçili M3U / Xtream kaynağından gelen afişler, büyük bir öne çıkan içerik alanı ve yatay **Son izlenenler / Favorilerin / Filmler / Diziler / Şimdi canlı** sıraları. Boş sıralar gizlenir; her sırada en fazla 12 kart yüklenir. **Tümünü gör** ilgili tam listeyi açar. Kaynağın kapak görseli yoksa içerik adıyla sade bir kapak kullanılır. Harici katalogdan içerik veya puan üretilmez.
 
 Sol menüyü başlığın yanındaki menü düğmesiyle, W simgesiyle veya **Ctrl+B** ile daraltıp genişletebilirsiniz. Tercih sonraki açılışta korunur. Küçük pencerede geniş menü içerik üzerine açılır; sol üstteki okla kapanır. **Ctrl+K** ana sayfadayken ana sayfa aramasına gider.
 
@@ -66,7 +76,7 @@ Güncelleme mevcut EXE'nin üzerine yazmaz. Doğrulanan yeni başlatıcı `updat
 
 Windows 10/11 **x64** içindir. Windows 11 önerilir. Dağıtım .NET 10 çalışma zamanını ve LibVLC'yi içerir; ayrıca VLC veya .NET 10 kurmanız gerekmez. Tek dosya başlatıcısı Windows'un .NET Framework 4.x bileşenini kullanır.
 
-* **WXPlayer.exe**: Tek dosyadır. İlk açılışta bileşenleri `%LOCALAPPDATA%\WXPlayer\application\1.5.0-<paket özeti>` konumuna çıkarır, sonraki açılışlarda bu kopyayı kullanır. Yönetici yetkisi veya sistem kurulumu istemez. İlk açılış için yaklaşık 500 MB boş alan ayırın.
+* **WXPlayer.exe**: Tek dosyadır. İlk açılışta bileşenleri `%LOCALAPPDATA%\WXPlayer\application\1.5.1-<paket özeti>` konumuna çıkarır, sonraki açılışlarda bu kopyayı kullanır. Yönetici yetkisi veya sistem kurulumu istemez. İlk açılış için yaklaşık 500 MB boş alan ayırın.
 * **WXPlayer-win-x64.zip**: Taşınabilir dağıtım. ZIP'in **tamamını** bir klasöre çıkarın ve içindeki `WXPlayer.exe` dosyasını çalıştırın. İçindeki EXE'yi tek başına başka klasöre taşımayın.
 * EXE henüz ticari kod imzalama sertifikasıyla imzalanmamıştır. Paket bütünlüğü `SHA256SUMS.txt` ile doğrulanabilir.
 
@@ -115,6 +125,7 @@ PVR, sağlayıcınızda ikinci bir eşzamanlı bağlantı açar. Bu sürümde za
 | I | Yayın istatistikleri |
 | Page Up / Page Down | Önceki / sonraki içerik; sayfa sınırından devam eder |
 | Ctrl+K | Aramaya odaklan |
+| Ctrl+B | Sol menüyü daralt / genişlet |
 | Video üzerinde tekerlek | Ses seviyesini değiştir |
 | Liste üzerinde tekerlek | Listeyi kaydır |
 | Videoya çift tık | Tam ekran |
@@ -127,7 +138,7 @@ Metin ve şifre alanlarına yazarken oynatıcı kısayolları devreye girmez.
 Veriler `%LOCALAPPDATA%\WXPlayer` altında kalır. Uygulama analitik veya telemetri servisine bağlanmaz. Ağ istekleri eklediğiniz kaynaklara, seçtiğiniz yayınlara ve güncelleme kontrolü/indirmesi için GitHub Releases sunucularına gider. GitHub sunucusuna IPTV hesabı veya yayın adresi gönderilmez.
 
 * Kaynak yapılandırması ve hesap şifreleri Windows DPAPI `CurrentUser` ile şifrelenir; başka kullanıcıya veya başka bilgisayara doğrudan taşınamaz.
-* `library.db`: katalog, favoriler, son izlenenler, EPG. **Oynatma listesinden gelen yayın URL'leri ve başlıkları bu SQLite dosyasında düz metindir**; URL içine gömülü token/şifreler de buna dahildir. Xtream yayın URL'leri mümkün olduğunda oynatma anında hesap bilgilerinden üretilir.
+* `library.db`: katalog, favoriler, son izlenenler, bölüm/dakika bilgisi, EPG. **Oynatma listesinden gelen yayın URL'leri ve başlıkları bu SQLite dosyasında düz metindir**; URL içine gömülü token/şifreler de buna dahildir. Xtream yayın URL'leri mümkün olduğunda oynatma anında hesap bilgilerinden üretilir.
 * `settings.json`: hassas olmayan ayarlar. `errors.log`: yalnız hata türü ve zaman; kaynak URL'leri loglanmaz.
 * Kaynak silme o kaynağın kataloğunu, favorilerini, geçmişini ve rehberini kaldırır. Kayıt dosyaları ayrıca kullanıcı tarafından yönetilir.
 * Tam kaldırma: uygulamayı kapatın, uygulama klasörünü ve istenirse `%LOCALAPPDATA%\WXPlayer` verilerini silin. Kayıtlar varsayılan olarak Videolar/WX Player altındadır.

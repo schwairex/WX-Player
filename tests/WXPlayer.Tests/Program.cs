@@ -75,6 +75,7 @@ await Test("Stalker mocked handshake, paginated lists, create_link",async()=>
 });
 await Test("Source deletion removes its content, favorites and guide",async()=>{await store.DeleteSourceAsync(source.Id);Assert((await store.StatsAsync(source.Id)).Total==0&&(await store.SourcesAsync()).Count==0,"source deletion");});
 await RegressionTests.RunAsync(Test,Assert,folder);
+await CatalogTests.RunAsync(Test,Assert,folder);
 Console.WriteLine($"{results.Count-failures}/{results.Count} passed");
 string output=args.Length>0?Path.GetFullPath(args[0]):Path.Combine(folder,"results.json");Directory.CreateDirectory(Path.GetDirectoryName(output)!);File.WriteAllText(output,JsonSerializer.Serialize(new{passed=results.Count-failures,total=results.Count,results},new JsonSerializerOptions{WriteIndented=true}));
 return failures==0?0:1;

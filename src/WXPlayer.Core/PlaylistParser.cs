@@ -44,7 +44,7 @@ public static partial class PlaylistParser
                 if (name.Length == 0) name = attrs.GetValueOrDefault("tvg-name", "");
                 epgName = attrs.GetValueOrDefault("tvg-name", "");
                 group = attrs.GetValueOrDefault("group-title", "Genel");
-                logo = attrs.GetValueOrDefault("tvg-logo", ""); epg = attrs.GetValueOrDefault("tvg-id", "");
+                logo = attrs.GetValueOrDefault("tvg-logo", attrs.GetValueOrDefault("cover", attrs.GetValueOrDefault("poster", ""))); epg = attrs.GetValueOrDefault("tvg-id", "");
                 catchup = attrs.GetValueOrDefault("catchup-source", "");
                 int.TryParse(attrs.GetValueOrDefault("catchup-days", "0"), out days);
             }
@@ -61,7 +61,7 @@ public static partial class PlaylistParser
                 if (label.Length == 0) label = $"Kanal {index}";
                 string lower = (group + " " + label).ToLowerInvariant();
                 var kind = lower.Contains("series") || lower.Contains("dizi") ? ContentKind.Series : lower.Contains("film") || lower.Contains("movie") || lower.Contains("vod") || new[] { ".mp4", ".mkv", ".avi" }.Contains(Path.GetExtension(uri.AbsolutePath).ToLowerInvariant()) ? ContentKind.Movie : ContentKind.Live;
-                yield return new ContentItem { Id = ContentItem.Key(source.Id, url), SourceId = source.Id, ProviderId = index.ToString(), Name = label, Category = string.IsNullOrWhiteSpace(group) ? "Genel" : group, Kind = kind, Url = url, Logo = logo.Length>0?Resolve(logo,source.Address):"", EpgId = epg, EpgName = epgName, Catchup = catchup, CatchupDays = days, UserAgent = ua, Referrer = refer };
+                yield return CatalogClassifier.Normalize(new ContentItem { Id = ContentItem.Key(source.Id, url), SourceId = source.Id, ProviderId = index.ToString(), Name = label, Category = string.IsNullOrWhiteSpace(group) ? "Genel" : group, Kind = kind, Url = url, Logo = logo.Length>0?Resolve(logo,source.Address):"", EpgId = epg, EpgName = epgName, Catchup = catchup, CatchupDays = days, UserAgent = ua, Referrer = refer },SourceKind.Playlist);
                 name = ""; group = "Genel"; logo = ""; epg = ""; epgName = ""; catchup = ""; ua = ""; refer = ""; days = 0;
             }
         }

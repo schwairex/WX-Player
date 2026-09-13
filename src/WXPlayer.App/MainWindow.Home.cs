@@ -10,10 +10,11 @@ public partial class MainWindow
     private HomeView _home=null!;
     private CancellationTokenSource? _homeLoad;
     private int _homeVersion;
+    private readonly Dictionary<string,string> _recommendations=new();
     private bool SidebarExpanded=>_settings.SidebarExpanded??(ActualWidth>=1180&&ActualHeight>=780);
     private void InitializeHome()
     {
-        _home=new HomeView(async item=>await SafeAsync(()=>OpenHomeItemAsync(item)),async item=>await SafeAsync(async()=>{await _store.FavoriteAsync(item.Id,!item.IsFavorite);await RefreshViewAsync();}),async section=>await SafeAsync(()=>BrowseSectionAsync(section)),()=>AddSource_Click(this,new RoutedEventArgs()),async()=>await SafeAsync(()=>BrowseSectionAsync(_current?.Kind switch{ContentKind.Movie=>"movie",ContentKind.Series or ContentKind.Episode=>"series",_=>"live"})));
+        _home=new HomeView(async item=>await SafeAsync(()=>OpenHomeItemAsync(item)),async item=>await SafeAsync(()=>ToggleFavoriteAsync(item)),async section=>await SafeAsync(()=>BrowseSectionAsync(section)),()=>AddSource_Click(this,new RoutedEventArgs()),async()=>await SafeAsync(()=>BrowseSectionAsync(_current?.Kind switch{ContentKind.Movie=>"movie",ContentKind.Series or ContentKind.Episode=>"series",_=>"live"})));
         _home.Search.SetBinding(TextBox.TextProperty,new Binding("Text"){Source=SearchBox,Mode=BindingMode.TwoWay,UpdateSourceTrigger=UpdateSourceTrigger.PropertyChanged});HomeHost.Content=_home;
     }
     private void ApplyPageLayout()
@@ -28,10 +29,14 @@ public partial class MainWindow
         string? source=SelectedSource?.Id;string name=SelectedSource?.Name??"";string search=SearchBox.Text.Trim();_home.Loading();
         try
         {
-            var definitions=new[]{("Son izlenenler","recent",(ContentKind?)null,false,true),("Favorilerin","favorites",(ContentKind?)null,true,false),("Film gecesi","movie",(ContentKind?)ContentKind.Movie,false,false),("Bir sonraki dizin","series",(ContentKind?)ContentKind.Series,false,false),("Şimdi canlı","live",(ContentKind?)ContentKind.Live,false,false)};
+            await SavePlaybackProgressAsync();
+            var definitions=new[]{("Son izlenenler","recent",(ContentKind?)null,false,true),("Favorilerin","favorites",(ContentKind?)null,true,false),("Filmler","movie",(ContentKind?)ContentKind.Movie,false,false),("Diziler","series",(ContentKind?)ContentKind.Series,false,false),("Şimdi canlı","live",(ContentKind?)ContentKind.Live,false,false)};
             var pages=await Task.WhenAll(definitions.Select(d=>_store.QueryAsync(source,d.Item3,null,search,d.Item4,d.Item5,0,12,cts.Token)));
             if(cts.IsCancellationRequested||version!=_homeVersion||source!=SelectedSource?.Id||_section!="home"||_fullscreen)return;
-            _home.Render(name.Length==0?null:name,definitions.Select((d,i)=>new HomeShelf(d.Item1,d.Item2,pages[i])).ToArray(),search);_home.NowPlaying(_current?.Name);
+            ContentItem? recommended=null;
+            if(search.Length==0&&source is not null){if(_recommendations.TryGetValue(source,out var id))recommended=await _store.FindAsync(id,cts.Token);if(recommended is null){recommended=await _store.RecommendationAsync(source,_settings.LastRecommendation.GetValueOrDefault(source),cts.Token);if(recommended is not null&&!cts.IsCancellationRequested){_recommendations[source]=recommended.Id;_settings.LastRecommendation[source]=recommended.Id;App.SaveSettings(_settings);}}}
+            if(cts.IsCancellationRequested||version!=_homeVersion||source!=SelectedSource?.Id)return;
+            _home.Render(name.Length==0?null:name,definitions.Select((d,i)=>new HomeShelf(d.Item1,d.Item2,pages[i])).ToArray(),search,recommended);_home.NowPlaying(_current?.Name);
         }catch(OperationCanceledException){}catch(Exception) when(cts.IsCancellationRequested){}
     }
     private async Task BrowseSectionAsync(string section)

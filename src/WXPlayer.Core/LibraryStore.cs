@@ -37,6 +37,7 @@ public sealed partial class LibraryStore(string path)
             cmd.CommandText="ALTER TABLE items ADD COLUMN search_text TEXT NOT NULL DEFAULT ''";cmd.ExecuteNonQuery();
             c.CreateFunction<string,string>("wx_normalize",ContentItem.SearchKey);cmd.CommandText="UPDATE items SET search_text=wx_normalize(name||' '||category)";cmd.ExecuteNonQuery();
         }
+        InitializeCatalog(c);
     });
     public Task<List<SourceConfig>> SourcesAsync() => Task.Run(() =>
     {
@@ -55,19 +56,21 @@ public sealed partial class LibraryStore(string path)
                 using var c = Open(); using var tx = c.BeginTransaction();
                 using (var del = c.CreateCommand()) { del.Transaction = tx; del.CommandText = "DELETE FROM items WHERE source=$s"; del.Parameters.AddWithValue("$s", source.Id); del.ExecuteNonQuery(); }
                 using var insert = c.CreateCommand(); insert.Transaction = tx;
-                insert.CommandText = "INSERT OR REPLACE INTO items(id,source,provider,name,category,kind,url,logo,epg,extension,catchup,days,ua,referrer,search_text,epg_name) VALUES($id,$s,$p,$n,$c,$k,$u,$l,$e,$x,$a,$d,$ua,$r,$search,$epgname)";
-                foreach (var key in new[] { "$id", "$s", "$p", "$n", "$c", "$k", "$u", "$l", "$e", "$x", "$a", "$d", "$ua", "$r", "$search", "$epgname" }) insert.Parameters.Add(new SqliteParameter(key, ""));
+                insert.CommandText = "INSERT OR REPLACE INTO items(id,source,provider,name,category,kind,url,logo,epg,extension,catchup,days,ua,referrer,search_text,epg_name,series_id,series_name,season,episode) VALUES($id,$s,$p,$n,$c,$k,$u,$l,$e,$x,$a,$d,$ua,$r,$search,$epgname,$series,$seriesname,$season,$episode)";
+                foreach (var key in new[] { "$id", "$s", "$p", "$n", "$c", "$k", "$u", "$l", "$e", "$x", "$a", "$d", "$ua", "$r", "$search", "$epgname", "$series", "$seriesname", "$season", "$episode" }) insert.Parameters.Add(new SqliteParameter(key, ""));
                 insert.Prepare(); int count = 0;
-                await foreach (var item in input.WithCancellation(ct))
+                await foreach (var original in input.WithCancellation(ct))
                 {
                     ct.ThrowIfCancellationRequested();
-                    object[] values = [item.Id, source.Id, item.ProviderId, item.Name, item.Category, (int)item.Kind, item.Url, item.Logo, item.EpgId, item.Extension, item.Catchup, item.CatchupDays, item.UserAgent, item.Referrer, ContentItem.SearchKey(item.Name+" "+item.Category), item.EpgName];
+                    var item=CatalogClassifier.Normalize(original,source.Kind);
+                    object[] values = [item.Id, source.Id, item.ProviderId, item.Name, item.Category, (int)item.Kind, item.Url, item.Logo, item.EpgId, item.Extension, item.Catchup, item.CatchupDays, item.UserAgent, item.Referrer, ContentItem.SearchKey(item.Name+" "+item.Category), item.EpgName,item.SeriesId,item.SeriesName,item.Season,item.Episode];
                     for (int i = 0; i < values.Length; i++) insert.Parameters[i].Value = values[i];
                     insert.ExecuteNonQuery(); count++;
                     if (count % 500 == 0) progress?.Report(new(count, $"{count:N0} içerik işleniyor…"));
                 }
                 if (count == 0) throw new InvalidOperationException("Kaynakta oynatılabilir içerik bulunamadı. Önceki kütüphane korundu.");
                 ct.ThrowIfCancellationRequested();
+                RebuildSeries(c,tx,source.Id);
                 source.UpdatedAt = DateTimeOffset.Now;
                 using var save = c.CreateCommand(); save.Transaction = tx; save.CommandText = "INSERT OR REPLACE INTO sources VALUES($id,$secret)";
                 save.Parameters.AddWithValue("$id", source.Id); save.Parameters.AddWithValue("$secret", SecretVault.Protect(source)); save.ExecuteNonQuery();
@@ -76,44 +79,49 @@ public sealed partial class LibraryStore(string path)
         }
         finally { _writer.Release(); }
     }
-    public Task<Page> QueryAsync(string? source, ContentKind? kind, string? category, string search, bool favorites, bool recent, int offset, int limit = 150, CancellationToken ct = default) => Task.Run(() =>
+    public Task<Page> QueryAsync(string? source, ContentKind? kind, string? category, string search, bool favorites, bool recent, int offset, int limit = 150, CancellationToken ct = default, string? itemId = null, bool recommend = false, string? exceptId = null, string? parent = null) => Task.Run(() =>
     {
         using var c = Open(); using var cmd = c.CreateCommand();
         using var reg = ct.Register(cmd.Cancel);
         var where = " WHERE ($s='' OR i.source=$s) AND ($k=-1 OR i.kind=$k) AND ($c='' OR i.category=$c) AND ($q='' OR i.search_text LIKE $q ESCAPE '~')";
+        where += " AND ($k=3 OR i.kind<>3)";
+        if(itemId is not null){where+=" AND i.id=$id";cmd.Parameters.AddWithValue("$id",itemId);}
+        if(parent is not null){where+=" AND i.series_id=$parent";cmd.Parameters.AddWithValue("$parent",parent);}
+        if(recommend)where+=" AND i.kind IN(1,2)";
+        if(exceptId is not null){where+=" AND i.id<>$except";cmd.Parameters.AddWithValue("$except",exceptId);}
         if (favorites) where += " AND f.id IS NOT NULL";
         if (recent) where += " AND h.id IS NOT NULL";
-        string from = " FROM items i LEFT JOIN favorites f ON f.id=i.id LEFT JOIN history h ON h.id=i.id";
+        string from = " FROM items i LEFT JOIN favorites f ON f.id=i.id LEFT JOIN history h ON h.id=i.id LEFT JOIN playback_progress p ON p.item=CASE WHEN i.kind=2 THEN (SELECT item FROM playback_progress WHERE series=i.id ORDER BY updated DESC LIMIT 1) ELSE i.id END";
         cmd.Parameters.AddWithValue("$s", source ?? ""); cmd.Parameters.AddWithValue("$k", kind is null ? -1 : (int)kind);
         cmd.Parameters.AddWithValue("$c", category ?? "");
         cmd.Parameters.AddWithValue("$q", search.Length == 0 ? "" : "%" + ContentItem.SearchKey(search).Replace("~", "~~").Replace("%", "~%").Replace("_", "~_") + "%");
         cmd.CommandText = "SELECT COUNT(*)" + from + where;
         int total = Convert.ToInt32(cmd.ExecuteScalar()); ct.ThrowIfCancellationRequested();
-        cmd.CommandText = "SELECT i.id,i.source,i.provider,i.name,i.category,i.kind,i.url,i.logo,i.epg,i.extension,i.catchup,i.days,i.ua,i.referrer,f.id IS NOT NULL,i.epg_name" + from + where + (recent ? " ORDER BY h.played DESC" : " ORDER BY i.name COLLATE NOCASE") + " LIMIT $limit OFFSET $offset";
+        cmd.CommandText = "SELECT i.id,i.source,i.provider,i.name,i.category,i.kind,i.url,i.logo,i.epg,i.extension,i.catchup,i.days,i.ua,i.referrer,f.id IS NOT NULL,i.epg_name,i.series_id,i.series_name,i.season,i.episode,p.item,p.source,p.series,p.name,p.position,p.duration,p.completed,p.updated" + from + where + (recommend ? " ORDER BY length(trim(i.logo))=0,random()" : parent is not null ? " ORDER BY i.season,i.episode,i.name COLLATE NOCASE" : recent ? " ORDER BY h.played DESC" : " ORDER BY i.name COLLATE NOCASE") + " LIMIT $limit OFFSET $offset";
         cmd.Parameters.AddWithValue("$limit", limit); cmd.Parameters.AddWithValue("$offset", offset);
         using var r = cmd.ExecuteReader(); var list = new List<ContentItem>();
-        while (r.Read()) { ct.ThrowIfCancellationRequested(); list.Add(new ContentItem { Id=r.GetString(0),SourceId=r.GetString(1),ProviderId=r.GetString(2),Name=r.GetString(3),Category=r.GetString(4),Kind=(ContentKind)r.GetInt32(5),Url=r.GetString(6),Logo=r.GetString(7),EpgId=r.GetString(8),Extension=r.GetString(9),Catchup=r.GetString(10),CatchupDays=r.GetInt32(11),UserAgent=r.GetString(12),Referrer=r.GetString(13),IsFavorite=r.GetBoolean(14),EpgName=r.GetString(15) }); }
+        while (r.Read()) { ct.ThrowIfCancellationRequested(); list.Add(new ContentItem { Id=r.GetString(0),SourceId=r.GetString(1),ProviderId=r.GetString(2),Name=r.GetString(3),Category=r.GetString(4),Kind=(ContentKind)r.GetInt32(5),Url=r.GetString(6),Logo=r.GetString(7),EpgId=r.GetString(8),Extension=r.GetString(9),Catchup=r.GetString(10),CatchupDays=r.GetInt32(11),UserAgent=r.GetString(12),Referrer=r.GetString(13),IsFavorite=r.GetBoolean(14),EpgName=r.GetString(15),SeriesId=r.GetString(16),SeriesName=r.GetString(17),Season=r.GetInt32(18),Episode=r.GetInt32(19),Progress=r.IsDBNull(20)?null:new WatchProgress(r.GetString(20),r.GetString(21),r.GetString(22),r.GetString(23),r.GetInt64(24),r.GetInt64(25),r.GetBoolean(26),r.GetInt64(27)) }); }
         return new Page(list,total);
     }, ct);
     public Task<LibraryStats> StatsAsync(string? source) => Task.Run(() =>
     {
         using var c=Open(); using var cmd=c.CreateCommand(); cmd.CommandText="SELECT kind,COUNT(*) FROM items WHERE ($s='' OR source=$s) GROUP BY kind"; cmd.Parameters.AddWithValue("$s",source??"");
         var counts=new int[4]; using(var r=cmd.ExecuteReader()) while(r.Read()) counts[r.GetInt32(0)]=r.GetInt32(1);
-        cmd.CommandText="SELECT COUNT(*) FROM items i JOIN favorites f ON f.id=i.id WHERE ($s='' OR i.source=$s)";
-        return new LibraryStats(counts[0],counts[1],counts[2]+counts[3],Convert.ToInt32(cmd.ExecuteScalar()));
+        cmd.CommandText="SELECT COUNT(*) FROM items i JOIN favorites f ON f.id=i.id WHERE i.kind<>3 AND ($s='' OR i.source=$s)";
+        return new LibraryStats(counts[0],counts[1],counts[2],Convert.ToInt32(cmd.ExecuteScalar()));
     });
     public Task<List<string>> CategoriesAsync(string? source, ContentKind? kind) => Task.Run(() =>
     {
-        using var c=Open(); using var cmd=c.CreateCommand(); cmd.CommandText="SELECT DISTINCT category FROM items WHERE ($s='' OR source=$s) AND ($k=-1 OR kind=$k) ORDER BY category COLLATE NOCASE";
+        using var c=Open(); using var cmd=c.CreateCommand(); cmd.CommandText="SELECT DISTINCT category FROM items WHERE kind<>3 AND ($s='' OR source=$s) AND ($k=-1 OR kind=$k) ORDER BY category COLLATE NOCASE";
         cmd.Parameters.AddWithValue("$s",source??"");cmd.Parameters.AddWithValue("$k",kind is null?-1:(int)kind);
         using var r=cmd.ExecuteReader();var list=new List<string>{"Tüm kategoriler"};while(r.Read())list.Add(r.GetString(0));return list;
     });
     public async Task FavoriteAsync(string id,bool value) => await WriteAsync(c => { using var cmd=c.CreateCommand();cmd.CommandText=value?"INSERT OR IGNORE INTO favorites VALUES($id)":"DELETE FROM favorites WHERE id=$id";cmd.Parameters.AddWithValue("$id",id);cmd.ExecuteNonQuery(); });
-    public async Task RememberAsync(string id) => await WriteAsync(c => { using var cmd=c.CreateCommand();cmd.CommandText="INSERT OR REPLACE INTO history VALUES($id,$t)";cmd.Parameters.AddWithValue("$id",id);cmd.Parameters.AddWithValue("$t",DateTimeOffset.Now.ToUnixTimeSeconds());cmd.ExecuteNonQuery(); });
+    public async Task RememberAsync(string id) => await WriteAsync(c => { using var cmd=c.CreateCommand();cmd.CommandText="INSERT OR REPLACE INTO history VALUES($id,$t)";cmd.Parameters.AddWithValue("$id",id);cmd.Parameters.AddWithValue("$t",DateTimeOffset.Now.ToUnixTimeMilliseconds());cmd.ExecuteNonQuery(); });
     public async Task DeleteSourceAsync(string id) => await WriteAsync(c =>
     {
         using var tx=c.BeginTransaction(); using var cmd=c.CreateCommand(); cmd.Transaction=tx;cmd.Parameters.AddWithValue("$s",id);
-        cmd.CommandText="DELETE FROM epg_matches WHERE item IN(SELECT id FROM items WHERE source=$s); DELETE FROM epg_aliases WHERE source=$s; DELETE FROM epg_state WHERE source=$s; DELETE FROM favorites WHERE id IN(SELECT id FROM items WHERE source=$s); DELETE FROM history WHERE id IN(SELECT id FROM items WHERE source=$s); DELETE FROM items WHERE source=$s; DELETE FROM epg WHERE source=$s; DELETE FROM sources WHERE id=$s;";cmd.ExecuteNonQuery();tx.Commit();
+        cmd.CommandText="DELETE FROM playback_progress WHERE source=$s; DELETE FROM epg_matches WHERE item IN(SELECT id FROM items WHERE source=$s); DELETE FROM epg_aliases WHERE source=$s; DELETE FROM epg_state WHERE source=$s; DELETE FROM favorites WHERE id IN(SELECT id FROM items WHERE source=$s); DELETE FROM history WHERE id IN(SELECT id FROM items WHERE source=$s); DELETE FROM items WHERE source=$s; DELETE FROM epg WHERE source=$s; DELETE FROM sources WHERE id=$s;";cmd.ExecuteNonQuery();tx.Commit();
     });
     private async Task WriteAsync(Action<SqliteConnection> action)
     {
