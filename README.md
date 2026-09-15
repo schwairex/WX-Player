@@ -1,197 +1,501 @@
-# WX Player 1.5.3
+<div align="center">
 
-**Kendi kaynağınız. Kendi kütüphaneniz.** Windows için C# / WPF ile geliştirilmiş yerel IPTV ve medya oynatıcısı. Koyu arayüz, Fluent tasarımından esinlenen kontroller, Direct3D video çıkışı ve SQLite tabanlı yerel veri altyapısı.
+# WX Player
 
-![WX Player](docs/WX-Player-preview.png)
+### Kendi kaynağınız. Kendi kütüphaneniz.
 
-## 1.5.3 — Kesintisiz kaydırma, hızlı afişler
+Windows için modern, yerel IPTV ve medya oynatıcısı.<br>
+Canlı TV, filmler ve diziler — tek bir kütüphanede.
 
-Ana sayfa tekerlekle kartların üzerinden de baştan sona kaydırılır. Afişler tek indirme, LRU bellek ve kalıcı disk önbelleğiyle yüklenir. Ana sayfa yalnız başarıyla yüklenen afişleri gösterir; afişsiz içerikler tam kütüphanede kalır. Film/dizi kartları afişi dolduran 2:3 düzende, üst öneri ise sınırlı yükseklikte sinematik bir paneldedir.
+<p>
+  <a href="docs/RELEASE-NOTES-1.5.3.md"><img src="https://img.shields.io/badge/s%C3%BCr%C3%BCm-1.5.3-bce784?style=for-the-badge&amp;labelColor=151b23" alt="Bu kaynak sürümü: 1.5.3"></a>
+  <img src="https://img.shields.io/badge/Windows-10%20%2F%2011%20x64-e6edf3?style=for-the-badge&amp;labelColor=151b23" alt="Windows 10 ve 11 x64">
+  <img src="https://img.shields.io/badge/.NET-10-9b8afb?style=for-the-badge&amp;logo=dotnet&amp;logoColor=white&amp;labelColor=151b23" alt=".NET 10">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/lisans-MIT-bce784?style=for-the-badge&amp;labelColor=151b23" alt="Uygulama kodu: MIT lisansı"></a>
+</p>
 
-[1.5.3 sürüm notları](docs/RELEASE-NOTES-1.5.3.md) · [Test raporu](docs/TEST-REPORT-1.5.3.md) · [GitHub yayını](docs/GITHUB-RELEASES.md)
+<p>
+  <a href="https://github.com/schwairex/WX-Player/releases/latest"><img src="https://img.shields.io/github/v/release/schwairex/WX-Player?style=flat-square&amp;label=GitHub%20Release&amp;color=bce784&amp;labelColor=151b23" alt="GitHub'daki son yayımlanan sürüm"></a>
+  <a href="https://github.com/schwairex/WX-Player/actions/workflows/windows.yml"><img src="https://img.shields.io/github/actions/workflow/status/schwairex/WX-Player/windows.yml?style=flat-square&amp;label=Windows%20build&amp;labelColor=151b23" alt="GitHub Actions Windows derleme durumu"></a>
+  <img src="https://img.shields.io/badge/aray%C3%BCz-WPF-9b8afb?style=flat-square&amp;labelColor=151b23" alt="Yerel WPF arayüzü">
+  <img src="https://img.shields.io/badge/medya-LibVLC-f4b66a?style=flat-square&amp;labelColor=151b23" alt="LibVLC medya motoru">
+</p>
 
-## Korunan 1.5.2 özellikleri — Daha sade ve düzenli bir ana sayfa
+**[Son sürümü indir](https://github.com/schwairex/WX-Player/releases/latest)** · **[Kurulum](#kurulum)** · **[Özellikler](#ozellikler)** · **[Sürüm geçmişi](#surum-gecmisi)** · **[Sorun bildir](https://github.com/schwairex/WX-Player/issues)**
 
-Öneri alanı artık sınırlı yükseklikte, kompakt bir paneldir. Büyük afişler sayfayı kaplamaz. Son izlenenler ve favorilerde farklı içerik türleri eşit kart ölçüleriyle gösterilir; filmler ve diziler ortak afiş düzeni kullanır. Uzun başlıklar, izleme konumları, klavye odağı ve dar pencere araması için ayrılan alanlar tutarlıdır.
+![WX Player ana sayfası](docs/WX-Player-preview.png)
 
-[1.5.2 sürüm notları](docs/RELEASE-NOTES-1.5.2.md) · [Test raporu](docs/TEST-REPORT-1.5.2.md) · [GitHub yayını](docs/GITHUB-RELEASES.md)
+<sub>Örnek test kütüphanesi. Gerçek kullanımda içerikler, afişler ve kanal logoları kendi kaynağınızdan gelir.</sub>
 
-Önizleme kontrollü test kütüphanesine aittir; gerçek kullanımda afiş ve içerikler kendi kaynağınızdan gelir.
+</div>
 
-## Korunan 1.5.1 özellikleri — Diziler tek kartta, kaldığınız yer kayıtlı
+---
 
-**Filmler** ve **Diziler** ayrımı düzeltildi. M3U bölüm/sezon işaretleri tanınır; aynı dizinin bölümleri afiş ve isimle tek kartta toplanır. Kart sezon/bölüm penceresini açar. Kayıtlı 1.5 kütüphanesi ilk açılışta arka planda dönüştürülür; favori ve geçmiş korunur.
+WX Player; M3U oynatma listelerinizi, Xtream Codes hesabınızı ve uyumlu Stalker portalınızı bir araya getirir. Kaynaklardan gelen kanalları, filmleri ve dizileri yerel kütüphanenize kaydeder; favoriler, yayın rehberi ve kaldığınız yerden devam etme özellikleriyle izlemeyi kolaylaştırır.
 
-Üst öneri her açılışta kaynak kataloğundan seçilir. Alternatif varsa önceki öneri tekrarlanmaz. Film/seri afişleri ve kanal logoları oranları korunarak daha düzenli kartlarda gösterilir. Tam ekranda favori yıldızına basmak yayını değiştirmez.
+Uygulama **kanal paketi, IPTV aboneliği veya içerik sunucusu sağlamaz**. Kendi erişim hakkınız bulunan kaynakları ekleyerek kullanabilirsiniz. C# / WPF ile geliştirilen istemci, katalog ve veri katmanları WX Player'a; medya oynatma altyapısı açık kaynak LibVLC'ye dayanır.
 
-Filmin dakikası ve dizinin son izlenen bölümü/dakikası kaydedilir. İçerik yeniden oynatıldığında, akış seek destekliyorsa kayıtlı konuma gidilir. Bölüm penceresinde **Baştan oynat** seçeneği vardır. Eski sürümler dakika bilgisi tutmadığı için bu bilgi 1.5.1'den itibaren birikir. Ayarlar'dan izleme geçmişini temizlemek konumları da temizler.
+> **1.5.3'te yenilik:** Kartların üzerinde kesintisiz sayfa kaydırma, kalıcı afiş önbelleği, ana sayfada yalnız yüklenebilen görseller ve daha düzenli 2:3 film/dizi kartları. [Sürüm notları →](docs/RELEASE-NOTES-1.5.3.md)
 
-[1.5.1 sürüm notları](docs/RELEASE-NOTES-1.5.1.md) · [Test raporu](docs/TEST-REPORT-1.5.1.md) · [GitHub yayını](docs/GITHUB-RELEASES.md)
+## İçindekiler
 
-## Korunan 1.5 özellikleri — Kütüphanenize yeni bir ana sayfa
+- [Öne çıkan özellikler](#ozellikler)
+- [Kurulum ve ilk kullanım](#kurulum)
+- [Kütüphane ve ana sayfa](#kutuphane)
+- [Oynatıcı, EPG ve kayıt](#oynatici)
+- [Klavye ve fare kısayolları](#kisayollar)
+- [Otomatik güncelleme](#guncelleme)
+- [Yerel veriler ve gizlilik](#veriler)
+- [Sık sorulan sorular](#sss)
+- [Geliştirme, test ve yayınlama](#gelistirme)
+- [Sürüm geçmişi](#surum-gecmisi)
+- [Katkıda bulunma ve lisans](#katki)
 
-Seçili M3U / Xtream kaynağından gelen afişler, kompakt bir öneri alanı ve yatay **Son izlenenler / Favorilerin / Filmler / Diziler / Şimdi canlı** sıraları. Boş sıralar gizlenir; her sırada en fazla 12 kart yüklenir. **Tümünü gör** ilgili tam listeyi açar. Kaynağın kapak görseli yoksa içerik adıyla sade bir kapak kullanılır. Harici katalogdan içerik veya puan üretilmez.
+<a id="ozellikler"></a>
+## Öne çıkan özellikler
 
-Sol menüyü başlığın yanındaki menü düğmesiyle, W simgesiyle veya **Ctrl+B** ile daraltıp genişletebilirsiniz. Tercih sonraki açılışta korunur. Küçük pencerede geniş menü içerik üzerine açılır; sol üstteki okla kapanır. **Ctrl+K** ana sayfadayken ana sayfa aramasına gider.
+| Alan | WX Player ile yapabilecekleriniz |
+| :--- | :--- |
+| **Kaynaklar** | Yerel dosya veya URL ile M3U / M3U8 / TXT; Xtream Codes API; uyumlu Stalker / MAG portalları. |
+| **Büyük kütüphaneler** | 100.000+ içerik için asenkron içe aktarma, iptal desteği, SQLite katalog, sayfalama ve sanallaştırılmış listeler. |
+| **Ana sayfa** | Kaynağınızdan öneriler, Filmler, Diziler, Şimdi canlı, Son izlenenler ve Favorilerin rafları. |
+| **Arama ve filtreler** | Türkçe karakterleri sadeleştiren arama; kaynak, tür, kategori, favori ve geçmiş filtreleri. |
+| **Afişler ve logolar** | Arka planda yükleme, aynı adres için tek indirme, bellek ve disk önbelleği; düzenli afiş ve logo kartları. |
+| **Favoriler ve devam etme** | Normal/tam ekran görünümünde favoriye ekleme; filmin dakikasını ve dizinin son bölümünü/konumunu kaydetme. |
+| **Yayın rehberi** | XMLTV / XMLTV.gz, kanal eşleştirme, şimdi/sıradaki program, gün seçimi ve Xtream EPG desteği. |
+| **Canlı geri sarma** | Uyumlu HTTP/HTTPS yayınlarda biriken son 60 saniyeye kadar yerel tampon ve tek tıkla canlıya dönüş. |
+| **PVR ve Catch-Up** | Manuel yayın kaydı; sağlayıcı destekliyorsa geçmiş programı arşivden tekrar izleme. |
+| **Windows medya motoru** | LibVLC, Direct3D 11/9 video çıkışı, D3D11VA donanım çözme ve yazılım çözme seçeneği. |
+| **Ses ve altyazı** | Çoklu ses/altyazı parçası seçimi; harici SRT, ASS, SSA, VTT ve SUB dosyaları. |
+| **Tam ekran** | Otomatik gizlenen kontroller; içerik, kategori ve arama paneli; oynatma sırasında favori yönetimi. |
+| **Yayın istatistikleri** | Sunulan verilere göre codec, çözünürlük, FPS, ses bilgisi, giriş hızı ve video sayaçları. |
+| **Masaüstü deneyimi** | Inter yazı tipi, SVG simgeler, koyu tema, daraltılabilir sol menü ve pencereye uyarlanan düzen. |
+| **Güncellemeler** | GitHub Releases kontrolü, arka planda indirme, SHA-256 doğrulaması ve kullanıcı seçimiyle yeniden başlatma. |
 
-Tam ekran kategori paneli ve oynatma çubuğu aynı genişliktedir. İçerik türü, kategori ve arama etiketleri; daha sade kanal kartları ve sayfa düğmeleriyle seçim alanı yenilendi. Fare hareketiyle açılma ve otomatik gizlenme korunur.
+<a id="kurulum"></a>
+## Kurulum ve ilk kullanım
 
-[1.5 sürüm notları](docs/RELEASE-NOTES-1.5.0.md) · [Test raporu](docs/TEST-REPORT-1.5.md) · [GitHub yayını](docs/GITHUB-RELEASES.md)
+### Sistem gereksinimleri
 
-## Korunan 1.4 özellikleri — Canlıya dönün, izlemeyi kesmeyin
+| Gereksinim | Açıklama |
+| :--- | :--- |
+| İşletim sistemi | Windows 10 / 11, **64 bit (x64)**. Windows 11 önerilir. |
+| Çalışma zamanı | Dağıtım .NET 10 çalışma zamanını ve LibVLC'yi içerir; ayrıca .NET 10 veya VLC kurmanız gerekmez. Tek EXE başlatıcısı Windows'un .NET Framework 4.x bileşenini kullanır. |
+| Disk alanı | Tek EXE'nin ilk açılışta açılması için yaklaşık 500 MB boş alan; afiş önbelleği ve kayıtlar için ek alan. |
+| Bağlantı | Çevrimiçi yayınlar, kaynak yenileme, afiş/EPG indirme ve güncelleme kontrolü için internet. |
+| Grafik donanımı | Donanım çözme desteği ekran kartına, sürücüye ve yayın codec'ine bağlıdır; yazılım çözme seçilebilir. |
 
-60 saniyeye kadar yerel canlı geri sarma, tam ekranda kategori/kanal seçimi, asenkron kanal logoları ve yenilenen masaüstü panelleri.
+### Seçenek 1 — Tek EXE
 
-[1.4 sürüm notları ve kapsam](docs/RELEASE-NOTES-1.4.0.md) · [Test raporu](docs/TEST-REPORT-1.4.md) · [GitHub yayını](docs/GITHUB-RELEASES.md)
+1. **[Releases sayfasını](https://github.com/schwairex/WX-Player/releases/latest)** açın.
+2. Sürümün **Assets** bölümünden `WXPlayer-1.5.3.exe` veya o sürüme ait `WXPlayer.exe` dosyasını indirin.
+3. EXE'yi çalıştırın. İlk açılışta dosyalar kullanıcı klasörüne açılır; sonraki açılışlarda bu dosyalar kullanılır.
+4. **Kaynak ekle** düğmesiyle kütüphanenizi bağlayın.
 
-Tampon kanalı açınca birikir. Timeline veya sol/sağ ok ile geçmişe gidin; **CANLIYA DÖN** ile güncel yayına geçin. HTTP/HTTPS canlı yayınlar desteklenir; ilk hazırlık birkaç saniye sürebilir. Desteklenmeyen akışta doğrudan oynatma korunur. Ayrıntılar sürüm notlarındadır.
+Yönetici yetkisi isteyen bir sistem kurulumu yapılmaz. Uygulama dosyaları `%LOCALAPPDATA%\WXPlayer\application` altında tutulur. Dağıtım EXE'si şu anda kod imzalı değildir; yayımlanan `SHA256SUMS` dosyasıyla bütünlüğünü kontrol edebilirsiniz. Sağlama toplamı, kod imzasının yerine geçmez.
 
-Tam ekranda fareyi hareket ettirin: kategori, arama ve kanal kartları alt kontrollerin üzerinde açılır. Aynı panelden film ve dizilere de geçilebilir. Logo yüklemeleri en fazla altı eşzamanlı istek ve 96 çözünürlük/adres girdilik bellek önbelleği kullanır. PNG/JPEG/GIF/BMP/ICO gibi WPF'nin okuyabildiği görseller desteklenir; hatalı/çok büyük/okunamayan logolarda harf simgesi kalır.
+### Seçenek 2 — Taşınabilir ZIP
 
-## Korunan 1.3 özellikleri — Daha düzenli bir izleme alanı
+1. Releases içinden `WXPlayer-1.5.3-portable.zip` veya `WXPlayer-win-x64.zip` dosyasını indirin.
+2. ZIP'in **tamamını** bir klasöre çıkarın.
+3. Klasördeki `WXPlayer.exe` dosyasını çalıştırın.
 
-* Arama, kategori ve kanal listesi aynı **Kütüphane** panelinde. Arama yazısı görünürlüğü düzeltildi; tek tuşla temizleme ve Ctrl+K erişimi var.
-* Canlı kanal, film, dizi ve favori sayıları sol menüdeki **Kütüphane özeti** kartında. Küçük pencerelerde üstteki kütüphane simgesinden açılır.
-* Timeline ve ses çubuğunun tamamında **36 px tıklama/sürükleme alanı**, daha belirgin tutamaçlar ve sürüklerken hedef zaman gösterimi. Timeline bırakıldığında seçilen konuma gider; yayın ileri sarmayı desteklemiyorsa kontrol devre dışıdır.
-* **Yayın akışı** ayrı, okunaklı kartlarla gösterilir. İzlenen kanal adı, gün seçimi, Şimdi/Sıradaki bilgisi ve ilerleme görünür. Oynatıcı ile rehber arasındaki tutamaç sürüklenebilir; rehber başlığındaki genişlet düğmesi alanı büyütür.
-* **Ses ve altyazılar** ayarlarla uyumlu kart tasarımına taşındı. Parça listesi açıkken yenilenir; ses/altyazı seçimi anında uygulanır, harici altyazı ekleme aynı pencerededir.
-* Daha küçük pencerelerde sade karşılama alanı ve simge menüsü; tam ekran, EPG eşleştirme, kayıt ve otomatik güncelleme altyapısı korunur.
+ZIP içindeki küçük EXE'yi tek başına taşımayın; yanındaki çalışma zamanı ve medya dosyaları gereklidir. Taşınabilir dağıtım da kullanıcı verilerini varsayılan olarak `%LOCALAPPDATA%\WXPlayer` altında saklar. GitHub'ın otomatik oluşturduğu **Source code** arşivleri hazır uygulama değildir.
 
-[1.3 sürüm notları](docs/RELEASE-NOTES-1.3.0.md) · [Test raporu](docs/TEST-REPORT-1.3.md) · [GitHub yayını](docs/GITHUB-RELEASES.md)
+### Kaynağınızı bağlayın
 
-## Korunan 1.2 özellikleri — Rehber, istatistikler ve otomatik güncelleme
+| Kaynak türü | Gireceğiniz bilgi | Yüklenen içerik |
+| :--- | :--- | :--- |
+| **M3U / M3U8 / TXT** | Oynatma listesi URL'si veya yerel dosya | Listedeki kanallar, filmler ve tanınabilen dizi bölümleri; kategori, logo ve rehber bilgileri. |
+| **Xtream Codes** | Sunucu adresi, kullanıcı adı ve şifre | Canlı TV, film ve dizi kategorileri; dizi seçildiğinde bölüm listeleri. Desteklenen `get.php` bağlantılarından hesap bilgileri ayrıştırılabilir. |
+| **Stalker / MAG** | Portal adresi ve hesabınıza tanımlı MAC adresi | Portalın sunduğu uyumlu kanal, film ve temel dizi katalogları. |
+| **DirectShow** | Windows kamera/yakalama aygıtının tam adı | Yerel yakalama aygıtından görüntü; otomatik aygıt keşfi bulunmaz. |
 
-* **XMLTV EPG Parser & Channel Matcher:** WX Player'ın kendi akış tabanlı ayrıştırıcısı ve kaynak bazında indekslenmiş kanal eşleştiricisi. Harici bir servis ya da bu isimde doğrulanmamış bir paket bağımlılığı kullanılmaz. Standart XMLTV DOCTYPE satırı dış kaynağa erişmeden işlenir; gzip içerik uzantı yerine imzasından tanınır. `tvg-id`, `tvg-name` ve XMLTV `display-name` bilgileri eşleştirilir. HD/FHD gibi kalite ekleri ad karşılaştırmasında ayıklanır; belirsiz eşleşme tahmin edilmez, elle seçim sunulur.
-* Rehber, kaynak yüklendiğinde ve canlı kanal seçildiğinde otomatik hazırlanır. Geçerli önbellek 6 saat kullanılır; başarısız bağlantı 5 dakika sonra yeniden denenebilir. Aynı kaynak için eşzamanlı indirmeler birleştirilir. Hatalı/boş XMLTV önceki rehberi silmez. İzlenen kanalın rehberi gösterilir; hızlı kanal değişiminde eski yanıt yeni kanala uygulanmaz.
-* Xtream `get_short_epg` ve `get_simple_data_table` yedek sorguları; get.php şeklindeki M3U bağlantısından hesap ve gerçek yayın kimliği keşfi. Unix saatleri önceliklidir, tarih metninde sunucunun bildirdiği saat dilimi kullanılır. XMLTV'de bitiş yoksa aynı kanalın sonraki başlangıcından türetilir; son program için süre uydurulmaz.
-* Oynatıcının **istatistik** simgesi veya **I**: codec, çözünürlük, kaynak FPS, görüntü oranı, ses örnekleme hızı/kanal sayısı, varsa parça bit hızı, giriş hızı ve video sayaçları. Her saniye yenilenir; URL'nin hesap/token içerebilen yolu gizlenir. GPU tercihi istenen ayardır, gerçek GPU kullanım yüzdesi değildir. LibVLC'nin sunmadığı kapsayıcı/piksel formatı gibi alanlar tahmin edilmez.
-* Modern **Ayarlar**: oynatma, kütüphane, güncellemeler sekmeleri; kaynak düzenleme/kaldırma, tüm favorileri veya izleme geçmişini temizleme. Silme işlemlerinde kapsam açıklanır ve onay istenir. Diskteki PVR kayıtları silinmez.
-* **GitHub Releases güncelleyicisi:** [schwairex/WX-Player](https://github.com/schwairex/WX-Player) deposunu açılışta ve 4 saatte bir kontrol eder. Yeni kararlı sürüm arka planda indirilir, boyutu ve SHA-256 özeti doğrulanır; ardından yeniden başlatma penceresi açılır. “Daha sonra” oynatmaya devam eder. Kayıt sürerken yeniden başlatma yapılmaz.
+İçe aktarma arka planda sürer. Bittiğinde kaynak seçicisinden kütüphanenizi seçin; **Canlı TV**, **Filmler** veya **Diziler** bölümünü açın. Kaynakta EPG adresi varsa rehber arka planda hazırlanır; gerektiğinde ayrıca XMLTV URL'si veya dosyası tanımlayabilirsiniz.
 
-**1.1 kullanıcıları için:** 1.1 içinde güncelleyici yoktur; 1.2 EXE bir kez elle açılmalıdır. Sonraki sürümler bu sistemden alınabilir. Uygulama kapalıyken kontrol yapılamaz; açıkken kontrol aralığı 4 saattir, Ayarlar'dan anında kontrol edilebilir. EPG'nin görünmesi sağlayıcının o kanal/gün için program verisi sunmasına bağlıdır.
+M3U ayrıştırıcı UTF-8/BOM, `EXTINF`, grup, `tvg-id`, `tvg-name`, logo, rehber adresi, göreli URL, kullanıcı aracısı ve referrer bilgilerini destekler. HLS medya/master manifestleri tek oynatılabilir akış olarak ele alınır. Stalker portallarının cihaz kimliği ve oturum gereksinimleri değişebildiğinden her portal varyantı desteklenmeyebilir.
 
-Güncelleme mevcut EXE'nin üzerine yazmaz. Doğrulanan yeni başlatıcı `updates` klasörüne alınır; önceki süreç kapandıktan sonra açılır. Yeni uygulama başarıyla ilklenince `active-update.txt` atomik olarak etkinleştirilir. 1.2 veya daha yeni eski başlatıcılar sonraki açılışta yeni sürüme yönlenir. Kullanıcı verileri aynı klasörde kalır; indirme/başlatma başarısızlığında önceki EXE korunur. Eski 1.0/1.1 kısayollarını 1.2 EXE'ye yönlendirin. Güncellemeler ve eski çıkarılmış paketler otomatik silinmez; yeterli boş alan bulunmalıdır. SHA-256 bütünlük kontrolüdür; kod imzalama sertifikasının yerine geçmez.
+<a id="kutuphane"></a>
+## Kütüphane ve ana sayfa
 
-[GitHub'da yeni sürüm yayımlama](docs/GITHUB-RELEASES.md) · [1.2 test raporu](docs/TEST-REPORT-1.2.md)
+### İçeriğinize odaklanan tasarım
 
-## Korunan 1.1 arayüz ve tam ekran özellikleri
+Ana sayfa seçili kaynaktan beslenir. Üst öneri açılışta seçilir; alternatif varsa önceki önerinin tekrarlanmaması hedeflenir. **Filmler** ve **Diziler** ayrı sunulur; bir dizinin bölümleri ana sayfayı doldurmak yerine tek dizi kartında toplanır. Dizi kartından sezon ve bölüm seçebilirsiniz.
 
-* **Inter** fontu Regular / Medium / SemiBold / Bold ağırlıklarıyla uygulamaya gömülüdür. Font kurulumu veya font için ağ bağlantısı gerekmez.
-* Menü, arama, favori, EPG ve oynatıcı kontrollerinde aynı çizgi kalınlığına sahip özgün **SVG** simgeler kullanılır. SVG dosyaları `Assets/Icons` altındadır ve WPF vektör geometrisi olarak çizilir.
-* Daha okunaklı yazı hiyerarşisi, sade menü, yumuşak yeşil vurgu, daha düzenli satırlar ve küçük pencerelerde simge menüsü.
-* Video artık kendisine ayrılmış **yerel child HWND** içinde çizilir. Önceki LibVLCSharp.WPF saydam yardımcı pencere katmanı kaldırılmıştır; normal oynatımda arayüzün üzerinde karartıcı bir pencere bulunmaz. Video çözme ve Direct3D GPU desteği korunur.
-* **Gerçek tam ekran:** monitörün çalışma alanı yerine fiziksel monitör sınırları kullanılır. Görev çubuğuna ve sabit alt kontrol satırına yer ayrılmaz. Video penceresi yeniden oluşturulmadan büyütülür; yayın kesilmez.
-* Kontroller fare hareketiyle görünür; **2,5 saniye** hareketsizlikte gizlenir. Kontrollerin üzerindeyken görünür kalır. `F`, videoya çift tıklama ve `Esc` desteklenir.
-* **Z** veya oynatıcıdaki sığdır/doldur düğmesi görüntü modunu değiştirir. Tam ekranda varsayılan **ekranı doldur** modudur: en-boy oranı korunur, oran farkı varsa kenarlar kırpılır. **Sığdır** modunda görüntünün tamamı korunur; oran farkında boşluk olabilir. Kaynak dosyaya görüntü olarak gömülmüş siyah şeritler otomatik algılanmaz.
-* Tam ekrandan çıkışta normal veya büyütülmüş önceki pencere durumu geri yüklenir. Kaynaklar, favoriler, EPG, kayıtlar ve kullanıcı ayarları aynı veri klasöründe kalır.
+Film/dizi afişleri ortak **2:3** ölçüyle, oranları bozulmadan ve gerektiğinde kenarlardan kırpılarak gösterilir. Kanal logoları tamamı görünecek biçimde sığdırılır. Öneri alanının yüksekliği sınırlıdır; aynı raftaki farklı içerik türlerinin kartları hizalı kalır.
 
-**Güncelleme:** Eski uygulamayı kapatıp yeni EXE'yi çalıştırın. Kütüphaneyi yeniden eklemeniz gerekmez. Tek EXE, yeni bileşenleri ayrı bir sürüm klasörüne çıkarır.
-## Çalıştırma
+![WX Player içerik rafları](docs/WX-Player-mixed-shelves.png)
 
-Windows 10/11 **x64** içindir. Windows 11 önerilir. Dağıtım .NET 10 çalışma zamanını ve LibVLC'yi içerir; ayrıca VLC veya .NET 10 kurmanız gerekmez. Tek dosya başlatıcısı Windows'un .NET Framework 4.x bileşenini kullanır.
+**1.5.3'te ana sayfaya yalnız başarıyla yüklenen afiş ve logolar alınır.** Afişsiz veya görseli bozuk içerikler silinmez; tam kütüphanede, favorilerde ve geçmişte erişilebilir. Boş raflar gizlenir. Raf başına en fazla 12 kart gösterilir; **Tümünü gör** tam listeyi açar. Harici katalogdan içerik veya puan üretilmez.
 
-* **WXPlayer.exe**: Tek dosyadır. İlk açılışta bileşenleri `%LOCALAPPDATA%\WXPlayer\application\1.5.3-<paket özeti>` konumuna çıkarır, sonraki açılışlarda bu kopyayı kullanır. Yönetici yetkisi veya sistem kurulumu istemez. İlk açılış için yaklaşık 500 MB boş alan ayırın.
-* **WXPlayer-win-x64.zip**: Taşınabilir dağıtım. ZIP'in **tamamını** bir klasöre çıkarın ve içindeki `WXPlayer.exe` dosyasını çalıştırın. İçindeki EXE'yi tek başına başka klasöre taşımayın.
-* EXE henüz ticari kod imzalama sertifikasıyla imzalanmamıştır. Paket bütünlüğü `SHA256SUMS.txt` ile doğrulanabilir.
+### Daha rahat gezinme
 
-## İlk kullanım
+- Kartların üzerindeki normal fare tekerleği ana sayfayı aşağı/yukarı kaydırır. **Shift + tekerlek** ilgili rafı yatay kaydırır; raf okları da kullanılabilir.
+- Kaynak veya arama değiştiğinde sayfa başa döner; aynı görünüm yenilenirken kaydırma konumu korunur.
+- Sol menü W simgesi, menü düğmesi veya **Ctrl+B** ile daraltılıp genişletilir. Tercih sonraki açılışta korunur.
+- Arama 250 ms beklemeyle çalışır; önceki sorgular iptal edilerek eski sonuçların yeni aramanın üzerine gelmesi önlenir.
+- Büyük kataloglar SQLite üzerinde tutulur. Tam listelerde 150 satırlık sayfalama ve WPF sanallaştırması kullanılır. Başarısız/boş yenilemeler mevcut kataloğu korur.
 
-1. **Kaynak ekle** ile bağlantı türünü seçin.
-2. M3U/M3U8/TXT dosyası veya URL girin; Xtream için sunucu, kullanıcı adı ve şifreyi yazın. `get.php?username=...&password=...` bağlantısını yapıştırırsanız hesap bilgileri ayrıştırılır. Stalker için sağlayıcının portal uç noktasını ve hesabınıza tanımladığı MAC adresini girin.
-3. Kaydet ve yükle. İlerleme alt çubukta görünür; **İptal** mevcut kütüphaneyi korur. Bir kaynağın yüklemesi başarısız olursa önceki veriler silinmez.
-4. Bir içeriğe tıklayın. Xtream dizilerinde bölüm seçicisi açılır. Yıldız favoriyi değiştirir. Filtreler, arama ve sayfa düğmeleri büyük listelerde de kullanılabilir.
-5. Canlı kanal seçildiğinde yayın akışı otomatik yüklenir. M3U başlığından veya Xtream hesabından XMLTV adresi keşfedilir. Kaynağınız rehber adresi vermiyorsa kaynak ayarlarına XMLTV URL/dosyasını ekleyin. Yayın akışındaki eşleştirme düğmesiyle kanal kimliğini elle seçebilir, yenile düğmesiyle önbelleği güncelleyebilirsiniz.
+### Afişler için akıllı önbellek
 
-Uygulama abonelik, ücretli kanal, hesap veya içerik sunmaz. Örnek kütüphane düğmesi açık lisanslı Blender filmlerinin bağlantılarını yükler; bu bağlantıların kullanılabilirliği uzaktaki sunucuya bağlıdır.
+Aynı görsel adresi farklı kart boyutlarında kullanıldığında tek ağ indirmesi paylaşılır. Yükleme ve çözme arka planda, sınırlı eşzamanlılıkla yürütülür. **64 MB hedefli LRU bellek önbelleği** sık kullanılan afişleri tutar; disk önbelleği sonraki açılışları hızlandırır. Disk temizliği 192 MB hedefi ve 7 günlük yaş sınırıyla yapılır.
 
-## Özellikler ve kapsam
+Bozuk görseller kısa süre içinde tekrar tekrar indirilmez; dosya ve çözülen görsel boyutları sınırlandırılır. İlk yükleme süresi sağlayıcının yanıt hızına bağlıdır.
 
-| Özellik | Bu sürümdeki uygulama |
-|---|---|
-| M3U / M3U8 / TXT | UTF-8/BOM, EXTINF, grup, tvg-id, rehber adresi, göreli URL, kullanıcı aracısı ve referrer; M3U8 medya/master manifestini tek yayın olarak açma |
-| Xtream Codes | Hesap doğrulama, canlı TV / VOD / dizi kategorileri, isteğe bağlı bölüm yükleme, kısa EPG, XMLTV ve timeshift URL üretimi |
-| Stalker | MAG uyumlu handshake, profil, tür/kategori, sayfalı katalog, create_link; temel bölüm listeleri. Sağlayıcının cihaz ve oturum varyantlarına göre uyarlama gerekebilir |
-| Büyük kütüphane | Akış halinde ayrıştırma, arka plan işi, SQLite WAL, atomik işlem, iptal, 150 satırlık sayfalar ve WPF satır sanallaştırması |
-| Akıllı arama | 250 ms gecikmeli arama; Türkçe karakterleri sadeleştirme; kategori, tür, favori ve geçmiş filtreleri; önceki sorguyu iptal etme |
-| Yerel önbellek | Kalıcı katalog; açılışta yeniden indirme gerektirmez. Elle yenileme. Ağ tamponu ayarlanabilir; tekrarlayan tamponlamada sonraki yayının tamponu artar |
-| Windows medya | LibVLC 3.0.23 / LibVLCSharp 3.10.1; Direct3D 11 veya 9; D3D11VA GPU çözme, yazılım çözme seçeneği |
-| DirectShow | Kaynak menüsünden Windows kamera/yakalama aygıtını adıyla açma. Ana IPTV oynatma hattı LibVLC + Direct3D'dir; ayrı özel DirectShow filtre grafiği değildir |
-| Ses / altyazı | Akıştaki parça seçimi, harici SRT/ASS/SSA/VTT/SUB ekleme, sessiz, ses seviyesi |
-| PVR | Ayrı oynatıcıyla TS remux kaydı, kayıt sırasında kanal değiştirme, kayıt klasörünü açma, kapanışta dosyayı tamamlama |
-| Catch-Up | XMLTV geçmiş programını çift tıklama; Xtream timeshift ve `{utc}`, `{utcend}`, `{duration}`, `${start}`, `${end}` M3U şablonları |
-| EPG | Kanal/gün rehberi, şimdi/sıradaki/geçmiş, ilerleme çizgisi, XMLTV ve XMLTV.gz, program açıklaması araç ipucu |
-| Arayüz | Afişli ana sayfa, kaynak bazında içerik sıraları, daraltılabilir menü, canlı TV / film / dizi / favoriler, tam ekran içerik seçimi |
+### Favoriler ve kaldığınız yer
 
-**Sağlayıcıya bağlı sınırlar:** Gerçek Xtream/Stalker aboneliği verilmediği için bu entegrasyonlar kontrollü API yanıtlarıyla test edildi. Portal sürümleri; MAC dışında seri numarası, device ID, ek kimlik doğrulama veya farklı dizi uç noktaları isteyebilir. Bu sürüm bunların hepsini kapsamaz. Stalker'a özel arşiv protokolü desteklenmez; Stalker kanallarında XMLTV rehberi kullanılabilir. Xtream Catch-Up URL'si UTC saatinden üretilir; farklı sunucu saat dilimi bekleyen sağlayıcılar için uyarlama gerekir. Catch-Up için sağlayıcı arşivi gerekir; HTTP/HTTPS canlı yayınlarda yerel geri sarma 1.4 tamponunu kullanır. Diğer kaynaklarda seek desteği gerekir.
+Yıldız düğmesiyle içerikleri favorileyebilirsiniz; tam ekran seçim panelinde favori eklemek yayını değiştirmez. Film için dakika, dizi için son izlenen bölüm ve dakika kaydedilir. Yeniden açılan içerik ileri/geri sarma destekliyorsa kayıtlı konumdan devam eder; bölüm penceresinden **Baştan oynat** seçilebilir.
 
-PVR, sağlayıcınızda ikinci bir eşzamanlı bağlantı açar. Bu sürümde zamanlanmış kayıt, kapalı uygulamada kayıt, DRM/Widevine/PlayReady ve abonelik yönetim sunucusu yoktur. Kayıt TS kabına yeniden paketlenir; uyumsuz codec/kaynaklar kaydedilemeyebilir. DirectShow aygıt keşfi otomatik değildir; Windows aygıtının tam adı girilir. Bu teslimat kendi istemci/veri altyapınızı sağlar, bir IPTV içerik sunucusu kurmaz.
+Konum kaydı 1.5.1 ile başlamıştır; daha eski izlemeler için geriye dönük dakika bilgisi bulunmaz. **İzleme geçmişini temizlemek devam etme konumlarını da temizler.**
 
-## Kısayollar
+<a id="oynatici"></a>
+## Oynatıcı, EPG ve kayıt
 
-| Girdi | İşlem |
-|---|---|
-| Space | Oynat / duraklat |
-| ← / → | Desteklenen akışta 10 saniye geri / ileri |
-| ↑ / ↓ | Ses +5 / −5 (yukarı artırır) |
-| F / Esc | Tam ekranı aç-kapat / tam ekrandan çık |
-| M | Sessiz |
-| Z | Sığdır / ekranı doldur |
-| I | Yayın istatistikleri |
-| Page Up / Page Down | Önceki / sonraki içerik; sayfa sınırından devam eder |
-| Ctrl+K | Aramaya odaklan |
-| Ctrl+B | Sol menüyü daralt / genişlet |
-| Video üzerinde tekerlek | Ses seviyesini değiştir |
-| Liste üzerinde tekerlek | Listeyi kaydır |
-| Videoya çift tık | Tam ekran |
-| Geçmiş EPG programına çift tık | Destekleniyorsa tekrar izle |
+### Tam ekran, ses ve görüntü
 
-Metin ve şifre alanlarına yazarken oynatıcı kısayolları devreye girmez.
+Tam ekran görünümü monitörü kaplar; kontroller video üzerine yerleşir ve fare hareketsizken otomatik gizlenir. Fareyi hareket ettirerek oynatma çubuğuna ve kategori/içerik paneline ulaşabilirsiniz. Panelden arama yapabilir, içerik değiştirebilir ve favorilerinizi yönetebilirsiniz.
 
-## Veri ve mahremiyet
+**Z** ile görüntüyü sığdırma ve ekranı doldurma arasında geçiş yapılır. Doldurma modu oranı koruyarak kenarları kırpabilir; sığdırma modu görüntünün tamamını gösterir ve en-boy oranları farklıysa siyah boşluk bırakabilir. Yayının içine gömülmüş siyah bantlar otomatik algılanıp kaldırılmaz.
 
-Veriler `%LOCALAPPDATA%\WXPlayer` altında kalır. Uygulama analitik veya telemetri servisine bağlanmaz. Ağ istekleri eklediğiniz kaynaklara, seçtiğiniz yayınlara ve güncelleme kontrolü/indirmesi için GitHub Releases sunucularına gider. GitHub sunucusuna IPTV hesabı veya yayın adresi gönderilmez.
+**Ses ve altyazılar** panelinden kaynağın sunduğu parçaları seçebilir veya harici altyazı ekleyebilirsiniz. **Yayın istatistikleri** saniyede bir yenilenir; motorun sağladığı codec, çözünürlük, kaynak FPS'i, ses örnekleme hızı/kanal bilgisi, veri hızı ve sayaçları gösterir. Bulunmayan değerler tahmin edilmez; bu panel GPU kullanım yüzdesi ölçmez. Yayın adresindeki hesap bilgileri görüntülemede maskelenir.
 
-* Kaynak yapılandırması ve hesap şifreleri Windows DPAPI `CurrentUser` ile şifrelenir; başka kullanıcıya veya başka bilgisayara doğrudan taşınamaz.
-* `library.db`: katalog, favoriler, son izlenenler, bölüm/dakika bilgisi, EPG. **Oynatma listesinden gelen yayın URL'leri ve başlıkları bu SQLite dosyasında düz metindir**; URL içine gömülü token/şifreler de buna dahildir. Xtream yayın URL'leri mümkün olduğunda oynatma anında hesap bilgilerinden üretilir.
-* `settings.json`: hassas olmayan ayarlar. `errors.log`: yalnız hata türü ve zaman; kaynak URL'leri loglanmaz.
-* Kaynak silme o kaynağın kataloğunu, favorilerini, geçmişini ve rehberini kaldırır. Kayıt dosyaları ayrıca kullanıcı tarafından yönetilir.
-* Tam kaldırma: uygulamayı kapatın, uygulama klasörünü ve istenirse `%LOCALAPPDATA%\WXPlayer` verilerini silin. Kayıtlar varsayılan olarak Videolar/WX Player altındadır.
+### XMLTV EPG Parser & Channel Matcher
 
-## Kaynaktan geliştirme
+Yayın akışı izlediğiniz canlı kanalı takip eder. Rehberde gün, şimdi/sıradaki/geçmiş programlar, ilerleme ve açıklama bilgileri gösterilir.
 
-Gerekli: Windows x64, **.NET 10 SDK**, NuGet erişimi. WPF kaynakları normal Visual Studio veya başka C# editöründe açılabilir.
+- **XMLTV ve gzip:** XMLTV / XMLTV.gz akış halinde ayrıştırılır; harici DTD kaynakları indirilmez.
+- **Kanal eşleştirme:** `tvg-id`, `tvg-name` ve sadeleştirilmiş kanal adları kullanılır. Kaynaklar birbirinden ayrılır; belirsiz eşleşmeler elle seçilebilir.
+- **Kaynak keşfi:** M3U başlıklarındaki rehber adresleri ve Xtream hesap bilgileri kullanılır. Manuel rehber URL'si veya yerel dosya da eklenebilir.
+- **Xtream yedeği:** Uygun durumda `get_short_epg` / `get_simple_data_table` yanıtlarından rehber alınır.
+- **Kararlılık:** Önbellek, yinelenen istekleri birleştirme ve hata sonrası bekleme uygulanır. Hatalı indirmeler eski rehberi silmez; önceki kanalın geç gelen yanıtı yeni kanala yazılmaz.
+
+Rehberin bulunması ve güncelliği sağlayıcının verilerine bağlıdır. Bir M3U bağlantısı tek başına EPG verisi içerme garantisi vermez.
+
+### Canlı yayını geri sarma — 60 saniyeye kadar
+
+Uyumlu **HTTP/HTTPS canlı yayınlarda**, kanalı açtıktan sonra yerel tampon birikir. Zaman çizgisinden veya yön tuşlarıyla tampon içinde geri gidebilir, **CANLI / Canlıya dön** düğmesiyle yayın anına dönebilirsiniz.
+
+Tampon kanal açılmadan önceki yayını içermez; ilk saniyelerde henüz 60 saniye oluşmamıştır. Kanal değiştirilince sıfırlanır. Akış yeniden kodlanmadan yerel parçalara paketlenir; uyumsuz kaynaklarda doğrudan oynatma kullanılır. Bu özellik DRM, RTSP, UDP ve DirectShow için sunulmaz.
+
+### PVR ve Catch-Up arasındaki fark
+
+| Özellik | Nasıl çalışır? | Gereken koşul |
+| :--- | :--- | :--- |
+| **Yerel geri sarma** | Açık kanalın son 60 saniyeye kadar biriken tamponunda gezinir. | Uyumlu HTTP/HTTPS canlı akış. |
+| **PVR kaydı** | Yayını TS dosyasına kaydeder; başka kanal izlemeye devam edebilirsiniz. | Uygulamanın açık kalması, yeterli disk alanı ve sağlayıcıda ikinci eşzamanlı bağlantı izni. |
+| **Catch-Up / arşiv** | Geçmiş EPG programına çift tıklayarak sağlayıcının arşivinden oynatır. | Sağlayıcının o kanal ve zaman aralığı için arşiv desteği. |
+
+PVR manuel başlatılır; uygulama kapalıyken veya zamanlanmış kayıt yapılmaz. Kayıt yeniden kodlama yerine TS'ye paketleme kullanır; codec/kaynak uyumu gereklidir. Catch-Up, Xtream timeshift ve desteklenen M3U şablonlarıyla çalışır: `{utc}`, `{utcend}`, `{duration}`, `${start}`, `${end}`. Stalker'a özel arşiv protokolü desteklenmez; Stalker kanallarında XMLTV rehberi kullanılabilir.
+
+<a id="kisayollar"></a>
+## Klavye ve fare kısayolları
+
+| Girdi | İşlev |
+| :--- | :--- |
+| **Space** | Oynat / duraklat |
+| **← / →** | Desteklenen akışta 10 saniye geri / ileri |
+| **↑ / ↓** | Ses seviyesini 5 artır / azalt |
+| **F** / **Esc** | Tam ekranı aç-kapat / tam ekrandan çık |
+| **M** | Sesi kapat / aç |
+| **Z** | Görüntüyü sığdır / ekranı doldur |
+| **I** | Yayın istatistiklerini aç |
+| **Page Up / Page Down** | Önceki / sonraki içerik |
+| **Ctrl+K** | Aramaya odaklan |
+| **Ctrl+B** | Sol menüyü daralt / genişlet |
+| **Video üzerinde tekerlek** | Ses seviyesini değiştir |
+| **Ana sayfada tekerlek** | Sayfayı aşağı/yukarı kaydır |
+| **Rafta Shift + tekerlek** | İçerik rafını yatay kaydır |
+| **Liste üzerinde tekerlek** | Listeyi kaydır |
+| **Videoya çift tık** | Tam ekranı değiştir |
+| **Geçmiş EPG programına çift tık** | Destekleniyorsa arşivden tekrar izle |
+
+Metin ve şifre alanlarına yazarken oynatıcı kısayolları devreye girmez. Odaktaki düğmeler Space / Enter ile kullanılabilir.
+
+<a id="guncelleme"></a>
+## Otomatik güncelleme
+
+WX Player **açılışta**, uygulama açık kaldığında **4 saatte bir** ve Ayarlar'dan elle istendiğinde [GitHub Releases](https://github.com/schwairex/WX-Player/releases) üzerinden yeni sürüm kontrolü yapar.
+
+1. Son kararlı sürümün numarası uygulamadakinden yeniyse dağıtım EXE'si arka planda indirilir.
+2. Dosyanın boyutu ve SHA-256 özeti doğrulanır. Doğrulama başarısızsa dosya çalıştırılmaz.
+3. **“Yeni bir sürüm mevcut, güncellemek için uygulamayı yeniden başlatın”** penceresi gösterilir.
+4. **Daha sonra** ile izlemeye devam edebilir veya **Güncelle ve yeniden başlat** seçeneğini kullanabilirsiniz.
+5. Eski süreç kapandıktan sonra yeni sürüm açılır; kaynaklar, favoriler, geçmiş ve ayarlar korunur.
+
+Aktif kayıt varken önce kaydı durdurmanız gerekir. İndirme hatası mevcut uygulamanın kullanılmasını engellemez. Taslaklar ve ön sürümler otomatik kurulmaz. **1.0 / 1.1 kullanıcıları ilk geçişi elle yapmalıdır; otomatik güncelleme 1.2 ile eklenmiştir.**
+
+Üstteki **GitHub Release** rozeti yayımlanmış sürümü, **Windows build** rozeti GitHub Actions durumunu gösterir; bu kaynak ağacının sürümü **1.5.3**'tür. Dinamik rozetler, ilgili GitHub yayını/iş akışı mevcut olduğunda Shields.io tarafından güncellenir.
+
+<a id="veriler"></a>
+## Yerel veriler ve gizlilik
+
+Varsayılan veri klasörü: **`%LOCALAPPDATA%\WXPlayer`**.
+
+| Veri | Saklama biçimi |
+| :--- | :--- |
+| Kaynak ayarları ve hesap şifreleri | Windows DPAPI `CurrentUser` ile şifrelenir; doğrudan başka Windows hesabına/bilgisayara taşınamaz. |
+| Katalog, favoriler, geçmiş, izleme konumu ve EPG | `library.db` adlı yerel SQLite veritabanı. |
+| Afişler ve logolar | `artwork-cache` altında hash ile adlandırılan önbellek dosyaları. |
+| Genel ayarlar | Hassas olmayan ayarları içeren `settings.json`. |
+| Hata kaydı | `errors.log`; hata türü ve zaman bilgisi. Kaynak URL'leri loglanmaz. |
+| Uygulama sürümleri | Tek EXE dağıtımında `application` altına açılan sürüm klasörleri. |
+| Yayın kayıtları | Varsayılan olarak Videolar / WX Player; seçtiğiniz kayıt klasörüne göre değişebilir. |
+
+**Veritabanının tamamı şifreli değildir.** M3U'dan gelen yayın URL'leri ve başlıkları SQLite içinde düz metin tutulur; URL'ye gömülü erişim anahtarları/şifreler de buna dahildir. Veritabanınızı veya gerçek abonelik adreslerinizi herkese açık GitHub deposuna yüklemeyin.
+
+Uygulama analitik veya telemetri servisi kullanmaz. Ağ istekleri kaynak, yayın, afiş/EPG adreslerine ve güncellemeler için GitHub'a yapılır. IPTV hesap bilgileriniz GitHub'a gönderilmez.
+
+Ayarlar'dan kaynakları, favorileri ve geçmişi temizleyebilirsiniz. Kaynak silme ilgili katalog, favori, geçmiş ve rehberi kaldırır; PVR dosyaları ayrıca yönetilir. Yedek için uygulamayı kapatıp veri klasörünü kopyalayın; DPAPI Windows kullanıcısına bağlıdır. Tam kaldırma için uygulama dosyalarını ve **verilerinizi de kaldırmak istiyorsanız** veri klasörünü silebilirsiniz.
+
+<a id="sss"></a>
+## Sık sorulan sorular
+
+<details>
+<summary><strong>Ana sayfa boş veya bazı içerikler görünmüyor.</strong></summary>
+
+1.5.3 ana sayfası yalnız başarıyla yüklenen afiş ve logoları gösterir. İçerikleri **Canlı TV / Filmler / Diziler**, tam kütüphane, favoriler veya geçmiş üzerinden açabilirsiniz. Kaynakta görsel adresi yoksa ya da sunucu yanıt vermiyorsa ilgili kart ana sayfaya alınmaz. `samples` içindeki bazı örnek yayınların logosu bulunmaz; bunlar tam listeden açılabilir.
+
+</details>
+
+<details>
+<summary><strong>Afişler ilk açılışta neden bekletiyor?</strong></summary>
+
+İlk indirme görsel sunucusunun hızına bağlıdır. Başarılı görseller bellekte/diskte saklanır; tekrar kullanım hızlanır. Bozuk adresler için kısa süreli tekrar deneme beklemesi uygulanır. Kaynak yenilemek, sağlayıcıdaki bozuk görsel bağlantısını kendiliğinden düzeltmez.
+
+</details>
+
+<details>
+<summary><strong>Yayın akışı görünmüyor veya yanlış kanalla eşleşiyor.</strong></summary>
+
+Kaynağın güncel XMLTV adresi sunduğunu ve rehberde o kanalın bulunduğunu kontrol edin. Gerekiyorsa manuel XMLTV URL'si/dosyası ekleyin ve kanal eşleştirmesini seçin. Kanal isimleri farklı olabilir; sağlayıcının boş veya eski rehberini uygulama kendi başına tamamlayamaz.
+
+</details>
+
+<details>
+<summary><strong>Canlı yayın neden hemen 60 saniye geri sarılamıyor?</strong></summary>
+
+Yerel tampon kanalı açtığınız anda birikmeye başlar. Önceki dakikaları indirmez ve kanal değişiminde sıfırlanır. Daha eski programlar için sağlayıcının Catch-Up arşivi gerekir. Her canlı akış yerel tamponlama ile uyumlu değildir.
+
+</details>
+
+<details>
+<summary><strong>Yayın açılmıyor, takılıyor veya kayıt başarısız oluyor.</strong></summary>
+
+Hesap/kaynak adresini, interneti ve sağlayıcının eşzamanlı bağlantı sınırını kontrol edin. PVR ikinci bağlantı kullanır. Farklı bir kanal deneyin; gerekiyorsa oynatma ayarlarından ağ tamponunu veya donanım/yazılım çözme seçimini değiştirin. DRM / Widevine / PlayReady desteklenmez. Stalker cihaz kimliği varyantları veya bazı codec'ler ek uyarlama gerektirebilir.
+
+</details>
+
+<details>
+<summary><strong>Güncelleme neden gelmiyor?</strong></summary>
+
+GitHub'a yalnız kaynak kodu göndermek güncelleme yayımlamaz. Daha yüksek numaralı kararlı Release, uygun tek dosya dağıtım EXE'si ve doğrulanabilir SHA-256 bilgisi bulunmalıdır. Ayarlar'dan elle kontrol edebilirsiniz. 1.0/1.1'den ilk geçiş elle yapılır. [Yayınlama rehberine bakın.](docs/GITHUB-RELEASES.md)
+
+</details>
+
+<a id="gelistirme"></a>
+## Geliştirme, test ve yayınlama
+
+### Kaynaktan çalıştırma
+
+Gerekli ortam: **Windows x64**, **.NET 10 SDK**, Git ve NuGet erişimi.
 
 ```powershell
+git clone https://github.com/schwairex/WX-Player.git
+cd WX-Player
+dotnet restore WXPlayer.sln
 dotnet build WXPlayer.sln -c Release
 dotnet run --project src/WXPlayer.App -c Release
-dotnet run --project tests/WXPlayer.Tests -c Release -- artifacts/test-results.json
-./tools/build.ps1
 ```
 
-`build.ps1` testleri çalıştırır, çalışma zamanı dahil taşınabilir ZIP ve tek dosya başlatıcı EXE üretir. Çıktı klasörü varsayılan `artifacts`; tekrar paketlerken yeni bir `-OutputPath` verin. Tek EXE üretiminde Windows .NET Framework 4 C# derleyicisi kullanılır; ana uygulama .NET 10'dur. Kod imzalama sertifikası bu depoya dahil değildir.
+### Proje yapısı
 
 ```text
-src/WXPlayer.Core    modeller, ayrıştırma, sağlayıcılar, XMLTV, SQLite, DPAPI
-src/WXPlayer.App     WPF, oynatıcı motoru, diyaloglar, klavye/fare, görsel test
-tests/WXPlayer.Tests bağımsız ağsız doğrulama programı, 100.500 içerik testi
-tools               EXE başlatıcısı ve yeniden üretilebilir paketleme betiği
-samples             açık lisanslı örnek içerik bağlantıları
-.github/workflows   Windows CI derleme ve paketleme
+WXPlayer.sln
+Directory.Build.props       Ortak derleme ayarları ve sürüm
+src/
+  WXPlayer.Core/            Sağlayıcılar, ayrıştırıcılar, XMLTV, SQLite, DPAPI
+  WXPlayer.App/             WPF, medya, afiş önbelleği, güncelleyici
+tests/
+  WXPlayer.Tests/           Bağımsız doğrulama programı
+tools/                     EXE başlatıcısı, paketleme ve güncelleyici testleri
+docs/                      Ekran görüntüleri, sürüm notları, test raporları
+samples/                   Örnek oynatma listeleri
+licenses/                  Üçüncü taraf lisans metinleri
+.github/workflows/         Windows CI ve Release paketleme
 ```
 
-Başlangıç ve medya testleri izole veri klasörüyle çalıştırılabilir:
+### Testler
 
 ```powershell
-./artifacts/WXPlayer-win-x64/WXPlayer.exe --smoke --stress --data-dir C:\Temp\WXPlayer-QA --media C:\Temp\test.mp4
+dotnet run --project tests/WXPlayer.Tests -c Release
 ```
 
-Bu test gerçek WPF penceresini oluşturur, PNG önizlemeleri ve JSON sonuç dosyası yazar; yerel MP4 ile video, seek, pause, ses parçaları, harici altyazı ve PVR/yeniden oynatma işlemlerini dener. `--stress`, içe aktarma sırasında UI zamanlayıcısının çalıştığını ölçer. Medya testi dosyanın desteklenen ve seek edilebilir olmasını gerektirir. Başlatıcıyı izole denemek için `WXPLAYER_APP_ROOT` ortam değişkeni çıkarma klasörünü değiştirebilir.
+1.5.3 dağıtım doğrulamasında **46/46 Core testi** ve **51 ana sayfa/afiş kontrolü** geçti. 100.500 içerik yerel test ortamında 3,575 saniyede yüklendi. Aynı görsel için 18 eşzamanlı farklı boyut isteği tek HTTP indirmesi oluşturdu. Bunlar test ortamına ait ölçümlerdir; internet yayını veya her donanım için performans garantisi değildir.
 
-## GitHub'a yükleme
+EPG, tam ekran favorileri, izleme konumu, PVR ve izole güncelleyici akışı da doğrulandı. Sağlayıcı API'leri kontrollü yanıtlarla test edildi; tüm gerçek Xtream/Stalker portal varyantları kapsanmaz. Ayrıntılar ve test sınırları: **[1.5.3 test raporu](docs/TEST-REPORT-1.5.3.md)**.
 
-Kaynak ZIP'i çıkarın; **içindeki proje dosyalarını** yeni GitHub deponuza yükleyin. ZIP'in kendisini kaynak ağacı yerine yüklemeyin. EXE/taşınabilir ZIP, büyük dosya olduklarından deponun **Releases** bölümüne eklenebilir. Depoda özel kullanıcı bilgileri, gerçek abonelik URL'leri veya veritabanı bulunmaz. GitHub'a yükleme bu teslimat sırasında yapılmadı.
+<details>
+<summary><strong>Arayüz, medya ve güncelleyici testlerini tekrarlama</strong></summary>
 
-Uygulama kodu MIT lisanslıdır. Dahil edilen codec bileşenlerinin lisansları ayrıdır; `THIRD-PARTY-NOTICES.md` ve `licenses/` dosyalarını koruyun. Özel multimedya motoru sıfırdan yazılmış değildir; WX Player kendi uygulama ve veri katmanları üzerinde açık kaynak LibVLC'yi kullanır.
+Paketleme sonrasında, gerçek kullanıcı verilerinden ayrı klasörlerle çalıştırın. Medya testi için desteklenen, ileri/geri sarılabilen yerel video dosyanızı belirtin.
 
+```powershell
+./artifacts/release-1.5.3/WXPlayer.exe --smoke --home-layout-only --data-dir C:\Temp\WXPlayer-Home-QA
+./artifacts/release-1.5.3/WXPlayer.exe --smoke --stress --timeshift --media C:\Temp\test.mp4 --data-dir C:\Temp\WXPlayer-Media-QA
+./tools/test-updater.ps1 -AppExe ./artifacts/release-1.5.3/WXPlayer.exe -OutputPath ./artifacts/updater-test-unique
+```
 
+Güncelleyici testi izole bir 1.6.0 deneme paketi üretir; GitHub'da sürüm yayımlamaz. **Deneme EXE'sini Releases'e yüklemeyin.**
 
+</details>
+
+### EXE ve taşınabilir ZIP oluşturma
+
+```powershell
+./tools/build.ps1 -OutputPath ./artifacts/release-1.5.3
+```
+
+Betik testleri çalıştırır, .NET çalışma zamanı ve medya bileşenleri dahil Windows x64 paketini üretir. Tek EXE başlatıcısı için Windows .NET Framework 4 C# derleyicisi de gereklidir. Her paketlemede yeni bir çıktı klasörü kullanın.
+
+| Çıktı | Kullanım |
+| :--- | :--- |
+| `WXPlayer.exe` | Tek dosya dağıtımı ve otomatik güncelleme paketi. |
+| `WXPlayer-win-x64.zip` | Tüm içeriği birlikte çıkarılarak çalıştırılan taşınabilir dağıtım. |
+| `SHA256SUMS.txt` | EXE ve ZIP için SHA-256 sağlama toplamları. |
+
+### GitHub Releases ile yayınlama
+
+1. Kaynak dosyalarını deponun köküne yerleştirin; `.github`, `src`, `tools` ve `Directory.Build.props` aynı kaynak ağacında bulunmalıdır.
+2. `Directory.Build.props` içindeki sürümü `major.minor.patch` biçiminde güncelleyin.
+3. Aynı sürüm için `v1.5.3` gibi bir Git etiketi gönderin. Dahil edilen Windows Actions akışı test, derleme ve Release paketleme işlemlerini yapar; etiket ile uygulama sürümü eşleşmelidir.
+4. Elle yayımlıyorsanız Assets'e **tek bir dağıtım EXE'si**, isteğe bağlı portable ZIP ve SHA-256 dosyasını ekleyin. ZIP içindeki küçük EXE güncelleme paketi değildir.
+5. Otomatik güncelleme için yayını kararlı sürüm olarak yayımlayın; taslak veya ön sürüm bırakmayın.
+
+EXE dosyalarını Git kaynak ağacına eklemek yerine **Releases** alanında dağıtın. Dosya adını değiştirirseniz sağlama toplamı dosyasındaki adın da eşleşmesini sağlayın. Tam süreç: **[GitHub yayınlama rehberi](docs/GITHUB-RELEASES.md)**.
+
+<a id="surum-gecmisi"></a>
+## Sürüm geçmişi
+
+Bu bölüm değişiklikleri sürüme göre özetler. Sürüm notları kapsamı, test raporları doğrulanan davranışları ve sınırları açıklar.
+
+### 1.5.3 · Kesintisiz kaydırma ve hızlı afişler
+
+- İç içe rafların tekerleği yakalayarak ana sayfa kaydırmasını engellemesi düzeltildi; Shift + tekerlek yatay gezinmeye ayrıldı.
+- Afişlerde tek indirme paylaşımı, LRU bellek ve kalıcı disk önbelleği eklendi; bozuk görsellerin tekrar yüklenmesi sınırlandı.
+- Ana sayfada yalnız başarıyla yüklenen afiş/logo kartları gösterildi; tam kütüphane kayıtları korundu.
+- 2:3 film/dizi afişleri, sınırlı sinematik öneri ve raf düzeni iyileştirildi; aynı görünümde kaydırma konumu korundu.
+
+[Sürüm notları](docs/RELEASE-NOTES-1.5.3.md) · [Test raporu](docs/TEST-REPORT-1.5.3.md)
+
+<details open>
+<summary><strong>1.5.2 · Dengeli ana sayfa ve eşit kartlar</strong></summary>
+
+- Büyük afişin tüm sayfayı kaplaması giderildi; öneri alanının yüksekliği sınırlandı.
+- Son izlenenler ve favorilerde farklı içerik türlerinin kart ölçüleri eşitlendi.
+- Raf başlıkları, uzun metinler, klavye odağı, dar pencere ve boş/yükleniyor/hata durumları yenilendi.
+
+[Sürüm notları](docs/RELEASE-NOTES-1.5.2.md) · [Test raporu](docs/TEST-REPORT-1.5.2.md)
+
+</details>
+
+<details>
+<summary><strong>1.5.1 · Dizi gruplama ve kaldığınız yerden devam etme</strong></summary>
+
+- Raflar Filmler ve Diziler olarak düzenlendi; M3U sezon/bölüm işaretleriyle içerik ayrımı iyileştirildi.
+- Diziler tek kartta toplandı; sezon/bölüm seçimi ve afiş desteği geliştirildi.
+- Açılış önerileri, tam ekran favorileri ve film/bölüm konumu kaydı eklendi.
+- Kütüphane dönüşümünde favori ve geçmiş kayıtları korundu.
+
+[Sürüm notları](docs/RELEASE-NOTES-1.5.1.md) · [Test raporu](docs/TEST-REPORT-1.5.1.md)
+
+</details>
+
+<details>
+<summary><strong>1.5.0 · Kaynak odaklı yeni ana sayfa</strong></summary>
+
+- M3U / Xtream kütüphanesinden beslenen öneri alanı ve yatay içerik rafları eklendi.
+- Sol menü daraltılıp genişletilebilir hale getirildi; tercih saklandı.
+- Tam ekran kategori paneli ve oynatma çubuğu hizalandı; içerik seçimi yenilendi.
+
+[Sürüm notları](docs/RELEASE-NOTES-1.5.0.md) · [Test raporu](docs/TEST-REPORT-1.5.md)
+
+</details>
+
+<details>
+<summary><strong>1.4.0 · Canlı geri sarma ve tam ekranda içerik seçimi</strong></summary>
+
+- Uyumlu canlı yayınlarda 60 saniyeye kadar yerel geri sarma ve canlıya dönüş eklendi.
+- Tam ekranda kategori/kanal seçme paneli ve asenkron kanal logoları getirildi.
+- Ses çubuğuna basılı tutarken beliren yeşil arka plan kaldırıldı.
+- Sol menü, kaynak ekleme, ses/altyazı, istatistik ve kısayol panelleri iyileştirildi.
+
+[Sürüm notları](docs/RELEASE-NOTES-1.4.0.md) · [Test raporu](docs/TEST-REPORT-1.4.md)
+
+</details>
+
+<details>
+<summary><strong>1.3.0 · Daha erişilebilir oynatıcı ve kütüphane</strong></summary>
+
+- Zaman çizgisi ve ses çubuğunun tıklama alanları genişletildi.
+- Arama, kategori ve içerik listesi tutarlı bir kütüphane alanında toplandı.
+- Üst içerik sayaçları taşındı; EPG ve ses/altyazı arayüzleri yenilendi.
+- Pencere boyutlarına uyum ve metin görünürlüğü iyileştirildi.
+
+[Sürüm notları](docs/RELEASE-NOTES-1.3.0.md) · [Test raporu](docs/TEST-REPORT-1.3.md)
+
+</details>
+
+<details>
+<summary><strong>1.2.0 · Kararlı EPG ve otomatik güncelleme</strong></summary>
+
+- XMLTV EPG Parser & Channel Matcher, kaynak keşfi, manuel eşleştirme ve Xtream rehber yedeği geliştirildi.
+- Yayın istatistikleri paneli eklendi.
+- Ayarlar tasarımı ve kaynak/favori/geçmiş temizleme işlemleri yenilendi.
+- GitHub Releases tabanlı indirme, doğrulama ve yeniden başlatma akışı eklendi.
+
+[Sürüm notları](docs/RELEASE-NOTES-1.2.0.md) · [Test raporu](docs/TEST-REPORT-1.2.md)
+
+</details>
+
+<details>
+<summary><strong>1.1.0 · Yazı tipi, simgeler ve gerçek tam ekran</strong></summary>
+
+- Gömülü Inter yazı tipi ve sade SVG simgeler eklendi.
+- Video dışındaki arayüzün kararmasına neden olan pencere/yüzey sorunu giderildi.
+- Tam ekran, görev çubuğu, gizlenen kontroller ve sığdır/doldur davranışı düzeltildi.
+
+[Test raporu](docs/TEST-REPORT-1.1.md)
+
+</details>
+
+<details>
+<summary><strong>1.0.0 · İlk sürüm</strong></summary>
+
+- Windows için C# / WPF tabanlı yerel WX Player istemcisi oluşturuldu.
+- M3U / Xtream / temel Stalker, asenkron katalog, arama ve favoriler eklendi.
+- LibVLC, GPU çözme, EPG, çoklu ses/altyazı, manuel PVR ve desteklenen kaynaklarda Catch-Up sunuldu.
+
+[Test raporu](docs/TEST-REPORT-1.0.md)
+
+</details>
+
+<a id="katki"></a>
+## Katkıda bulunma ve lisans
+
+Hata veya öneri için **[Issues](https://github.com/schwairex/WX-Player/issues)** bölümünü kullanabilirsiniz. Uygulama/Windows sürümünü, kaynak türünü ve tekrar adımlarını ekleyin. Görsel veya örnek liste paylaşırken hesap şifrelerini, MAC adreslerini ve erişim anahtarı içeren URL'leri çıkarın.
+
+Kod katkısı için depoyu fork edin, değişikliğinizi ayrı bir dalda hazırlayın ve ilgili testleri çalıştırarak pull request açın. Arayüz değişikliklerinde farklı pencere boyutlarını gösteren görüntüler incelemeyi kolaylaştırır.
+
+Uygulama kodu **[MIT lisansı](LICENSE)** ile sunulur. LibVLC ve paketlenen bileşenlerin lisansları ayrıdır; dağıtımda **[üçüncü taraf bildirimlerini](THIRD-PARTY-NOTICES.md)** ve **[licenses](licenses/)** klasörünü koruyun. LibVLC LGPL kapsamındadır; bazı VLC eklentileri GPL koşulları taşıyabilir. Inter, SIL Open Font License 1.1 ile kullanılır. Ayrıntılar bildirim dosyasındadır.
+
+---
+
+<div align="center">
+
+**WX Player** · Windows için kendi kütüphanenize açılan pencere.
+
+[GitHub](https://github.com/schwairex/WX-Player) · [İndir](https://github.com/schwairex/WX-Player/releases/latest) · [Sürüm notları](#surum-gecmisi) · [Başa dön](#wx-player)
+
+<sub>Rozetler <a href="https://shields.io/">Shields.io</a> ile oluşturulmuştur · <a href="https://github.com/badges/shields/tree/master">Shields kaynak deposu</a></sub>
+
+</div>
