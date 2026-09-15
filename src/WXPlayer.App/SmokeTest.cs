@@ -16,6 +16,13 @@ internal static class SmokeTest
         var results=new Dictionary<string,object>();
         try
         {
+            await HomeLayoutSmoke.RunAsync(window,results);
+            if(App.Arguments.Contains("--home-layout-only"))
+            {
+                results["success"]=true;
+                File.WriteAllText(Path.Combine(App.DataDirectory,"smoke-results.json"),JsonSerializer.Serialize(results,new JsonSerializerOptions{WriteIndented=true}));
+                window.Close();return;
+            }
             var selectionTest=new EpisodeWindow(window,new ContentItem{Name="Seçim testi",Kind=ContentKind.Series},Enumerable.Range(1,3).Select(n=>new ContentItem{Id="selection-"+n,Name="Bölüm "+n,Kind=ContentKind.Episode,Season=1,Episode=n}).ToArray());
             selectionTest.Show();await Task.Delay(150);selectionTest.Episodes.SelectedIndex=1;int selectedIndex=selectionTest.Episodes.SelectedIndex;selectionTest.Close();if(selectedIndex!=1)throw new Exception("Episode selection changed unexpectedly to "+selectedIndex);
             if(App.Arguments.Contains("--stress"))
@@ -232,6 +239,7 @@ internal static class SmokeTest
         window.UpdateLayout();var content=(FrameworkElement)window.Content;var bitmap=new RenderTargetBitmap((int)content.ActualWidth,(int)content.ActualHeight,96,96,PixelFormats.Pbgra32);bitmap.Render(content);var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(bitmap));using var file=File.Create(path);encoder.Save(file);
     }
 }
+
 
 
 

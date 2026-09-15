@@ -1,10 +1,18 @@
-# WX Player 1.5.1
+# WX Player 1.5.2
 
 **Kendi kaynağınız. Kendi kütüphaneniz.** Windows için C# / WPF ile geliştirilmiş yerel IPTV ve medya oynatıcısı. Koyu arayüz, Fluent tasarımından esinlenen kontroller, Direct3D video çıkışı ve SQLite tabanlı yerel veri altyapısı.
 
 ![WX Player](docs/WX-Player-preview.png)
 
-## 1.5.1 — Diziler tek kartta, kaldığınız yer kayıtlı
+## 1.5.2 — Daha sade ve düzenli bir ana sayfa
+
+Öneri alanı artık sınırlı yükseklikte, kompakt bir paneldir. Büyük afişler sayfayı kaplamaz. Son izlenenler ve favorilerde farklı içerik türleri eşit kart ölçüleriyle gösterilir; filmler ve diziler ortak afiş düzeni kullanır. Uzun başlıklar, izleme konumları, klavye odağı ve dar pencere araması için ayrılan alanlar tutarlıdır.
+
+[1.5.2 sürüm notları](docs/RELEASE-NOTES-1.5.2.md) · [Test raporu](docs/TEST-REPORT-1.5.2.md) · [GitHub yayını](docs/GITHUB-RELEASES.md)
+
+Önizleme kontrollü test kütüphanesine aittir; gerçek kullanımda afiş ve içerikler kendi kaynağınızdan gelir.
+
+## Korunan 1.5.1 özellikleri — Diziler tek kartta, kaldığınız yer kayıtlı
 
 **Filmler** ve **Diziler** ayrımı düzeltildi. M3U bölüm/sezon işaretleri tanınır; aynı dizinin bölümleri afiş ve isimle tek kartta toplanır. Kart sezon/bölüm penceresini açar. Kayıtlı 1.5 kütüphanesi ilk açılışta arka planda dönüştürülür; favori ve geçmiş korunur.
 
@@ -16,7 +24,7 @@ Filmin dakikası ve dizinin son izlenen bölümü/dakikası kaydedilir. İçerik
 
 ## Korunan 1.5 özellikleri — Kütüphanenize yeni bir ana sayfa
 
-Seçili M3U / Xtream kaynağından gelen afişler, büyük bir öne çıkan içerik alanı ve yatay **Son izlenenler / Favorilerin / Filmler / Diziler / Şimdi canlı** sıraları. Boş sıralar gizlenir; her sırada en fazla 12 kart yüklenir. **Tümünü gör** ilgili tam listeyi açar. Kaynağın kapak görseli yoksa içerik adıyla sade bir kapak kullanılır. Harici katalogdan içerik veya puan üretilmez.
+Seçili M3U / Xtream kaynağından gelen afişler, kompakt bir öneri alanı ve yatay **Son izlenenler / Favorilerin / Filmler / Diziler / Şimdi canlı** sıraları. Boş sıralar gizlenir; her sırada en fazla 12 kart yüklenir. **Tümünü gör** ilgili tam listeyi açar. Kaynağın kapak görseli yoksa içerik adıyla sade bir kapak kullanılır. Harici katalogdan içerik veya puan üretilmez.
 
 Sol menüyü başlığın yanındaki menü düğmesiyle, W simgesiyle veya **Ctrl+B** ile daraltıp genişletebilirsiniz. Tercih sonraki açılışta korunur. Küçük pencerede geniş menü içerik üzerine açılır; sol üstteki okla kapanır. **Ctrl+K** ana sayfadayken ana sayfa aramasına gider.
 
@@ -76,7 +84,7 @@ Güncelleme mevcut EXE'nin üzerine yazmaz. Doğrulanan yeni başlatıcı `updat
 
 Windows 10/11 **x64** içindir. Windows 11 önerilir. Dağıtım .NET 10 çalışma zamanını ve LibVLC'yi içerir; ayrıca VLC veya .NET 10 kurmanız gerekmez. Tek dosya başlatıcısı Windows'un .NET Framework 4.x bileşenini kullanır.
 
-* **WXPlayer.exe**: Tek dosyadır. İlk açılışta bileşenleri `%LOCALAPPDATA%\WXPlayer\application\1.5.1-<paket özeti>` konumuna çıkarır, sonraki açılışlarda bu kopyayı kullanır. Yönetici yetkisi veya sistem kurulumu istemez. İlk açılış için yaklaşık 500 MB boş alan ayırın.
+* **WXPlayer.exe**: Tek dosyadır. İlk açılışta bileşenleri `%LOCALAPPDATA%\WXPlayer\application\1.5.2-<paket özeti>` konumuna çıkarır, sonraki açılışlarda bu kopyayı kullanır. Yönetici yetkisi veya sistem kurulumu istemez. İlk açılış için yaklaşık 500 MB boş alan ayırın.
 * **WXPlayer-win-x64.zip**: Taşınabilir dağıtım. ZIP'in **tamamını** bir klasöre çıkarın ve içindeki `WXPlayer.exe` dosyasını çalıştırın. İçindeki EXE'yi tek başına başka klasöre taşımayın.
 * EXE henüz ticari kod imzalama sertifikasıyla imzalanmamıştır. Paket bütünlüğü `SHA256SUMS.txt` ile doğrulanabilir.
 
@@ -178,4 +186,5 @@ Bu test gerçek WPF penceresini oluşturur, PNG önizlemeleri ve JSON sonuç dos
 Kaynak ZIP'i çıkarın; **içindeki proje dosyalarını** yeni GitHub deponuza yükleyin. ZIP'in kendisini kaynak ağacı yerine yüklemeyin. EXE/taşınabilir ZIP, büyük dosya olduklarından deponun **Releases** bölümüne eklenebilir. Depoda özel kullanıcı bilgileri, gerçek abonelik URL'leri veya veritabanı bulunmaz. GitHub'a yükleme bu teslimat sırasında yapılmadı.
 
 Uygulama kodu MIT lisanslıdır. Dahil edilen codec bileşenlerinin lisansları ayrıdır; `THIRD-PARTY-NOTICES.md` ve `licenses/` dosyalarını koruyun. Özel multimedya motoru sıfırdan yazılmış değildir; WX Player kendi uygulama ve veri katmanları üzerinde açık kaynak LibVLC'yi kullanır.
+
 

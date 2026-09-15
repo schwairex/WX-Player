@@ -12,12 +12,12 @@ internal sealed class SmokeHttpServer : IAsyncDisposable
     private readonly List<Task> _clients=[];
     private readonly Task _accept;
     private readonly byte[] _bytes;
-    private readonly bool _paced;
+    private readonly bool _paced; private readonly int _delayMs;
     internal string Url {get;}
     internal int Connections;
-    internal SmokeHttpServer(byte[] bytes,bool paced=false)
+    internal SmokeHttpServer(byte[] bytes,bool paced=false,int delayMs=0)
     {
-        _bytes=bytes;_paced=paced;_listener.Start();Url=$"http://127.0.0.1:{((IPEndPoint)_listener.LocalEndpoint).Port}/fixture."+(paced?"ts":"ico");
+        _bytes=bytes;_paced=paced;_delayMs=delayMs;_listener.Start();Url=$"http://127.0.0.1:{((IPEndPoint)_listener.LocalEndpoint).Port}/fixture."+(paced?"ts":"ico");
         _accept=Task.Run(async()=>{try{while(!_stop.IsCancellationRequested){var client=await _listener.AcceptTcpClientAsync(_stop.Token);lock(_clients)_clients.Add(Serve(client));}}catch(OperationCanceledException){}catch(SocketException){}});
     }
     private async Task Serve(TcpClient client)
@@ -26,7 +26,7 @@ internal sealed class SmokeHttpServer : IAsyncDisposable
         {
             var ct=_stop.Token;await using var stream=client.GetStream();byte[] request=new byte[8192];int count=0;
             while(count<request.Length){int n=await stream.ReadAsync(request.AsMemory(count),ct);if(n==0)return;count+=n;if(Encoding.ASCII.GetString(request,0,count).Contains("\r\n\r\n"))break;}
-            Interlocked.Increment(ref Connections);
+            Interlocked.Increment(ref Connections);if(_delayMs>0)await Task.Delay(_delayMs,ct);
             string header="HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Type: "+(_paced?"video/mp2t":"image/x-icon")+"\r\n"+(_paced?"":"Content-Length: "+_bytes.Length+"\r\n")+"\r\n";
             await stream.WriteAsync(Encoding.ASCII.GetBytes(header),ct);
             if(!_paced){await stream.WriteAsync(_bytes,ct);return;}
@@ -60,3 +60,4 @@ internal sealed class SmokeHttpServer : IAsyncDisposable
     }
     public async ValueTask DisposeAsync(){_stop.Cancel();_listener.Stop();await _accept;Task[] tasks;lock(_clients)tasks=_clients.ToArray();await Task.WhenAll(tasks);_stop.Dispose();}
 }
+

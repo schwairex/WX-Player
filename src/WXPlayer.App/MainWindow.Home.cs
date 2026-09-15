@@ -37,7 +37,7 @@ public partial class MainWindow
             if(search.Length==0&&source is not null){if(_recommendations.TryGetValue(source,out var id))recommended=await _store.FindAsync(id,cts.Token);if(recommended is null){recommended=await _store.RecommendationAsync(source,_settings.LastRecommendation.GetValueOrDefault(source),cts.Token);if(recommended is not null&&!cts.IsCancellationRequested){_recommendations[source]=recommended.Id;_settings.LastRecommendation[source]=recommended.Id;App.SaveSettings(_settings);}}}
             if(cts.IsCancellationRequested||version!=_homeVersion||source!=SelectedSource?.Id)return;
             _home.Render(name.Length==0?null:name,definitions.Select((d,i)=>new HomeShelf(d.Item1,d.Item2,pages[i])).ToArray(),search,recommended);_home.NowPlaying(_current?.Name);
-        }catch(OperationCanceledException){}catch(Exception) when(cts.IsCancellationRequested){}
+        }catch(OperationCanceledException){}catch(Exception) when(cts.IsCancellationRequested){}catch{if(version==_homeVersion)_home.Error(()=>_ = SafeAsync(RefreshHomeAsync));throw;}
     }
     private async Task BrowseSectionAsync(string section)
     {
@@ -54,3 +54,4 @@ public partial class MainWindow
     internal Task SmokeOpenHomeAsync(ContentItem item)=>OpenHomeItemAsync(item);
     internal void SmokeSidebar()=>SidebarToggle_Click(this,new RoutedEventArgs());
 }
+
