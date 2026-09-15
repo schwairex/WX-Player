@@ -12,7 +12,7 @@ internal sealed class SmokeHttpServer : IAsyncDisposable
     private readonly List<Task> _clients=[];
     private readonly Task _accept;
     private readonly byte[] _bytes;
-    private readonly bool _paced; private readonly int _delayMs;
+    private int _disposed; private readonly bool _paced; private readonly int _delayMs;
     internal string Url {get;}
     internal int Connections;
     internal SmokeHttpServer(byte[] bytes,bool paced=false,int delayMs=0)
@@ -58,6 +58,7 @@ internal sealed class SmokeHttpServer : IAsyncDisposable
         }
         return b;
     }
-    public async ValueTask DisposeAsync(){_stop.Cancel();_listener.Stop();await _accept;Task[] tasks;lock(_clients)tasks=_clients.ToArray();await Task.WhenAll(tasks);_stop.Dispose();}
+    public async ValueTask DisposeAsync(){if(Interlocked.Exchange(ref _disposed,1)!=0)return;_stop.Cancel();_listener.Stop();await _accept;Task[] tasks;lock(_clients)tasks=_clients.ToArray();await Task.WhenAll(tasks);_stop.Dispose();}
 }
+
 

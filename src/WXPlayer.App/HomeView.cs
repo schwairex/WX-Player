@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Input;
 using WXPlayer.Core;
 
 namespace WXPlayer.App;
@@ -9,7 +10,7 @@ internal sealed record HomeShelf(string Title, string Section, WXPlayer.Core.Pag
 
 internal sealed partial class HomeView : ScrollViewer
 {
-    private const double FeatureHeight = 264;
+    private const double FeatureHeight = 300;
     private readonly StackPanel _body = new(), _shelves = new();
     private readonly Grid _feature = new() { Height = FeatureHeight, ClipToBounds = true };
     private readonly Grid _toolbar = new(), _searchBox = new();
@@ -52,6 +53,7 @@ internal sealed partial class HomeView : ScrollViewer
         System.Windows.Automation.AutomationProperties.SetName(Search, "Ana sayfada içerik ara");
         Grid.SetColumn(_searchBox, 1); _toolbar.Children.Add(_searchBox); _body.Children.Add(_toolbar);
         SizeChanged += (_, _) => LayoutToolbar();
+        PreviewMouseWheel += HomeWheel;
         _return = Action("İzlemeye dön", resume);
         _return.HorizontalAlignment = HorizontalAlignment.Left; _return.Margin = new Thickness(0, 0, 0, 16);
         _return.MaxWidth = 600; _return.Visibility = Visibility.Collapsed; _body.Children.Add(_return);
@@ -77,9 +79,9 @@ internal sealed partial class HomeView : ScrollViewer
         _return.Content = new TextBlock { Text = "İzlemeye dön · " + title, TextTrimming = TextTrimming.CharacterEllipsis };
         _return.ToolTip = title; _return.Visibility = string.IsNullOrEmpty(title) ? Visibility.Collapsed : Visibility.Visible;
     }
-    internal void Loading()
+    internal void Loading(bool clear = true)
     {
-        Reset(); Empty = false;
+        CancelArtwork(); if (!clear && Items.Count > 0) return; Reset(); ScrollToTop(); Empty = false;
         ShowState("Kütüphanen hazırlanıyor", "İçerikleriniz listeleniyor…", null, null);
         var skeletons = new StackPanel { Orientation = Orientation.Horizontal, ClipToBounds = true, Height = 200 };
         for (int i = 0; i < 8; i++) skeletons.Children.Add(new Border { Width = 160, Height = 200, Background = Color("#141922"), CornerRadius = new CornerRadius(8), Margin = new Thickness(0, 0, 16, 0) });
@@ -87,7 +89,7 @@ internal sealed partial class HomeView : ScrollViewer
     }
     internal void Error(Action retry)
     {
-        Reset(); Empty = false;
+        CancelArtwork(); Reset(); Empty = false;
         ShowState("Kütüphane görüntülenemedi", "İçerikler şu anda yüklenemiyor. Yeniden deneyebilirsiniz.", "Yeniden dene", retry);
     }
     private void Reset() { _feature.Children.Clear(); _shelves.Children.Clear(); Items = []; Featured = null; }
@@ -102,51 +104,60 @@ internal sealed partial class HomeView : ScrollViewer
         }
         _feature.Children.Add(new Border { Background = Color("#141922"), BorderBrush = Color("#252C38"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10), Child = copy });
     }
-    internal void Render(string? source, IReadOnlyList<HomeShelf> shelves, string search, ContentItem? recommendation = null)
-    {
-        Reset(); Items = shelves.SelectMany(s => s.Page.Items).DistinctBy(i => i.Id).ToArray(); Empty = Items.Count == 0;
-        Featured = recommendation ?? Items.FirstOrDefault(i => i.Kind == ContentKind.Movie && !string.IsNullOrWhiteSpace(i.Logo)) ?? Items.FirstOrDefault(i => i.Kind == ContentKind.Movie) ?? Items.FirstOrDefault();
-        if (Featured is null)
-        {
-            bool searching = search.Length > 0;
-            ShowState(searching ? "Aradığın içerik bulunamadı" : source is null ? "Kütüphanen seni bekliyor" : "Bu kaynakta henüz içerik yok",
-                searching ? "Farklı bir ad deneyin veya aramanızı temizleyin." : "M3U listenizi veya Xtream hesabınızı bağlayın. Filmleriniz, dizileriniz ve canlı kanallarınız burada görünsün.",
-                searching ? "Aramayı temizle" : "Kaynak ekle", () => { if (searching) Search.Clear(); else _add(); });
-            return;
-        }
-        BuildHero(Featured, source ?? "Kütüphaneniz");
-        foreach (var shelf in shelves.Where(s => s.Page.Items.Count > 0)) BuildShelf(shelf);
-    }
     private void BuildHero(ContentItem item, string source)
     {
-        // Explicit bounds prevent asynchronously loaded, tall artwork from expanding a ScrollViewer's content.
-        var hero = new Grid { Height = FeatureHeight - 2, ClipToBounds = true };
-        hero.ColumnDefinitions.Add(new() { Width = new GridLength(1, GridUnitType.Star) });
-        hero.ColumnDefinitions.Add(new() { Width = new GridLength(192) });
-        var copy = new StackPanel { Margin = new Thickness(28, 20, 20, 20), VerticalAlignment = VerticalAlignment.Center, MaxWidth = 660, HorizontalAlignment = HorizontalAlignment.Left };
+        var hero = new Grid { Height = FeatureHeight - 2, ClipToBounds = true, Background = Color("#141B24") };
+        Round(hero, 12);
+        var art = new ChannelLogo { Url = item.Logo, Initials = "", DecodeWidth = 480, ImageStretch = Stretch.UniformToFill, ImagePadding = new Thickness(0), Opacity = .35, HorizontalAlignment = HorizontalAlignment.Right, Width = 510, Height = FeatureHeight - 2 };
+        hero.Children.Add(art);
+        var shade = new LinearGradientBrush(); shade.StartPoint = new Point(0, .5); shade.EndPoint = new Point(1, .5);
+        shade.GradientStops.Add(new GradientStop(((SolidColorBrush)Color("#141B24")).Color, 0));
+        shade.GradientStops.Add(new GradientStop(((SolidColorBrush)Color("#FF141B24")).Color, .43));
+        shade.GradientStops.Add(new GradientStop(((SolidColorBrush)Color("#24141B24")).Color, 1));
+        hero.Children.Add(new Border { Background = shade, IsHitTestVisible = false });
+        var poster = Artwork(item, 172, 258); poster.HorizontalAlignment = HorizontalAlignment.Right; poster.VerticalAlignment = VerticalAlignment.Center; poster.Margin = new Thickness(0, 0, 28, 0); hero.Children.Add(poster);
+        var copy = new StackPanel { Margin = new Thickness(30, 22, 24, 22), VerticalAlignment = VerticalAlignment.Center, MaxWidth = 580, HorizontalAlignment = HorizontalAlignment.Left };
         hero.Children.Add(copy);
         var eyebrow = Text("SENİN İÇİN SEÇTİK  ·  " + item.KindLabel, 10, "#C1EC8B"); eyebrow.FontWeight = FontWeights.SemiBold; copy.Children.Add(eyebrow);
-        var title = Text(item.Name, 26); title.FontWeight = FontWeights.SemiBold; title.LineHeight = 32;
-        title.MaxHeight = 64; title.TextTrimming = TextTrimming.CharacterEllipsis; title.ToolTip = item.Name; title.Margin = new Thickness(0, 12, 0, 10); copy.Children.Add(title);
-        var metadata = Text(item.Category + "  ·  " + source, 12, "#98A3B6"); metadata.TextWrapping = TextWrapping.NoWrap; metadata.TextTrimming = TextTrimming.CharacterEllipsis; metadata.Margin = new Thickness(0, 0, 0, 18); copy.Children.Add(metadata);
+        var title = Text(item.Name, 30); title.FontWeight = FontWeights.SemiBold; title.LineHeight = 36;
+        title.MaxHeight = 72; title.TextTrimming = TextTrimming.CharacterEllipsis; title.ToolTip = item.Name; title.Margin = new Thickness(0, 14, 0, 12); copy.Children.Add(title);
+        var metadata = Text(item.Category + "  ·  " + source, 12, "#B1BECC"); metadata.TextWrapping = TextWrapping.NoWrap; metadata.TextTrimming = TextTrimming.CharacterEllipsis; metadata.Margin = new Thickness(0, 0, 0, 22); copy.Children.Add(metadata);
         var actions = new WrapPanel();
         string playLabel = item.Kind == ContentKind.Series ? "Bölümleri keşfet" : item.Kind == ContentKind.Live ? "Canlı izle" : "Filmi izle";
         var play = Action(playLabel, () => _play(item), true); play.Margin = new Thickness(0, 0, 8, 6); actions.Children.Add(play);
         var favorite = Action(item.IsFavorite ? "Favorilerimde" : "Favorilere ekle", () => _favorite(item)); favorite.Margin = new Thickness(0, 0, 0, 6); actions.Children.Add(favorite); copy.Children.Add(actions);
-        var poster = Artwork(item, 144, 216); poster.Margin = new Thickness(12, 22, 28, 22); Grid.SetColumn(poster, 1); hero.Children.Add(poster);
         hero.SizeChanged += (_, _) =>
         {
-            bool narrow = hero.ActualWidth < 620;
-            hero.ColumnDefinitions[1].Width = new GridLength(narrow ? 144 : 192);
-            poster.Width = narrow ? 108 : 144; poster.Height = narrow ? 162 : 216;
-            poster.Margin = new Thickness(8, 20, narrow ? 20 : 28, 20);
-            title.FontSize = narrow ? 22 : 26; title.LineHeight = narrow ? 28 : 32; title.MaxHeight = narrow ? 84 : 64;
-            copy.Margin = new Thickness(narrow ? 20 : 28, 16, 16, 16);
+            bool narrow = hero.ActualWidth < 800;
+            copy.MaxWidth = Math.Max(200, Math.Min(580, hero.ActualWidth - 254));
+            art.Width = Math.Min(510, hero.ActualWidth * .58);
+            shade.GradientStops[1].Offset = Math.Max(.43, 1 - art.Width / Math.Max(1, hero.ActualWidth));
+            title.FontSize = narrow ? 25 : 30; title.LineHeight = narrow ? 30 : 36; title.MaxHeight = narrow ? 90 : 72;
         };
-        _feature.Children.Add(new Border { Background = Color("#141B24"), BorderBrush = Color("#293440"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10), Child = hero, ClipToBounds = true });
+        _feature.Children.Add(hero);
+    }
+    private void HomeWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (e.Delta == 0 || SystemParameters.WheelScrollLines == 0) return;
+        if ((Keyboard.Modifiers & ModifierKeys.Shift) != 0)
+        {
+            DependencyObject? current = e.OriginalSource as DependencyObject;
+            while (current is not null && current != this)
+            {
+                if (current is ScrollViewer shelf) { shelf.ScrollToHorizontalOffset(shelf.HorizontalOffset - e.Delta * 2); e.Handled = true; return; }
+                current = current is Visual ? VisualTreeHelper.GetParent(current) : LogicalTreeHelper.GetParent(current);
+            }
+        }
+        double step = SystemParameters.WheelScrollLines < 0 ? ViewportHeight : SystemParameters.WheelScrollLines * 36;
+        ScrollToVerticalOffset(VerticalOffset - e.Delta / 120d * step);
+        e.Handled = true;
     }
     private static void Round(FrameworkElement element, double radius)
     {
         element.SizeChanged += (_, _) => element.Clip = new RectangleGeometry(new Rect(0, 0, element.ActualWidth, element.ActualHeight), radius, radius);
     }
 }
+
+
+
+

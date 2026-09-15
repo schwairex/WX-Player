@@ -37,7 +37,9 @@ internal static class SmokeTest
                 await store.DeleteSourceAsync(stressSource.Id);
             }
             var source=new SourceConfig{Id="smoke-demo",Name="Örnek · Açık filmler",Address=Path.Combine(AppContext.BaseDirectory,"samples","open-films.m3u")};
-            await store.ImportAsync(source,providers.LoadAsync(source,default),null,default);await window.SmokeRefreshAsync(source.Id);
+            await using var startupArt = new SmokeHttpServer(await File.ReadAllBytesAsync(Path.Combine(AppContext.BaseDirectory,"samples","test-logo.ico")));
+            async IAsyncEnumerable<ContentItem> StartupItems(){await foreach(var item in providers.LoadAsync(source,default))yield return item with{Logo=startupArt.Url};}
+            await store.ImportAsync(source,StartupItems(),null,default);await window.SmokeRefreshAsync(source.Id);
             await Task.Delay(500);window.UpdateLayout();SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-preview.png"));results["startup"]=true;
             results["homeUsesSelectedSource"]=window.HomeHost.IsVisible&&!window.ContentGrid.IsVisible&&window.SmokeHome.Items.Count==4&&window.SmokeHome.Items.All(i=>i.SourceId==source.Id)&&window.SmokeHome.Featured?.Kind==ContentKind.Movie;
             window.SmokeHome.Search.Text="Sintel";await WaitUntil(()=>window.SmokeHome.Items.Count==1,TimeSpan.FromSeconds(5));
@@ -239,6 +241,7 @@ internal static class SmokeTest
         window.UpdateLayout();var content=(FrameworkElement)window.Content;var bitmap=new RenderTargetBitmap((int)content.ActualWidth,(int)content.ActualHeight,96,96,PixelFormats.Pbgra32);bitmap.Render(content);var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(bitmap));using var file=File.Create(path);encoder.Save(file);
     }
 }
+
 
 
 

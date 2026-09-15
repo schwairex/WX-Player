@@ -11,19 +11,19 @@ internal sealed partial class HomeView
     {
         bool live = item.Kind == ContentKind.Live;
         var image = new Grid { Width = width, Height = height, Background = Color("#1B2530"), ClipToBounds = true };
-        Round(image, 8);
+        Round(image, 10);
         image.Children.Add(new ChannelLogo
         {
-            Url = item.Logo, Initials = item.Initials, DecodeWidth = live ? 240 : 480,
-            ImageStretch = Stretch.Uniform, ImagePadding = new Thickness(live ? 20 : 0)
+            Url = item.Logo, Initials = item.Initials, DecodeWidth = 480,
+            ImageStretch = live ? Stretch.Uniform : Stretch.UniformToFill, ImagePadding = new Thickness(live ? 20 : 0)
         });
         return image;
     }
     private void BuildShelf(HomeShelf shelf)
     {
         // Geometry belongs to the shelf, never to an individual item's media kind.
-        bool posters = shelf.Section is "movie" or "series";
-        double width = posters ? 160 : 224, artHeight = posters ? 224 : 126;
+        bool posters = shelf.Section != "live";
+        double width = posters ? 176 : 232, artHeight = posters ? 264 : 130;
         bool hasProgress = shelf.Page.Items.Any(i => i.Progress is not null);
         var section = new StackPanel { Margin = new Thickness(0, 0, 0, 24), Tag = shelf.Section };
         _shelves.Children.Add(section);
@@ -39,8 +39,8 @@ internal sealed partial class HomeView
         var next = Arrow("chevron-right", shelf.Title + " · Sonraki içerikler", () => scroll.ScrollToHorizontalOffset(scroll.HorizontalOffset + Step()));
         actions.Children.Add(prev); actions.Children.Add(next);
         var caption = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
-        var title = Text(shelf.Title, 18); title.FontWeight = FontWeights.SemiBold; caption.Children.Add(title);
-        var count = Text(shelf.Page.Total.ToString("N0"), 11, "#98A3B6"); count.Margin = new Thickness(10, 4, 0, 0); caption.Children.Add(count); header.Children.Add(caption);
+        var title = Text(shelf.Title, 20); title.FontWeight = FontWeights.SemiBold; caption.Children.Add(title);
+        header.Children.Add(caption);
         section.Children.Add(scroll);
         void UpdateArrows() { next.IsEnabled = scroll.HorizontalOffset < scroll.ScrollableWidth - 1; prev.IsEnabled = scroll.HorizontalOffset > 1; }
         scroll.ScrollChanged += (_, _) => UpdateArrows(); scroll.Loaded += (_, _) => UpdateArrows();
@@ -49,7 +49,7 @@ internal sealed partial class HomeView
             var card = new StackPanel { Width = width }; card.Children.Add(Artwork(item, width, artHeight));
             var name = Text(item.Name, 12); name.FontWeight = FontWeights.SemiBold;
             name.Height = 36; name.LineHeight = 18; name.Margin = new Thickness(0, 10, 0, 4); name.TextTrimming = TextTrimming.CharacterEllipsis; card.Children.Add(name);
-            var category = Text(posters ? item.Category : item.KindLabel + "  ·  " + item.Category, 10, "#98A3B6");
+            var category = Text(item.KindLabel + "  ·  " + item.Category, 10, "#98A3B6");
             category.Height = 16; category.TextWrapping = TextWrapping.NoWrap; category.TextTrimming = TextTrimming.CharacterEllipsis; card.Children.Add(category);
             if (hasProgress)
             {
@@ -78,3 +78,4 @@ internal sealed partial class HomeView
         System.Windows.Automation.AutomationProperties.SetName(button, label); return button;
     }
 }
+

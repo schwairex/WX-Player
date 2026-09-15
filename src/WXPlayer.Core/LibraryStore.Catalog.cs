@@ -57,10 +57,10 @@ public sealed partial class LibraryStore
         cmd.ExecuteNonQuery();
     }
     public async Task<ContentItem?> FindAsync(string id,CancellationToken ct=default)=>(await QueryAsync(null,null,null,"",false,false,0,1,ct,itemId:id)).Items.FirstOrDefault();
-    public async Task<ContentItem?> RecommendationAsync(string? source,string? previous,CancellationToken ct=default)
+    public async Task<ContentItem?> RecommendationAsync(string? source,string? previous,CancellationToken ct=default,bool artworkOnly=false)
     {
-        var page=await QueryAsync(source,null,null,"",false,false,0,1,ct,recommend:true,exceptId:previous);
-        return page.Items.FirstOrDefault()??(await QueryAsync(source,null,null,"",false,false,0,1,ct,recommend:true)).Items.FirstOrDefault();
+        var page=await QueryAsync(source,null,null,"",false,false,0,1,ct,recommend:true,exceptId:previous,artworkOnly:artworkOnly);
+        return page.Items.FirstOrDefault()??(await QueryAsync(source,null,null,"",false,false,0,1,ct,recommend:true,artworkOnly:artworkOnly)).Items.FirstOrDefault();
     }
     public async Task<IReadOnlyList<ContentItem>> PlaylistEpisodesAsync(ContentItem series,CancellationToken ct=default)
         =>(await QueryAsync(series.SourceId,ContentKind.Episode,null,"",false,false,0,int.MaxValue,ct,parent:series.Id)).Items;
@@ -84,3 +84,4 @@ public sealed partial class LibraryStore
         cmd.Parameters.AddWithValue("$i",item.Id);cmd.Parameters.AddWithValue("$s",item.SourceId);cmd.Parameters.AddWithValue("$p",item.SeriesId);cmd.Parameters.AddWithValue("$n",item.Kind==ContentKind.Episode&&item.Episode>0?(item.Season>0?$"S{item.Season:00} · B{item.Episode:00}":$"Bölüm {item.Episode}"):item.Name);cmd.Parameters.AddWithValue("$pos",position);cmd.Parameters.AddWithValue("$dur",duration);cmd.Parameters.AddWithValue("$done",completed);cmd.Parameters.AddWithValue("$t",DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());cmd.Parameters.AddWithValue("$owner",item.SeriesId.Length>0?item.SeriesId:item.Id);cmd.ExecuteNonQuery();
     });
 }
+

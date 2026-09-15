@@ -88,7 +88,7 @@
           <Button x:Name="SettingsNav" Style="{StaticResource Nav}" Click="Settings_Click">
             <ui:IconLabel Icon="settings" Label="Ayarlar" />
           </Button>
-          <TextBlock x:Name="VersionLabel" Text="WX PLAYER  /  1.5.2" FontSize="9" Foreground="#5F6D81" Margin="14,14,0,0" />
+          <TextBlock x:Name="VersionLabel" Text="WX PLAYER  /  1.5.3" FontSize="9" Foreground="#5F6D81" Margin="14,14,0,0" />
         </StackPanel>
         <Grid />
       </DockPanel>
@@ -346,4 +346,5 @@
     </Grid>
   </Grid>
 </Window>
+
 

@@ -79,7 +79,7 @@ public sealed partial class LibraryStore(string path)
         }
         finally { _writer.Release(); }
     }
-    public Task<Page> QueryAsync(string? source, ContentKind? kind, string? category, string search, bool favorites, bool recent, int offset, int limit = 150, CancellationToken ct = default, string? itemId = null, bool recommend = false, string? exceptId = null, string? parent = null) => Task.Run(() =>
+    public Task<Page> QueryAsync(string? source, ContentKind? kind, string? category, string search, bool favorites, bool recent, int offset, int limit = 150, CancellationToken ct = default, string? itemId = null, bool recommend = false, string? exceptId = null, string? parent = null, bool artworkOnly = false) => Task.Run(() =>
     {
         using var c = Open(); using var cmd = c.CreateCommand();
         using var reg = ct.Register(cmd.Cancel);
@@ -87,6 +87,7 @@ public sealed partial class LibraryStore(string path)
         where += " AND ($k=3 OR i.kind<>3)";
         if(itemId is not null){where+=" AND i.id=$id";cmd.Parameters.AddWithValue("$id",itemId);}
         if(parent is not null){where+=" AND i.series_id=$parent";cmd.Parameters.AddWithValue("$parent",parent);}
+        if(artworkOnly)where+=" AND (trim(i.logo) LIKE 'http://%' OR trim(i.logo) LIKE 'https://%')";
         if(recommend)where+=" AND i.kind IN(1,2)";
         if(exceptId is not null){where+=" AND i.id<>$except";cmd.Parameters.AddWithValue("$except",exceptId);}
         if (favorites) where += " AND f.id IS NOT NULL";
@@ -128,4 +129,5 @@ public sealed partial class LibraryStore(string path)
         await _writer.WaitAsync();try { await Task.Run(()=>{using var c=Open();action(c);}); } finally { _writer.Release(); }
     }
 }
+
 

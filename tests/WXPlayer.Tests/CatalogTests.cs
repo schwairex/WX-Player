@@ -9,6 +9,21 @@ internal static class CatalogTests
         ContentItem Episode(int season,int episode)=>new(){Id="ep-"+season+"-"+episode,SourceId=source.Id,Name=$"500T (2021) S{season:00} 500T - {episode}. Bölüm - Başlık - S{season:00}.E{episode:00}",Category="TR ✦ Gain",Kind=ContentKind.Movie,Logo="https://example.test/poster.jpg",Url=$"https://example.test/series/u/p/{season}{episode}.mp4"};
         var movie=new ContentItem{Id="movie151",SourceId=source.Id,Name="Bir Film (2024)",Category="Filmler",Kind=ContentKind.Movie,Url="https://example.test/movie/1.mp4"};
         var store=new LibraryStore(Path.Combine(folder,"catalog151.db"));await store.InitializeAsync();
+        await test("Home artwork filter runs before pagination and preserves full catalog",async()=>
+        {
+            var artSource=new SourceConfig{Id="artwork153",Name="Artwork",Kind=SourceKind.Xtream};
+            async IAsyncEnumerable<ContentItem> ArtItems(){for(int i=0;i<30;i++){yield return new ContentItem{Id="art-empty-"+i,SourceId=artSource.Id,Name="A Missing "+i,Kind=ContentKind.Movie,Logo=i%2==0?"":"ftp://example.test/art"};await Task.Yield();}for(int i=0;i<3;i++)yield return new ContentItem{Id="art-valid-"+i,SourceId=artSource.Id,Name="Z Poster "+i,Kind=(ContentKind)i,Logo="https://example.test/"+i+".jpg"};}
+            await store.ImportAsync(artSource,ArtItems(),null,default);
+            var page=await store.QueryAsync(artSource.Id,null,null,"",false,false,0,2,artworkOnly:true);
+            assert(page.Total==3&&page.Items.Count==2&&page.Items.All(i=>i.Id.StartsWith("art-valid-")),"filter before limit");
+            assert((await store.QueryAsync(artSource.Id,null,null,"",false,false,0)).Total==33,"full library preserved");
+            await store.FavoriteAsync("art-empty-0",true);await store.RememberAsync("art-empty-0");
+            assert((await store.QueryAsync(artSource.Id,null,null,"",true,true,0,artworkOnly:true)).Total==0,"home favorites/history artwork filter");
+            assert((await store.QueryAsync(artSource.Id,null,null,"",true,true,0)).Total==1,"hidden card still available in library");
+            var recommendation=await store.RecommendationAsync(artSource.Id,null,artworkOnly:true);
+            assert(recommendation is not null&&recommendation.Logo.StartsWith("https://"),"recommendation requires artwork");
+            await store.DeleteSourceAsync(artSource.Id);
+        });
         await test("Content selection identity survives binding and favorite changes",()=>
         {var item=movie with{};var set=new HashSet<ContentItem>{item};int hash=item.GetHashCode();item.PropertyChanged+=(_,_)=>{};item.IsFavorite=true;assert(hash==item.GetHashCode()&&set.Contains(item)&&set.Remove(item),"stable hash for WPF item selection");assert(!item.Equals(item with{Id="another"}),"different content remains distinct");return Task.CompletedTask;});
         async IAsyncEnumerable<ContentItem> Items(){yield return Episode(1,10);yield return Episode(2,1);yield return Episode(1,2);yield return movie;await Task.Yield();}
@@ -66,3 +81,4 @@ internal static class CatalogTests
         });
     }
 }
+

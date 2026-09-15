@@ -1,10 +1,16 @@
-# WX Player 1.5.2
+# WX Player 1.5.3
 
 **Kendi kaynağınız. Kendi kütüphaneniz.** Windows için C# / WPF ile geliştirilmiş yerel IPTV ve medya oynatıcısı. Koyu arayüz, Fluent tasarımından esinlenen kontroller, Direct3D video çıkışı ve SQLite tabanlı yerel veri altyapısı.
 
 ![WX Player](docs/WX-Player-preview.png)
 
-## 1.5.2 — Daha sade ve düzenli bir ana sayfa
+## 1.5.3 — Kesintisiz kaydırma, hızlı afişler
+
+Ana sayfa tekerlekle kartların üzerinden de baştan sona kaydırılır. Afişler tek indirme, LRU bellek ve kalıcı disk önbelleğiyle yüklenir. Ana sayfa yalnız başarıyla yüklenen afişleri gösterir; afişsiz içerikler tam kütüphanede kalır. Film/dizi kartları afişi dolduran 2:3 düzende, üst öneri ise sınırlı yükseklikte sinematik bir paneldedir.
+
+[1.5.3 sürüm notları](docs/RELEASE-NOTES-1.5.3.md) · [Test raporu](docs/TEST-REPORT-1.5.3.md) · [GitHub yayını](docs/GITHUB-RELEASES.md)
+
+## Korunan 1.5.2 özellikleri — Daha sade ve düzenli bir ana sayfa
 
 Öneri alanı artık sınırlı yükseklikte, kompakt bir paneldir. Büyük afişler sayfayı kaplamaz. Son izlenenler ve favorilerde farklı içerik türleri eşit kart ölçüleriyle gösterilir; filmler ve diziler ortak afiş düzeni kullanır. Uzun başlıklar, izleme konumları, klavye odağı ve dar pencere araması için ayrılan alanlar tutarlıdır.
 
@@ -84,7 +90,7 @@ Güncelleme mevcut EXE'nin üzerine yazmaz. Doğrulanan yeni başlatıcı `updat
 
 Windows 10/11 **x64** içindir. Windows 11 önerilir. Dağıtım .NET 10 çalışma zamanını ve LibVLC'yi içerir; ayrıca VLC veya .NET 10 kurmanız gerekmez. Tek dosya başlatıcısı Windows'un .NET Framework 4.x bileşenini kullanır.
 
-* **WXPlayer.exe**: Tek dosyadır. İlk açılışta bileşenleri `%LOCALAPPDATA%\WXPlayer\application\1.5.2-<paket özeti>` konumuna çıkarır, sonraki açılışlarda bu kopyayı kullanır. Yönetici yetkisi veya sistem kurulumu istemez. İlk açılış için yaklaşık 500 MB boş alan ayırın.
+* **WXPlayer.exe**: Tek dosyadır. İlk açılışta bileşenleri `%LOCALAPPDATA%\WXPlayer\application\1.5.3-<paket özeti>` konumuna çıkarır, sonraki açılışlarda bu kopyayı kullanır. Yönetici yetkisi veya sistem kurulumu istemez. İlk açılış için yaklaşık 500 MB boş alan ayırın.
 * **WXPlayer-win-x64.zip**: Taşınabilir dağıtım. ZIP'in **tamamını** bir klasöre çıkarın ve içindeki `WXPlayer.exe` dosyasını çalıştırın. İçindeki EXE'yi tek başına başka klasöre taşımayın.
 * EXE henüz ticari kod imzalama sertifikasıyla imzalanmamıştır. Paket bütünlüğü `SHA256SUMS.txt` ile doğrulanabilir.
 
@@ -186,5 +192,6 @@ Bu test gerçek WPF penceresini oluşturur, PNG önizlemeleri ve JSON sonuç dos
 Kaynak ZIP'i çıkarın; **içindeki proje dosyalarını** yeni GitHub deponuza yükleyin. ZIP'in kendisini kaynak ağacı yerine yüklemeyin. EXE/taşınabilir ZIP, büyük dosya olduklarından deponun **Releases** bölümüne eklenebilir. Depoda özel kullanıcı bilgileri, gerçek abonelik URL'leri veya veritabanı bulunmaz. GitHub'a yükleme bu teslimat sırasında yapılmadı.
 
 Uygulama kodu MIT lisanslıdır. Dahil edilen codec bileşenlerinin lisansları ayrıdır; `THIRD-PARTY-NOTICES.md` ve `licenses/` dosyalarını koruyun. Özel multimedya motoru sıfırdan yazılmış değildir; WX Player kendi uygulama ve veri katmanları üzerinde açık kaynak LibVLC'yi kullanır.
+
 
 

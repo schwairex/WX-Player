@@ -2,12 +2,12 @@
 
 Hedef depo: https://github.com/schwairex/WX-Player
 
-## 1.5.2'yi yayımlama
+## 1.5.3'ü yayımlama
 
 1. Kaynak ZIP içindeki `WXPlayer` klasörünün **içeriğini** deponun köküne yükleyin. `.github/workflows/windows.yml` ve `Directory.Build.props` kökte olmalı.
-2. GitHub **Releases → Draft a new release** yolundan `v1.5.2` etiketiyle kararlı bir sürüm hazırlayın.
-3. Teslim edilen **WXPlayer-1.5.2.exe** dosyasını sürümün Assets alanına ekleyin. Dosya adı `WXPlayer.exe` olarak da kullanılabilir. Aynı sürüme yalnız **bir** WXPlayer EXE ekleyin. İsteğe bağlı kaynak/portable ZIP eklenebilir. Taşınabilir ZIP içindeki küçük EXE güncelleme paketi değildir; tek dosya dağıtım EXE'sini ekleyin.
-4. GitHub'ın asset digest alanı SHA-256 sağlıyorsa başka manifest gerekmez. Ek güvence ve eski API uyumluluğu için teslim edilen `SHA256SUMS-1.5.2.txt` dosyasını da ekleyin. EXE adını değiştirirseniz bu dosyadaki ad da aynı olmalı. “Pre-release” seçmeden **Publish release** yapın.
+2. GitHub **Releases → Draft a new release** yolundan `v1.5.3` etiketiyle kararlı bir sürüm hazırlayın.
+3. Teslim edilen **WXPlayer-1.5.3.exe** dosyasını sürümün Assets alanına ekleyin. Dosya adı `WXPlayer.exe` olarak da kullanılabilir. Aynı sürüme yalnız **bir** WXPlayer EXE ekleyin. İsteğe bağlı kaynak/portable ZIP eklenebilir. Taşınabilir ZIP içindeki küçük EXE güncelleme paketi değildir; tek dosya dağıtım EXE'sini ekleyin.
+4. GitHub'ın asset digest alanı SHA-256 sağlıyorsa başka manifest gerekmez. Ek güvence ve eski API uyumluluğu için teslim edilen `SHA256SUMS-1.5.3.txt` dosyasını da ekleyin. EXE adını değiştirirseniz bu dosyadaki ad da aynı olmalı. “Pre-release” seçmeden **Publish release** yapın.
 
 Kaynak kodunu yüklemek veya commit oluşturmak tek başına güncelleme yayımlamaz. Taslak ve ön sürümler otomatik kurulmaz. Kontrol noktası: https://api.github.com/repos/schwairex/WX-Player/releases/latest
 
@@ -31,6 +31,7 @@ Manuel paketleme: Windows + .NET 10 SDK ortamında `./tools/build.ps1`. Yeni ve 
 
 `./tools/test-updater.ps1 -AppExe ./artifacts/WXPlayer.exe -OutputPath ./artifacts/updater-test-unique`
 
-Bu test kendi geçici 1.6.0 fixture EXE'sini üretir; gerçek GitHub'da yayın oluşturmaz. 1.5.2'yin indirme/doğrulama/yeniden başlatma kodunu çalıştırır, eski süreç kapanmadan yenisinin başlamadığını ve eski EXE'nin etkin yeni sürüme yönlendiğini kontrol eder. Test verileri ayrı klasörde tutulur. Fixture EXE'yi Releases'e yüklemeyin.
+Bu test kendi geçici 1.6.0 fixture EXE'sini üretir; gerçek GitHub'da yayın oluşturmaz. 1.5.3'ün indirme/doğrulama/yeniden başlatma kodunu çalıştırır, eski süreç kapanmadan yenisinin başlamadığını ve eski EXE'nin etkin yeni sürüme yönlendiğini kontrol eder. Test verileri ayrı klasörde tutulur. Fixture EXE'yi Releases'e yüklemeyin.
+
 
 
