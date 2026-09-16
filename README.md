@@ -383,7 +383,7 @@ Bu bölüm değişiklikleri sürüme göre özetler. Sürüm notları kapsamı, 
 </details>
 
 <details>
-<summary><strong>1.5.3 · Kesintisiz kaydırma ve hızlı afişler<summary><strong>
+<summary><strong>1.5.3 · Kesintisiz kaydırma ve hızlı afişler</strong></summary>
 
 - İç içe rafların tekerleği yakalayarak ana sayfa kaydırmasını engellemesi düzeltildi; Shift + tekerlek yatay gezinmeye ayrıldı.
 - Afişlerde tek indirme paylaşımı, LRU bellek ve kalıcı disk önbelleği eklendi; bozuk görsellerin tekrar yüklenmesi sınırlandı.
@@ -391,8 +391,8 @@ Bu bölüm değişiklikleri sürüme göre özetler. Sürüm notları kapsamı, 
 - 2:3 film/dizi afişleri, sınırlı sinematik öneri ve raf düzeni iyileştirildi; aynı görünümde kaydırma konumu korundu.
 
 [Sürüm notları](docs/RELEASE-NOTES-1.5.3.md) · [Test raporu](docs/TEST-REPORT-1.5.3.md)
-
 </details>
+
 
 <details>
 <summary><strong>1.5.2 · Dengeli ana sayfa ve eşit kartlar</strong></summary>
