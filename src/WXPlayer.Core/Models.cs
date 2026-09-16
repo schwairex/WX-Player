@@ -38,7 +38,9 @@ public sealed record ContentItem : System.ComponentModel.INotifyPropertyChanged
     public string Category { get; init; } = "Genel";
     public ContentKind Kind { get; init; }
     public string Url { get; init; } = "";
-    public string Logo { get; init; } = "";
+    private string _logo="";
+    public string ArtworkCredit { get; set; } = "";
+    public string Logo { get=>_logo; set {if(_logo==value)return;_logo=value;PropertyChanged?.Invoke(this,new(nameof(Logo)));} }
     public string EpgId { get; init; } = "";
     public string EpgName { get; init; } = "";
     public string Extension { get; init; } = "mp4";
@@ -71,6 +73,7 @@ public sealed record PlaybackTarget(string Url, string UserAgent = "", string Re
 
 public sealed class PlayerSettings
 {
+    public bool DiscoverArtwork { get; set; } = true;
     public Dictionary<string,string> LastRecommendation { get; set; } = new();
     public bool? SidebarExpanded { get; set; }
     public bool AutoUpdate { get; set; } = true;

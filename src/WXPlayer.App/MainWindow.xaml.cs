@@ -46,7 +46,8 @@ public partial class MainWindow : Window
 
     public MainWindow()
     {
-        InitializeComponent();InitializeHome();VersionLabel.Text="WX PLAYER  /  "+UpdateController.Current.ToString(3);
+        ArtworkService.Enabled=_settings.DiscoverArtwork&&!App.Arguments.Contains("--smoke");
+        InitializeComponent();InitializeHome();InitializeSeries();VersionLabel.Text="WX PLAYER  /  "+UpdateController.Current.ToString(3);
         Loaded+=async(_,_)=>await InitializeAsync();
         SourceInitialized+=(_,_)=>{try{int dark=1;DwmSetWindowAttribute(new WindowInteropHelper(this).Handle,20,ref dark,sizeof(int));}catch{/* Older Windows falls back to the system title bar. */}};
         SeekSlider.InteractionCommitted+=async(_,_)=>{if(!_ready)return;if(_engine.HasLiveBuffer)await SafeAsync(()=>_engine.RewindLiveAsync((1-SeekSlider.Value)*_engine.BufferedSeconds,_life.Token));else if(_engine.Player.IsSeekable)_engine.Player.Position=(float)SeekSlider.Value;};
@@ -62,7 +63,7 @@ public partial class MainWindow : Window
         VideoBorder.SizeChanged+=(_,_)=>{bool small=VideoBorder.ActualHeight<285;WelcomeFull.Visibility=small?Visibility.Collapsed:Visibility.Visible;WelcomeCompact.Visibility=small?Visibility.Visible:Visibility.Collapsed;};
         _hideControls.Tick+=(_,_)=>{if(_floatingControls?.IsMouseOver==true||Mouse.Captured is not null||_fullscreenCategory?.IsDropDownOpen==true||Keyboard.FocusedElement is ComboBox{IsDropDownOpen:true})return;_hideControls.Stop();_floatingControls?.Hide();};
         Activated+=(_,_)=>{if(_fullscreen)Topmost=true;};
-        Deactivated+=(_,_)=>{if(_fullscreen&&_floatingControls?.IsActive!=true){Topmost=false;_floatingControls?.Hide();}};
+        Deactivated+=(_,_)=>{if(_fullscreen&&_floatingControls?.IsActive!=true&&_nextEpisodeWindow?.IsActive!=true){Topmost=false;_floatingControls?.Hide();_nextEpisodeWindow?.Hide();}};
     }
     [DllImport("dwmapi.dll")]private static extern int DwmSetWindowAttribute(IntPtr hwnd,int attr,ref int value,int size);
     private async Task InitializeAsync()
@@ -129,7 +130,7 @@ public partial class MainWindow : Window
     {if(_load is not null)return;var source=Dialogs.Source(this);if(source is not null)await ImportSourceAsync(source);}
     private async Task ImportSourceAsync(SourceConfig source)
     {
-        if(_load is not null)return;_load=CancellationTokenSource.CreateLinkedTokenSource(_life.Token);SetBusy(true);Status("Kaynak bağlanıyor…");
+        if(_load is not null)return;_episodeCacheKey="";_load=CancellationTokenSource.CreateLinkedTokenSource(_life.Token);SetBusy(true);Status("Kaynak bağlanıyor…");
         try{await SafeAsync(async()=>{var progress=new Progress<ImportProgress>(p=>Status(p.Message));int count=await _store.ImportAsync(source,_providers.LoadAsync(source,_load.Token),progress,_load.Token);await ReloadSourcesAsync(source.Id);_offset=0;await RefreshViewAsync();Status($"✓  {count:N0} içerik yüklendi. Rehber arka planda hazırlanıyor.");_ = _epgService.RefreshAsync(source,true);});}
         finally{_load?.Dispose();_load=null;SetBusy(false);}
     }
@@ -138,7 +139,7 @@ public partial class MainWindow : Window
     {
         var menu=new ContextMenu();var edit=new MenuItem{Header="Kaynağı düzenle"};edit.Click+=async(_,_)=>{if(SelectedSource is{} s&&_load is null&&Dialogs.Source(this,s) is{} updated)await ImportSourceAsync(updated);};menu.Items.Add(edit);
         var delete=new MenuItem{Header="Kaynağı kütüphaneden kaldır"};delete.Click+=async(_,_)=>{if(SelectedSource is not{} s||_load is not null)return;if(MessageBox.Show(this,$"'{s.Name}' kaynağı ve bu kaynağın favorileri kaldırılsın mı?","Kaynağı kaldır",MessageBoxButton.YesNo,MessageBoxImage.Question)!=MessageBoxResult.Yes)return;await SafeAsync(()=>RemoveSourceFromSettingsAsync(s.Id));};menu.Items.Add(delete);
-        menu.Items.Add(new Separator());var direct=new MenuItem{Header="DirectShow yakalama aygıtını aç…"};direct.Click+=async(_,_)=>{if(Dialogs.Capture(this) is{} capture)await SafeAsync(async()=>{await SavePlaybackProgressAsync();_progressReady=false;_play?.Cancel();_current=null;_target=null;_epg?.Cancel();++_epgVersion;EpgList.ItemsSource=null;EpgEmptyPanel.Visibility=Visibility.Visible;EpgEmpty.Text="DirectShow aygıtında program rehberi bulunmaz.";GuideTitle.Text="Yayın akışı";ShowVideo();NowTitle.Text="DirectShow · "+(capture.Video.Length>0?capture.Video:"Varsayılan aygıt");await _engine.PlayCaptureAsync(capture.Video,capture.Audio,_settings);});};menu.Items.Add(direct);menu.IsOpen=true;
+        menu.Items.Add(new Separator());var direct=new MenuItem{Header="DirectShow yakalama aygıtını aç…"};direct.Click+=async(_,_)=>{if(Dialogs.Capture(this) is{} capture)await SafeAsync(async()=>{await SavePlaybackProgressAsync();_progressReady=false;_play?.Cancel();_current=null;ApplySeriesVisibility();_target=null;_epg?.Cancel();++_epgVersion;EpgList.ItemsSource=null;EpgEmptyPanel.Visibility=Visibility.Visible;EpgEmpty.Text="DirectShow aygıtında program rehberi bulunmaz.";GuideTitle.Text="Yayın akışı";ShowVideo();NowTitle.Text="DirectShow · "+(capture.Video.Length>0?capture.Video:"Varsayılan aygıt");await _engine.PlayCaptureAsync(capture.Video,capture.Audio,_settings);});};menu.Items.Add(direct);menu.IsOpen=true;
     }
     private async void Demo_Click(object sender,RoutedEventArgs e)
     {
@@ -161,6 +162,7 @@ public partial class MainWindow : Window
     private async void Channel_DoubleClick(object sender,MouseButtonEventArgs e){if(ChannelList.SelectedItem is ContentItem item&&(item.Kind==ContentKind.Series||item.Id==_current?.Id&&!_engine.Player.IsPlaying))await SafeAsync(()=>PlayItemAsync(item));}
     private async Task PlayItemAsync(ContentItem item,bool restart=false)
     {
+        CloseNextEpisode();
         _play?.Cancel();_play?.Dispose();var cts=_play=CancellationTokenSource.CreateLinkedTokenSource(_life.Token);int version=++_playVersion;
         var source=_sources.FirstOrDefault(s=>s.Id==item.SourceId);if(source is null)return;
         var historyId=item.Id;
@@ -172,9 +174,10 @@ public partial class MainWindow : Window
             if(item.SeriesId.Length>0)historyId=item.SeriesId;
             var progress=restart?null:await _store.ProgressAsync(item.Id);if(cts.IsCancellationRequested)return;
             var target=await _providers.ResolveAsync(source,item,cts.Token);if(version!=_playVersion)return;
-            _progressReady=false;_lastPosition=_lastDuration=0;_current=item;_target=target;_epg?.Cancel();++_epgVersion;EpgList.ItemsSource=null;EpgEmptyPanel.Visibility=Visibility.Visible;EpgEmpty.Text="Rehber hazırlanıyor…";GuideTitle.Text=item.Name;NowTitle.Text=item.Name;PlaybackBadge.Text="BAĞLANIYOR";ShowVideo();
-            await _engine.PlayAsync(target,_settings,cts.Token,item.Kind==ContentKind.Live && new Uri(target.Url).Scheme is "http" or "https");if(version!=_playVersion)return;await _store.RememberAsync(historyId);Status($"{item.Name} · Tampon {_engine.CacheMs(_settings)} ms · F: tam ekran"+(_engine.TimeshiftStatus.Length>0?" · "+_engine.TimeshiftStatus:""));_guideDay=new(DateTime.Today);await LoadGuideAsync();
+            _progressReady=false;_lastPosition=_lastDuration=0;_current=item;_dismissedEpisode=null;ApplySeriesVisibility();_target=target;_epg?.Cancel();++_epgVersion;EpgList.ItemsSource=null;EpgEmptyPanel.Visibility=Visibility.Visible;EpgEmpty.Text="Rehber hazırlanıyor…";GuideTitle.Text=item.Name;NowTitle.Text=item.Name;PlaybackBadge.Text="BAĞLANIYOR";ShowVideo();
+            await _engine.PlayAsync(target,_settings,cts.Token,item.Kind==ContentKind.Live && new Uri(target.Url).Scheme is "http" or "https");if(version!=_playVersion)return;await _store.RememberAsync(historyId);Status($"{item.Name} · Tampon {_engine.CacheMs(_settings)} ms · F: tam ekran"+(_engine.TimeshiftStatus.Length>0?" · "+_engine.TimeshiftStatus:""));_guideDay=new(DateTime.Today);
             if(item.Kind is ContentKind.Movie or ContentKind.Episode)_ = RestorePlaybackProgressAsync(progress,version,cts.Token);
+            await LoadGuideAsync();
         }catch(OperationCanceledException){/* A later channel selection wins. */}
     }
     private void ShowVideo(){if(_section=="home"&&!_fullscreen){_section=_current?.Kind==ContentKind.Movie?"movie":"live";SetNav();}WelcomePanel.Visibility=Visibility.Collapsed;Video.Visibility=Visibility.Visible;UpdateLayout();}
@@ -196,7 +199,8 @@ public partial class MainWindow : Window
     {
         _epg?.Cancel();_epg?.Dispose();var cts=_epg=CancellationTokenSource.CreateLinkedTokenSource(_life.Token);int version=++_epgVersion;
         var day=_guideDay;GuideDate.Text=day.LocalDateTime.Date==DateTime.Today?"BUGÜN":day.LocalDateTime.ToString("dd MMM");
-        var item=_current;EpgList.ItemsSource=null;EpgEmptyPanel.Visibility=Visibility.Visible;
+        var item=_current;EpgList.ItemsSource=null;EpgEmptyPanel.Visibility=Visibility.Visible;ApplySeriesVisibility();
+        if(item?.Kind==ContentKind.Episode){await LoadSeriesPanelAsync(item,cts.Token);return;}
         GuideTitle.Text=item?.Kind==ContentKind.Live?item.Name:"Bir canlı kanal seçin";
         if(item is null||item.Kind!=ContentKind.Live){EpgEmpty.Text="Program rehberi canlı kanallarda görüntülenir.";return;}
         var source=_sources.FirstOrDefault(s=>s.Id==item.SourceId);if(source is null)return;
@@ -273,7 +277,7 @@ public partial class MainWindow : Window
     private void Settings_Click(object sender,RoutedEventArgs e)
     {
         if(!_ready)return;if(_fullscreen)ToggleFullscreen();
-        var w=CreateSettingsWindow();w.ShowDialog();if(w.Saved){UpdateVideoSizing();Status("Ayarlar kaydedildi.");}
+        var w=CreateSettingsWindow();w.ShowDialog();if(w.Saved){ArtworkService.Enabled=_settings.DiscoverArtwork;UpdateVideoSizing();_ = SafeAsync(RefreshHomeAsync);Status("Ayarlar kaydedildi.");}
     }
     internal SettingsWindow CreateSettingsWindow()=>new(this,_settings,_store,_updates,ImportSourceAsync,RemoveSourceFromSettingsAsync,ClearFromSettingsAsync);
     private async Task ResetEpgJobsAsync(){_epg?.Cancel();++_epgVersion;await _epgService.StopAsync();_epgService=new EpgService(_providers,_store,_life.Token);}
@@ -281,7 +285,7 @@ public partial class MainWindow : Window
     {
         if(_load is not null)throw new InvalidOperationException("Önce kaynak yüklemesini tamamlayın.");
         await ResetEpgJobsAsync();if(id is null)await _store.ClearAsync(LibraryCleanup.Sources);else await _store.DeleteSourceAsync(id);
-        if(_current is not null&&(id is null||_current.SourceId==id)){_play?.Cancel();++_playVersion;await _engine.StopAsync();_current=null;_target=null;NowTitle.Text="Bir içerik seçin";Video.Visibility=Visibility.Collapsed;WelcomePanel.Visibility=Visibility.Visible;}
+        if(_current is not null&&(id is null||_current.SourceId==id)){_play?.Cancel();++_playVersion;await _engine.StopAsync();_episodeCacheKey="";_episodeCache=[];_current=null;_target=null;NowTitle.Text="Bir içerik seçin";Video.Visibility=Visibility.Collapsed;WelcomePanel.Visibility=Visibility.Visible;}
         await ReloadSourcesAsync();_offset=0;await RefreshViewAsync();await LoadGuideAsync();
     }
     private async Task ClearFromSettingsAsync(LibraryCleanup kind)
@@ -316,6 +320,7 @@ public partial class MainWindow : Window
     private void NextChannel_Click(object sender,RoutedEventArgs e)=>ChangeChannel(1);
     private async void ChangeChannel(int delta)
     {
+        if(_current?.Kind==ContentKind.Episode){await SafeAsync(()=>PlayAdjacentEpisodeAsync(delta));return;}
         if(ChannelList.Items.Count==0)return;int next=ChannelList.SelectedIndex+delta;
         if(next>=ChannelList.Items.Count&&_offset+150<_total){_offset+=150;await SafeAsync(QueryAsync);next=0;}
         else if(next<0&&_offset>0){_offset=Math.Max(0,_offset-150);await SafeAsync(QueryAsync);next=ChannelList.Items.Count-1;}
@@ -343,13 +348,13 @@ public partial class MainWindow : Window
             VideoBorder.CornerRadius=new CornerRadius(14,14,0,0);VideoBorder.BorderThickness=new Thickness(1);Grid.SetRowSpan(VideoBorder,1);
             _fullscreenPlacement.Exit(this);Sidebar.Visibility=TopBar.Visibility=StatsBar.Visibility=FilterBar.Visibility=LibraryPanel.Visibility=GuidePanel.Visibility=GuideSplitter.Visibility=BottomBar.Visibility=Visibility.Visible;SetNav();ApplyLayout();if(_section=="home")_ = SafeAsync(RefreshHomeAsync);
         }
-        UpdateLayout();UpdateVideoSizing();
+        ApplySeriesVisibility();UpdateLayout();UpdateVideoSizing();UpdateNextEpisode();
     }
     private void RestartControlsTimer(){_hideControls.Stop();_hideControls.Start();}
     private void RevealFullscreenControls()
     {
         if(!_fullscreen||_floatingControls is null||_closing)return;
-        if(!_floatingControls.IsVisible)_floatingControls.Show();_fullscreenPlacement.PlaceControls(this,_floatingControls);RestartControlsTimer();
+        if(!_floatingControls.IsVisible)_floatingControls.Show();_fullscreenPlacement.PlaceControls(this,_floatingControls);RestartControlsTimer();PlaceNextEpisode();
     }
     private void Fit_Click(object sender,RoutedEventArgs e)
     {
@@ -397,6 +402,7 @@ public partial class MainWindow : Window
         if(!_ready||_closing)return;var player=_engine.Player;_ = _engine.MaintainLiveAsync();LiveEdgeButton.Visibility=_engine.HasLiveBuffer?Visibility.Visible:Visibility.Collapsed;LiveEdgeButton.Content=_engine.IsReplay?"↗ CANLIYA DÖN":"● CANLI";SeekSlider.IsEnabled=_engine.HasLiveBuffer?_engine.BufferedSeconds>=2:player.IsSeekable;SeekSlider.ToolTip=_engine.HasLiveBuffer?$"Son {_engine.BufferedSeconds:0} saniye · Yerel tampon":"Yayın konumu";
         if(!SeekSlider.IsInteracting&&player.Position>=0)SeekSlider.Value=_engine.HasLiveBuffer?Math.Clamp(1-_engine.BehindLive/Math.Max(1,_engine.BufferedSeconds),0,1):player.Position;
         if(player.IsPlaying&&!SeekSlider.IsInteracting)PlaybackBadge.Text=_engine.HasLiveBuffer?(_engine.IsReplay?$"−{_engine.BehindLive:0} sn":$"{_engine.BufferedSeconds:0} sn hazır"):player.IsSeekable?TimeSpan.FromMilliseconds(Math.Max(0,player.Time)).ToString(@"hh\:mm\:ss")+" / "+TimeSpan.FromMilliseconds(Math.Max(0,player.Length)).ToString(@"hh\:mm\:ss"):"● CANLI";
+        UpdateNextEpisode();PlaceNextEpisode();
         if(++_tick%5==0)_ = SafeAsync(()=>SavePlaybackProgressAsync());if(_tick%30==0)EpgList.Items.Refresh();if(_tick%300==0&&_current?.Kind==ContentKind.Live)_ = LoadGuideAsync();if(_tick%15==0)App.SaveSettings(_settings);
     }
     private async void GoLive_Click(object sender,RoutedEventArgs e)=>await SafeAsync(_engine.GoLiveAsync);
@@ -420,7 +426,7 @@ public partial class MainWindow : Window
         if(_closed)return;e.Cancel=true;if(_closing)return;
         if(_engine?.Recording==true&&MessageBox.Show(this,"Devam eden kayıt sonlandırılıp uygulama kapatılsın mı?","Kayıt devam ediyor",MessageBoxButton.YesNo,MessageBoxImage.Question)!=MessageBoxResult.Yes)return;
         if(_fullscreen)ToggleFullscreen();_closing=true;_life.Cancel();_load?.Cancel();_play?.Cancel();_epg?.Cancel();_query?.Cancel();_homeLoad?.Cancel();_clock.Stop();_search.Stop();_hideControls.Stop();
-        try{await SavePlaybackProgressAsync();App.SaveSettings(_settings);_statistics?.Close();_updateWindow?.Close();if(_epgService is not null)await _epgService.StopAsync();if(_engine is not null){Video.MediaPlayer=null;await _engine.DisposeAsync();}_providers.Dispose();_updates?.Dispose();}finally{_closed=true;Close();}
+        try{await SavePlaybackProgressAsync();App.SaveSettings(_settings);_statistics?.Close();_updateWindow?.Close();if(_epgService is not null)await _epgService.StopAsync();if(_engine is not null){Video.MediaPlayer=null;await _engine.DisposeAsync();}ArtworkService.Discovery.Dispose();_providers.Dispose();_updates?.Dispose();}finally{_closed=true;Close();}
     }
     internal Task SmokePlayAsync(ContentItem item)=>PlayItemAsync(item);
     internal async Task SmokeRefreshAsync(string id){await ReloadSourcesAsync(id);await RefreshViewAsync();}

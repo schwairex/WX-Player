@@ -36,9 +36,12 @@ public partial class MainWindow
     }
     private async Task<IReadOnlyList<ContentItem>> LoadEpisodesAsync(SourceConfig source,ContentItem series,CancellationToken ct)
     {
-        var episodes=source.Kind==SourceKind.Playlist?await _store.PlaylistEpisodesAsync(series,ct):await _providers.EpisodesAsync(source,series,ct);
+        string key=source.Id+"|"+series.Id;
+        var episodes=_episodeCacheKey==key?_episodeCache:source.Kind==SourceKind.Playlist?await _store.PlaylistEpisodesAsync(series,ct):await _providers.EpisodesAsync(source,series,ct);
         var progress=await _store.ProgressForSeriesAsync(series.Id,ct);
-        return episodes.Select(item=>item with{Kind=ContentKind.Episode,SeriesId=series.Id,SeriesName=series.Name,Logo=item.Logo.Length>0?item.Logo:series.Logo,Progress=progress.GetValueOrDefault(item.Id)}).ToArray();
+        ct.ThrowIfCancellationRequested();
+        var result=episodes.Select(item=>item with{Kind=ContentKind.Episode,SeriesId=series.Id,SeriesName=series.Name,Logo=item.Logo.Length>0?item.Logo:series.Logo,Progress=progress.GetValueOrDefault(item.Id)}).ToArray();
+        _episodeCacheKey=result.Length>0?key:"";_episodeCache=result;return result;
     }
     internal Task SmokeSaveProgressAsync()=>SavePlaybackProgressAsync();
     internal Task<IReadOnlyList<ContentItem>> SmokeEpisodesAsync(SourceConfig source,ContentItem series)=>LoadEpisodesAsync(source,series,default);

@@ -33,9 +33,14 @@ public partial class MainWindow
             await SavePlaybackProgressAsync();
             var definitions=new[]{("Son izlenenler","recent",(ContentKind?)null,false,true),("Favorilerin","favorites",(ContentKind?)null,true,false),("Filmler","movie",(ContentKind?)ContentKind.Movie,false,false),("Diziler","series",(ContentKind?)ContentKind.Series,false,false),("Şimdi canlı","live",(ContentKind?)ContentKind.Live,false,false)};
             var pages=await Task.WhenAll(definitions.Select(d=>_store.QueryAsync(source,d.Item3,null,search,d.Item4,d.Item5,0,24,cts.Token,artworkOnly:true)));
+            if(ArtworkService.Enabled)
+            {
+                var all=await Task.WhenAll(definitions.Select(d=>_store.QueryAsync(source,d.Item3,null,search,d.Item4,d.Item5,0,24,cts.Token)));
+                pages=pages.Select((p,i)=>new WXPlayer.Core.Page(p.Items.Take(12).Concat(all[i].Items).Concat(p.Items).DistinctBy(x=>x.Id).Take(36).ToArray(),all[i].Total)).ToArray();
+            }
             if(cts.IsCancellationRequested||version!=_homeVersion||source!=SelectedSource?.Id||_section!="home"||_fullscreen)return;
             ContentItem? recommended=null;
-            if(search.Length==0&&source is not null){if(_recommendations.TryGetValue(source,out var id))recommended=await _store.FindAsync(id,cts.Token);if(recommended is not null&&!ArtworkCache.HasAddress(recommended.Logo))recommended=null;if(recommended is null){recommended=await _store.RecommendationAsync(source,_settings.LastRecommendation.GetValueOrDefault(source),cts.Token,artworkOnly:true);if(recommended is not null&&!cts.IsCancellationRequested){_recommendations[source]=recommended.Id;_settings.LastRecommendation[source]=recommended.Id;App.SaveSettings(_settings);}}}
+            if(search.Length==0&&source is not null){if(_recommendations.TryGetValue(source,out var id))recommended=await _store.FindAsync(id,cts.Token);if(recommended is not null&&!ArtworkService.Enabled&&!ArtworkCache.HasAddress(recommended.Logo))recommended=null;if(recommended is null){recommended=await _store.RecommendationAsync(source,_settings.LastRecommendation.GetValueOrDefault(source),cts.Token,artworkOnly:!ArtworkService.Enabled);if(recommended is not null&&!cts.IsCancellationRequested){_recommendations[source]=recommended.Id;_settings.LastRecommendation[source]=recommended.Id;App.SaveSettings(_settings);}}}
             if(cts.IsCancellationRequested||version!=_homeVersion||source!=SelectedSource?.Id)return;
             await _home.RenderAsync(name.Length==0?null:name,definitions.Select((d,i)=>new HomeShelf(d.Item1,d.Item2,pages[i])).ToArray(),search,recommended);_home.NowPlaying(_current?.Name);
         }catch(OperationCanceledException){}catch(Exception) when(cts.IsCancellationRequested){}catch{if(version==_homeVersion)_home.Error(()=>_ = SafeAsync(RefreshHomeAsync));throw;}

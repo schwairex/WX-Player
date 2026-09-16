@@ -33,6 +33,13 @@ internal sealed class FullscreenPlacement
         controls.Width=width/scale;
         SetWindowPos(new WindowInteropHelper(controls).Handle,IntPtr.Zero,Bounds.Left+(Bounds.Width-width)/2,Bounds.Bottom-height-(int)(24*scale),width,height,0x0010|0x0004);
     }
+    public void PlaceEpisodePrompt(Window owner,Window prompt,double bottom)
+    {
+        double scale=GetDpiForWindow(new WindowInteropHelper(owner).Handle)/96d;
+        int width=(int)(prompt.Width*scale),height=(int)(prompt.Height*scale);
+        int y=Math.Max(Bounds.Top+(int)(24*scale),Bounds.Bottom-height-(int)(bottom*scale));
+        SetWindowPos(new WindowInteropHelper(prompt).Handle,IntPtr.Zero,Bounds.Right-width-(int)(24*scale),y,width,height,0x0010|0x0004);
+    }
     public static Rect WindowBounds(Window window){GetWindowRect(new WindowInteropHelper(window).Handle,out var rect);return rect;}
     [DllImport("user32.dll")]private static extern bool GetWindowPlacement(IntPtr hwnd,ref Placement placement);
     [DllImport("user32.dll")]private static extern bool SetWindowPlacement(IntPtr hwnd,ref Placement placement);

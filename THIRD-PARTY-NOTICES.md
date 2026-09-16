@@ -16,3 +16,13 @@ WX Player does not provide subscription channels, credentials, or subscriptions.
 
 * Inter 4.1 — Copyright Rasmus Andersson; SIL Open Font License 1.1. Unmodified static OTF fonts are bundled; license: licenses/Inter-OFL-1.1.txt. https://rsms.me/inter/ and https://github.com/rsms/inter/releases/tag/v4.1
 * WX Player SVG icons — original artwork included under the application's MIT license.
+
+## Online artwork metadata (1.6.0)
+
+Missing artwork discovery optionally uses these public services at runtime. Provider artwork is kept when supplied. No metadata database or remote artwork collection is bundled with this application.
+
+- TVmaze API: https://www.tvmaze.com/api — metadata under CC BY-SA; attribution links are available in Settings → Library. Matching records retain the TVmaze show URL. TVmaze data remains subject to its own license and is not relicensed under the application's MIT license.
+- Wikipedia / MediaWiki PageImages: https://www.mediawiki.org/wiki/Extension:PageImages — records retain the originating article URL. Wikipedia text/data and individual images have their respective licenses and copyright terms; API access does not relicense images.
+- IPTV-org API/database: https://github.com/iptv-org/api and https://github.com/iptv-org/database — public channel identification and logo metadata. Logos/trademarks belong to their respective owners.
+
+Cached metadata includes its source and attribution URL. Artwork availability and matching depend on each service's catalog. No account password, playlist URL or playback URL is sent to these metadata services.

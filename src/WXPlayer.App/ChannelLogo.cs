@@ -24,7 +24,11 @@ public sealed class ChannelLogo : Grid
     private static void Changed(DependencyObject obj,DependencyPropertyChangedEventArgs args){var logo=(ChannelLogo)obj;logo._letters.Text=logo.Initials;if(logo.IsLoaded)logo.Refresh();}
     private async void Refresh()
     {
-        int version=++_version;_image.Source=null;_letters.Visibility=Visibility.Visible;string url=Url;
+        int version=++_version;_image.Source=null;_letters.Visibility=Visibility.Visible;
+        if(!ArtworkCache.HasAddress(Url)&&DataContext is WXPlayer.Core.ContentItem item)
+        {await ArtworkService.PopulateAsync(item);if(version!=_version||!IsLoaded)return;}
+        string url=Url;
+        if(DataContext is WXPlayer.Core.ContentItem credit&&credit.ArtworkCredit.Length>0)ToolTip=credit.ArtworkCredit;
         var bitmap=await ArtworkCache.GetAsync(url,DecodeWidth);
         if(version!=_version||!IsLoaded)return;_image.Source=bitmap;_letters.Visibility=bitmap is null?Visibility.Visible:Visibility.Collapsed;
     }

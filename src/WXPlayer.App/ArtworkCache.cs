@@ -21,6 +21,7 @@ internal static class ArtworkCache
     private static readonly HttpClient Client = new(new SocketsHttpHandler { MaxConnectionsPerServer = 12, PooledConnectionLifetime = TimeSpan.FromMinutes(10), AutomaticDecompression = System.Net.DecompressionMethods.All }) { Timeout = TimeSpan.FromSeconds(6) };
     private static long _memory;
     private static int _writes;
+    static ArtworkCache() => Client.DefaultRequestHeaders.UserAgent.ParseAdd("WXPlayer/1.6.0 (+https://github.com/schwairex/WX-Player)");
     private static string Folder => Path.Combine(App.DataDirectory, "artwork-cache");
     internal static bool HasAddress(string url) => Uri.TryCreate(url, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https";
     private static string Key(string url, int width) => Math.Clamp(width, 96, 960) + "|" + url;

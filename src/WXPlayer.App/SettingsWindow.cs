@@ -51,6 +51,11 @@ internal sealed class SettingsWindow : PremiumWindow
                 var text=Text(source.Name);text.VerticalAlignment=VerticalAlignment.Center;row.Children.Add(text);sourceRows.Children.Add(row);
             }
         }
+        var artwork=Card(library,"Eksik afişler ve logolar","Yalnız içerik adı/yılı ile arama yapılır; hesap ve yayın adresleri paylaşılmaz. Eşleşen görseller önbellekte tutulur.");
+        var discover=new CheckBox{Content="Eksik görselleri internetten otomatik tamamla",IsChecked=settings.DiscoverArtwork};artwork.Children.Add(discover);
+        artwork.Children.Add(Text("Diziler: TVmaze · Film/dizi: Wikipedia · Kanallar: IPTV-org / Wikipedia. Kesin eşleşme bulunamazsa görsel eklenmez.",11,"#98A3B6"));
+        foreach(var (label,url) in new[]{("TVmaze · CC BY-SA","https://www.tvmaze.com/api#licensing"),("Wikipedia · Görsel kaynakları","https://www.wikipedia.org/"),("IPTV-org · Kanal verileri","https://github.com/iptv-org/database")})
+        {var link=Action(label,()=>{try{System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url){UseShellExecute=true});}catch{}});link.HorizontalAlignment=HorizontalAlignment.Left;link.Margin=new Thickness(0,6,0,0);artwork.Children.Add(link);}
         var clean=Card(library,"Kütüphaneyi temizle","Bu işlemler seçtiğiniz kayıtları tüm kaynaklardan kaldırır.");
         foreach(var (label,kind,description) in new[]{("Favorileri temizle",LibraryCleanup.Favorites,"Tüm favori işaretleri kaldırılacak."),("Son izlenenleri temizle",LibraryCleanup.History,"İzleme geçmişiniz ve kayıtlı bölüm/dakika bilgileriniz temizlenecek."),("Tüm kaynakları kaldır",LibraryCleanup.Sources,"Kaynaklar, kanal listeleri, rehber, favoriler ve izleme geçmişi kaldırılacak.")})
         {
@@ -68,7 +73,7 @@ internal sealed class SettingsWindow : PremiumWindow
             if(!int.TryParse(cache.Text,out int value)||value is <200 or >10000){error.Text="Önbellek: 200–10000 ms";SelectTab(0);return;}
             try{var full=Path.GetFullPath(folder.Text);if(full.Contains('\''))throw new ArgumentException();Directory.CreateDirectory(full);settings.RecordingFolder=full;}catch{error.Text="Kayıt klasörü geçersiz.";SelectTab(0);return;}
             settings.NetworkCacheMs=value;settings.HardwareAcceleration=gpu.IsChecked==true;settings.AdaptiveCache=adaptive.IsChecked==true;settings.FullscreenFill=fill.IsChecked==true;settings.AutoUpdate=automatic.IsChecked==true;settings.VideoOutput=output.SelectedIndex==0?"direct3d11":output.SelectedIndex==1?"direct3d9":"any";
-            App.SaveSettings(settings);Saved=true;Close();
+            settings.DiscoverArtwork=discover.IsChecked==true;App.SaveSettings(settings);Saved=true;Close();
         },true));
         SelectTab(0);Loaded+=async(_,_)=>{try{await LoadSources();}catch{message.Text="Kaynaklar okunamadı.";}};
     }

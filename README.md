@@ -8,7 +8,7 @@ Windows için modern, yerel IPTV ve medya oynatıcısı.<br>
 Canlı TV, filmler ve diziler — tek bir kütüphanede.
 
 <p>
-  <a href="docs/RELEASE-NOTES-1.5.3.md"><img src="https://img.shields.io/badge/s%C3%BCr%C3%BCm-1.5.3-bce784?style=for-the-badge&amp;labelColor=151b23" alt="Bu kaynak sürümü: 1.5.3"></a>
+  <a href="docs/RELEASE-NOTES-1.6.0.md"><img src="https://img.shields.io/badge/s%C3%BCr%C3%BCm-1.6.0-bce784?style=for-the-badge&amp;labelColor=151b23" alt="Bu kaynak sürümü: 1.6.0"></a>
   <img src="https://img.shields.io/badge/Windows-10%20%2F%2011%20x64-e6edf3?style=for-the-badge&amp;labelColor=151b23" alt="Windows 10 ve 11 x64">
   <img src="https://img.shields.io/badge/.NET-10-9b8afb?style=for-the-badge&amp;logo=dotnet&amp;logoColor=white&amp;labelColor=151b23" alt=".NET 10">
   <a href="LICENSE"><img src="https://img.shields.io/badge/lisans-MIT-bce784?style=for-the-badge&amp;labelColor=151b23" alt="Uygulama kodu: MIT lisansı"></a>
@@ -34,6 +34,8 @@ Canlı TV, filmler ve diziler — tek bir kütüphanede.
 WX Player; M3U oynatma listelerinizi, Xtream Codes hesabınızı ve uyumlu Stalker portalınızı bir araya getirir. Kaynaklardan gelen kanalları, filmleri ve dizileri yerel kütüphanenize kaydeder; favoriler, yayın rehberi ve kaldığınız yerden devam etme özellikleriyle izlemeyi kolaylaştırır.
 
 Uygulama **kanal paketi, IPTV aboneliği veya içerik sunucusu sağlamaz**. Kendi erişim hakkınız bulunan kaynakları ekleyerek kullanabilirsiniz. C# / WPF ile geliştirilen istemci, katalog ve veri katmanları WX Player'a; medya oynatma altyapısı açık kaynak LibVLC'ye dayanır.
+
+> **1.6.0'da yenilik:** Dizi izlerken sezon/bölüm paneli, tam ekranda son 30 saniyede sonraki bölüm önerisi ve eksik afiş/logoları otomatik tamamlama. [1.6.0 sürüm notları →](docs/RELEASE-NOTES-1.6.0.md)
 
 > **1.5.3'te yenilik:** Kartların üzerinde kesintisiz sayfa kaydırma, kalıcı afiş önbelleği, ana sayfada yalnız yüklenebilen görseller ve daha düzenli 2:3 film/dizi kartları. [Sürüm notları →](docs/RELEASE-NOTES-1.5.3.md)
 
@@ -224,7 +226,7 @@ WX Player **açılışta**, uygulama açık kaldığında **4 saatte bir** ve Ay
 
 Aktif kayıt varken önce kaydı durdurmanız gerekir. İndirme hatası mevcut uygulamanın kullanılmasını engellemez. Taslaklar ve ön sürümler otomatik kurulmaz. **1.0 / 1.1 kullanıcıları ilk geçişi elle yapmalıdır; otomatik güncelleme 1.2 ile eklenmiştir.**
 
-Üstteki **GitHub Release** rozeti yayımlanmış sürümü, **Windows build** rozeti GitHub Actions durumunu gösterir; bu kaynak ağacının sürümü **1.5.3**'tür. Dinamik rozetler, ilgili GitHub yayını/iş akışı mevcut olduğunda Shields.io tarafından güncellenir.
+Üstteki **GitHub Release** rozeti yayımlanmış sürümü, **Windows build** rozeti GitHub Actions durumunu gösterir; bu kaynak ağacının sürümü **1.6.0**'tür. Dinamik rozetler, ilgili GitHub yayını/iş akışı mevcut olduğunda Shields.io tarafından güncellenir.
 
 <a id="veriler"></a>
 ## Yerel veriler ve gizlilik
@@ -377,6 +379,16 @@ EXE dosyalarını Git kaynak ağacına eklemek yerine **Releases** alanında da�
 ## Sürüm geçmişi
 
 Bu bölüm değişiklikleri sürüme göre özetler. Sürüm notları kapsamı, test raporları doğrulanan davranışları ve sınırları açıklar.
+
+### 1.6.0 · Akıcı bölüm geçişleri ve otomatik görsel tamamlama
+
+- **Dizi bölümleri oynatıcının altında:** Normal görünümde yayın akışı alanı sezon seçicili bölüm listesine dönüşür. İzlenen bölüm vurgulanır; sezon/bölüm seçimi ve önceki/sonraki düğmeleriyle kolayca geçilir. Canlı TV'de EPG korunur.
+- **Tam ekranda sonraki bölüm:** Bölümün son 30 saniyesinde öneri çıkar. Tıklanınca sıradaki bölüm baştan açılır; tam ekran ve önceki bölümün izleme konumu korunur. Sezon geçişi desteklenir; son bölümde veya süre bilinmiyorsa öneri çıkmaz.
+- **Eksik afiş ve logolar:** Kaynakta görsel adresi yoksa diziler için TVmaze, film/dizi için Wikipedia ve kanallar için IPTV-org / Wikipedia üzerinden otomatik arama yapılır. Ad, tür ve varsa yıl karşılaştırılır; belirsiz eşleşmeye rastgele görsel atanmaz.
+- **Hız ve önbellek:** Görünümde gereken içerikler arka planda hazırlanır; aynı başlık için tek sorgu paylaşılır. Eşleştirmeler ve görseller diskte saklanır. Bulunan görseller ana sayfada gösterilir; bulunamayan içerikler tam kütüphanede kalır.
+- **Kontrol sizde:** Ayarlar → Kütüphane'den görsel tamamlamayı kapatabilirsiniz. Harici servislere temizlenmiş içerik adı/yılı gider; hesap, kaynak ve oynatma URL'leri gönderilmez. Katalog kapsamı ve servis yanıtı nedeniyle her içerik için afiş bulunması garanti değildir.
+
+[Sürüm notları](docs/RELEASE-NOTES-1.6.0.md) · [Test raporu](docs/TEST-REPORT-1.6.0.md)
 
 ### 1.5.3 · Kesintisiz kaydırma ve hızlı afişler
 
