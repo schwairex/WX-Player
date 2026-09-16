@@ -370,7 +370,7 @@ Betik testleri çalıştırır, .NET çalışma zamanı ve medya bileşenleri da
 
 Bu bölüm değişiklikleri sürüme göre özetler. Sürüm notları kapsamı, test raporları doğrulanan davranışları ve sınırları açıklar.
 
-### 1.6.0 · Akıcı bölüm geçişleri ve otomatik görsel tamamlama
+<summary><strong>1.6.0 · Akıcı bölüm geçişleri ve otomatik görsel tamamlama<summary><strong>
 
 - **Dizi bölümleri oynatıcının altında:** Normal görünümde yayın akışı alanı sezon seçicili bölüm listesine dönüşür. İzlenen bölüm vurgulanır; sezon/bölüm seçimi ve önceki/sonraki düğmeleriyle kolayca geçilir. Canlı TV'de EPG korunur.
 - **Tam ekranda sonraki bölüm:** Bölümün son 30 saniyesinde öneri çıkar. Tıklanınca sıradaki bölüm baştan açılır; tam ekran ve önceki bölümün izleme konumu korunur. Sezon geçişi desteklenir; son bölümde veya süre bilinmiyorsa öneri çıkmaz.
@@ -379,8 +379,11 @@ Bu bölüm değişiklikleri sürüme göre özetler. Sürüm notları kapsamı, 
 - **Kontrol sizde:** Ayarlar → Kütüphane'den görsel tamamlamayı kapatabilirsiniz. Harici servislere temizlenmiş içerik adı/yılı gider; hesap, kaynak ve oynatma URL'leri gönderilmez. Katalog kapsamı ve servis yanıtı nedeniyle her içerik için afiş bulunması garanti değildir.
 
 [Sürüm notları](docs/RELEASE-NOTES-1.6.0.md) · [Test raporu](docs/TEST-REPORT-1.6.0.md)
+</details>
 
-### 1.5.3 · Kesintisiz kaydırma ve hızlı afişler
+<details>
+
+<summary><strong>1.5.3 · Kesintisiz kaydırma ve hızlı afişler<summary><strong>
 
 - İç içe rafların tekerleği yakalayarak ana sayfa kaydırmasını engellemesi düzeltildi; Shift + tekerlek yatay gezinmeye ayrıldı.
 - Afişlerde tek indirme paylaşımı, LRU bellek ve kalıcı disk önbelleği eklendi; bozuk görsellerin tekrar yüklenmesi sınırlandı.
@@ -389,7 +392,9 @@ Bu bölüm değişiklikleri sürüme göre özetler. Sürüm notları kapsamı, 
 
 [Sürüm notları](docs/RELEASE-NOTES-1.5.3.md) · [Test raporu](docs/TEST-REPORT-1.5.3.md)
 
-<details open>
+</details>
+
+<details>
 <summary><strong>1.5.2 · Dengeli ana sayfa ve eşit kartlar</strong></summary>
 
 - Büyük afişin tüm sayfayı kaplaması giderildi; öneri alanının yüksekliği sınırlandı.
