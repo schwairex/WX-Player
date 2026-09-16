@@ -365,16 +365,6 @@ Betik testleri çalıştırır, .NET çalışma zamanı ve medya bileşenleri da
 | `WXPlayer-win-x64.zip` | Tüm içeriği birlikte çıkarılarak çalıştırılan taşınabilir dağıtım. |
 | `SHA256SUMS.txt` | EXE ve ZIP için SHA-256 sağlama toplamları. |
 
-### GitHub Releases ile yayınlama
-
-1. Kaynak dosyalarını deponun köküne yerleştirin; `.github`, `src`, `tools` ve `Directory.Build.props` aynı kaynak ağacında bulunmalıdır.
-2. `Directory.Build.props` içindeki sürümü `major.minor.patch` biçiminde güncelleyin.
-3. Aynı sürüm için `v1.5.3` gibi bir Git etiketi gönderin. Dahil edilen Windows Actions akışı test, derleme ve Release paketleme işlemlerini yapar; etiket ile uygulama sürümü eşleşmelidir.
-4. Elle yayımlıyorsanız Assets'e **tek bir dağıtım EXE'si**, isteğe bağlı portable ZIP ve SHA-256 dosyasını ekleyin. ZIP içindeki küçük EXE güncelleme paketi değildir.
-5. Otomatik güncelleme için yayını kararlı sürüm olarak yayımlayın; taslak veya ön sürüm bırakmayın.
-
-EXE dosyalarını Git kaynak ağacına eklemek yerine **Releases** alanında dağıtın. Dosya adını değiştirirseniz sağlama toplamı dosyasındaki adın da eşleşmesini sağlayın. Tam süreç: **[GitHub yayınlama rehberi](docs/GITHUB-RELEASES.md)**.
-
 <a id="surum-gecmisi"></a>
 ## Sürüm geçmişi
 
@@ -507,7 +497,5 @@ Uygulama kodu **[MIT lisansı](LICENSE)** ile sunulur. LibVLC ve paketlenen bile
 **WX Player** · Windows için kendi kütüphanenize açılan pencere.
 
 [GitHub](https://github.com/schwairex/WX-Player) · [İndir](https://github.com/schwairex/WX-Player/releases/latest) · [Sürüm notları](#surum-gecmisi) · [Başa dön](#wx-player)
-
-<sub>Rozetler <a href="https://shields.io/">Shields.io</a> ile oluşturulmuştur · <a href="https://github.com/badges/shields/tree/master">Shields kaynak deposu</a></sub>
 
 </div>
