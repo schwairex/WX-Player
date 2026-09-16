@@ -370,7 +370,8 @@ Betik testleri çalıştırır, .NET çalışma zamanı ve medya bileşenleri da
 
 Bu bölüm değişiklikleri sürüme göre özetler. Sürüm notları kapsamı, test raporları doğrulanan davranışları ve sınırları açıklar.
 
-<summary><strong>1.6.0 · Akıcı bölüm geçişleri ve otomatik görsel tamamlama<summary><strong>
+<details>
+<summary><strong>1.6.0 · Akıcı bölüm geçişleri ve otomatik görsel tamamlama</strong></summary>
 
 - **Dizi bölümleri oynatıcının altında:** Normal görünümde yayın akışı alanı sezon seçicili bölüm listesine dönüşür. İzlenen bölüm vurgulanır; sezon/bölüm seçimi ve önceki/sonraki düğmeleriyle kolayca geçilir. Canlı TV'de EPG korunur.
 - **Tam ekranda sonraki bölüm:** Bölümün son 30 saniyesinde öneri çıkar. Tıklanınca sıradaki bölüm baştan açılır; tam ekran ve önceki bölümün izleme konumu korunur. Sezon geçişi desteklenir; son bölümde veya süre bilinmiyorsa öneri çıkmaz.
@@ -382,7 +383,6 @@ Bu bölüm değişiklikleri sürüme göre özetler. Sürüm notları kapsamı, 
 </details>
 
 <details>
-
 <summary><strong>1.5.3 · Kesintisiz kaydırma ve hızlı afişler<summary><strong>
 
 - İç içe rafların tekerleği yakalayarak ana sayfa kaydırmasını engellemesi düzeltildi; Shift + tekerlek yatay gezinmeye ayrıldı.
