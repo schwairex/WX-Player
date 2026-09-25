@@ -18,6 +18,7 @@ internal sealed partial class HomeView : ScrollViewer
     private readonly Action<ContentItem> _play, _favorite;
     private readonly Action<string> _browse;
     private readonly Action _add;
+    private readonly Func<ContentItem,Task>? _removeRecent;
     internal readonly TextBox Search = new() { MinHeight = 40, Padding = new Thickness(12, 9, 12, 9) };
     internal IReadOnlyList<ContentItem> Items { get; private set; } = [];
     internal ContentItem? Featured { get; private set; }
@@ -25,9 +26,10 @@ internal sealed partial class HomeView : ScrollViewer
     private static Brush Color(string value) => PremiumWindow.Brush(value);
     private static TextBlock Text(string value, int size = 13, string color = "#E9EEF5") => PremiumWindow.Text(value, size, color);
 
-    internal HomeView(Action<ContentItem> play, Action<ContentItem> favorite, Action<string> browse, Action add, Action resume)
+    internal HomeView(Action<ContentItem> play, Action<ContentItem> favorite, Action<string> browse, Action add, Action resume, Func<ContentItem,Task>? removeRecent = null)
     {
         _play = play; _favorite = favorite; _browse = browse; _add = add;
+        _removeRecent = removeRecent;
         VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
         HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled;
         Content = _body; _body.Margin = new Thickness(0, 0, 12, 0);

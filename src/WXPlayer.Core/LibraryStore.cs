@@ -79,10 +79,13 @@ public sealed partial class LibraryStore(string path)
         }
         finally { _writer.Release(); }
     }
-    public Task<Page> QueryAsync(string? source, ContentKind? kind, string? category, string search, bool favorites, bool recent, int offset, int limit = 150, CancellationToken ct = default, string? itemId = null, bool recommend = false, string? exceptId = null, string? parent = null, bool artworkOnly = false) => Task.Run(() =>
+    public Task<Page> QueryAsync(string? source, ContentKind? kind, string? category, string search, bool favorites, bool recent, int offset, int limit = 150, CancellationToken ct = default, string? itemId = null, bool recommend = false, string? exceptId = null, string? parent = null, bool artworkOnly = false, int? shuffleSeed = null) => Task.Run(() =>
     {
         using var c = Open(); using var cmd = c.CreateCommand();
         using var reg = ct.Register(cmd.Cancel);
+        // A visit-scoped shuffle is stable across artwork refreshes and paginated reads.
+        if(shuffleSeed is int seed)c.CreateFunction<string,string>("wx_shuffle",id=>
+            Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(seed.ToString(System.Globalization.CultureInfo.InvariantCulture)+":"+id))),isDeterministic:true);
         var where = " WHERE ($s='' OR i.source=$s) AND ($k=-1 OR i.kind=$k) AND ($c='' OR i.category=$c) AND ($q='' OR i.search_text LIKE $q ESCAPE '~')";
         where += " AND ($k=3 OR i.kind<>3)";
         if(itemId is not null){where+=" AND i.id=$id";cmd.Parameters.AddWithValue("$id",itemId);}
@@ -91,14 +94,14 @@ public sealed partial class LibraryStore(string path)
         if(recommend)where+=" AND i.kind IN(1,2)";
         if(exceptId is not null){where+=" AND i.id<>$except";cmd.Parameters.AddWithValue("$except",exceptId);}
         if (favorites) where += " AND f.id IS NOT NULL";
-        if (recent) where += " AND h.id IS NOT NULL";
+        if (recent) where += " AND h.played>0";
         string from = " FROM items i LEFT JOIN favorites f ON f.id=i.id LEFT JOIN history h ON h.id=i.id LEFT JOIN playback_progress p ON p.item=CASE WHEN i.kind=2 THEN (SELECT item FROM playback_progress WHERE series=i.id ORDER BY updated DESC LIMIT 1) ELSE i.id END";
         cmd.Parameters.AddWithValue("$s", source ?? ""); cmd.Parameters.AddWithValue("$k", kind is null ? -1 : (int)kind);
         cmd.Parameters.AddWithValue("$c", category ?? "");
         cmd.Parameters.AddWithValue("$q", search.Length == 0 ? "" : "%" + ContentItem.SearchKey(search).Replace("~", "~~").Replace("%", "~%").Replace("_", "~_") + "%");
         cmd.CommandText = "SELECT COUNT(*)" + from + where;
         int total = Convert.ToInt32(cmd.ExecuteScalar()); ct.ThrowIfCancellationRequested();
-        cmd.CommandText = "SELECT i.id,i.source,i.provider,i.name,i.category,i.kind,i.url,i.logo,i.epg,i.extension,i.catchup,i.days,i.ua,i.referrer,f.id IS NOT NULL,i.epg_name,i.series_id,i.series_name,i.season,i.episode,p.item,p.source,p.series,p.name,p.position,p.duration,p.completed,p.updated" + from + where + (recommend ? " ORDER BY length(trim(i.logo))=0,random()" : parent is not null ? " ORDER BY i.season,i.episode,i.name COLLATE NOCASE" : recent ? " ORDER BY h.played DESC" : " ORDER BY i.name COLLATE NOCASE") + " LIMIT $limit OFFSET $offset";
+        cmd.CommandText = "SELECT i.id,i.source,i.provider,i.name,i.category,i.kind,i.url,i.logo,i.epg,i.extension,i.catchup,i.days,i.ua,i.referrer,f.id IS NOT NULL,i.epg_name,i.series_id,i.series_name,i.season,i.episode,p.item,p.source,p.series,p.name,p.position,p.duration,p.completed,p.updated" + from + where + (recommend ? " ORDER BY length(trim(i.logo))=0,random()" : parent is not null ? " ORDER BY i.season,i.episode,i.name COLLATE NOCASE" : recent ? " ORDER BY h.played DESC" : shuffleSeed is not null ? " ORDER BY wx_shuffle(i.id),i.id" : " ORDER BY i.name COLLATE NOCASE") + " LIMIT $limit OFFSET $offset";
         cmd.Parameters.AddWithValue("$limit", limit); cmd.Parameters.AddWithValue("$offset", offset);
         using var r = cmd.ExecuteReader(); var list = new List<ContentItem>();
         while (r.Read()) { ct.ThrowIfCancellationRequested(); list.Add(new ContentItem { Id=r.GetString(0),SourceId=r.GetString(1),ProviderId=r.GetString(2),Name=r.GetString(3),Category=r.GetString(4),Kind=(ContentKind)r.GetInt32(5),Url=r.GetString(6),Logo=r.GetString(7),EpgId=r.GetString(8),Extension=r.GetString(9),Catchup=r.GetString(10),CatchupDays=r.GetInt32(11),UserAgent=r.GetString(12),Referrer=r.GetString(13),IsFavorite=r.GetBoolean(14),EpgName=r.GetString(15),SeriesId=r.GetString(16),SeriesName=r.GetString(17),Season=r.GetInt32(18),Episode=r.GetInt32(19),Progress=r.IsDBNull(20)?null:new WatchProgress(r.GetString(20),r.GetString(21),r.GetString(22),r.GetString(23),r.GetInt64(24),r.GetInt64(25),r.GetBoolean(26),r.GetInt64(27)) }); }
@@ -119,6 +122,14 @@ public sealed partial class LibraryStore(string path)
     });
     public async Task FavoriteAsync(string id,bool value) => await WriteAsync(c => { using var cmd=c.CreateCommand();cmd.CommandText=value?"INSERT OR IGNORE INTO favorites VALUES($id)":"DELETE FROM favorites WHERE id=$id";cmd.Parameters.AddWithValue("$id",id);cmd.ExecuteNonQuery(); });
     public async Task RememberAsync(string id) => await WriteAsync(c => { using var cmd=c.CreateCommand();cmd.CommandText="INSERT OR REPLACE INTO history VALUES($id,$t)";cmd.Parameters.AddWithValue("$id",id);cmd.Parameters.AddWithValue("$t",DateTimeOffset.Now.ToUnixTimeMilliseconds());cmd.ExecuteNonQuery(); });
+    public Task RemoveRecentAsync(string id) => WriteAsync(c =>
+    {
+        // Zero is a dismissal marker: progress saves keep it hidden; explicit playback
+        // through RememberAsync restores it. Resume checkpoints and favorites stay intact.
+        using var cmd=c.CreateCommand();
+        cmd.CommandText="INSERT INTO history SELECT id,0 FROM items WHERE id=$id ON CONFLICT(id) DO UPDATE SET played=0";
+        cmd.Parameters.AddWithValue("$id",id);cmd.ExecuteNonQuery();
+    });
     public async Task DeleteSourceAsync(string id) => await WriteAsync(c =>
     {
         using var tx=c.BeginTransaction(); using var cmd=c.CreateCommand(); cmd.Transaction=tx;cmd.Parameters.AddWithValue("$s",id);

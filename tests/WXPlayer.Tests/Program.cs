@@ -76,6 +76,7 @@ await Test("Stalker mocked handshake, paginated lists, create_link",async()=>
 await Test("Source deletion removes its content, favorites and guide",async()=>{await store.DeleteSourceAsync(source.Id);Assert((await store.StatsAsync(source.Id)).Total==0&&(await store.SourcesAsync()).Count==0,"source deletion");});
 await RegressionTests.RunAsync(Test,Assert,folder);
 await CatalogTests.RunAsync(Test,Assert,folder);
+await HomeLibraryTests.RunAsync(Test,Assert,folder);
 await Experience160Tests.RunAsync(Test,Assert,folder);
 if(args.Contains("--artwork-live"))await Test("Public artwork services integration",()=>Experience160Tests.LiveAsync(folder));
 Console.WriteLine($"{results.Count-failures}/{results.Count} passed");

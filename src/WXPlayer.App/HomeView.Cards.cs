@@ -7,6 +7,7 @@ namespace WXPlayer.App;
 
 internal sealed partial class HomeView
 {
+    private sealed record RecentRemoval(ContentItem Item);
     private static Grid Artwork(ContentItem item, double width, double height)
     {
         bool live = item.Kind == ContentKind.Live;
@@ -68,9 +69,50 @@ internal sealed partial class HomeView
             button.MouseEnter += (_, _) => button.Background = Color("#19212C");
             button.MouseLeave += (_, _) => button.Background = Brushes.Transparent;
             System.Windows.Automation.AutomationProperties.SetName(button, (item.Kind == ContentKind.Series ? "Bölümleri aç · " : "İzle · ") + item.Name);
-            button.Click += (_, _) => _play(item); cards.Children.Add(button);
+            button.Click += (_, _) => _play(item);
+            if(shelf.Section=="recent"&&_removeRecent is not null)
+                cards.Children.Add(RecentCard(button,item));
+            else cards.Children.Add(button);
         }
     }
+    private Grid RecentCard(Button play, ContentItem item)
+    {
+        // Sibling actions prevent a remove click from triggering playback. The overlay
+        // takes no layout space, so recent cards retain exactly the existing geometry.
+        var wrapper=new Grid { VerticalAlignment=VerticalAlignment.Top };
+        wrapper.Children.Add(play);
+        var remove=new Button
+        {
+            Content=new SvgIcon("close") { Width=16,Height=16 },Tag=new RecentRemoval(item),
+            Width=36,Height=36,MinHeight=36,Padding=new Thickness(8),Margin=new Thickness(0,12,16,0),
+            HorizontalAlignment=HorizontalAlignment.Right,VerticalAlignment=VerticalAlignment.Top,
+            Background=(Brush)FindResource("SurfaceElevatedBrush"),Foreground=(Brush)FindResource("TextPrimaryBrush"),
+            BorderBrush=(Brush)FindResource("BorderSubtleBrush"),BorderThickness=new Thickness(1),
+            ToolTip="Son izlenenlerden kaldır",Opacity=0,IsHitTestVisible=false
+        };
+        System.Windows.Automation.AutomationProperties.SetName(remove,"Son izlenenlerden kaldır · "+item.Name);
+        wrapper.Children.Add(remove);
+        void Reveal()
+        {
+            bool visible=wrapper.IsMouseOver||wrapper.IsKeyboardFocusWithin;
+            remove.Opacity=visible?1:0;remove.IsHitTestVisible=visible;
+        }
+        wrapper.MouseEnter+=(_,_)=>Reveal();wrapper.MouseLeave+=(_,_)=>Reveal();
+        wrapper.IsKeyboardFocusWithinChanged+=(_,_)=>Reveal();
+        bool removing=false;
+        remove.Click+=async(_,e)=>
+        {
+            // Keep keyboard focus available to DisplayReady while blocking repeat clicks.
+            e.Handled=true;if(removing)return;removing=true;
+            try { await _removeRecent!(item); }
+            finally { removing=false; }
+        };
+        return wrapper;
+    }
+    private IEnumerable<Button> ShelfButtons()=>_shelves.Children.OfType<StackPanel>()
+        .SelectMany(p=>p.Children.OfType<ScrollViewer>())
+        .SelectMany(s=>((StackPanel)s.Content).Children.Cast<UIElement>())
+        .SelectMany(e=>e is Grid wrapper?wrapper.Children.OfType<Button>():e is Button button?new[]{button}:Enumerable.Empty<Button>());
     private static Button Arrow(string icon, string label, Action action)
     {
         var button = Action("", action); button.Content = new SvgIcon(icon) { Width = 14, Height = 14 };

@@ -51,10 +51,12 @@ internal sealed partial class HomeView
         {
             if (version != _renderVersion) return;
             double vertical = VerticalOffset;
-            string? focusedId = Keyboard.FocusedElement is Button { Tag: ContentItem focusItem } focusButton && IsAncestorOf(focusButton) ? focusItem.Id : null;
+            var focused=Keyboard.FocusedElement as Button;
+            bool removeFocused=focused?.Tag is RecentRemoval&&IsAncestorOf(focused);
+            string? focusedId = focused is not null&&IsAncestorOf(focused)?focused.Tag switch {ContentItem item=>item.Id,RecentRemoval removal=>removal.Item.Id,_=>null}:null;
             var offsets = _shelves.Children.OfType<StackPanel>().Where(p => p.Tag is string).ToDictionary(p => (string)p.Tag, p => p.Children.OfType<ScrollViewer>().FirstOrDefault()?.HorizontalOffset ?? 0);
             Reset();
-            var visible = candidates.Select(s => s with { Page = new WXPlayer.Core.Page(s.Page.Items.Where(i => ready.Contains(i.Id)).Take(12).ToArray(), s.Page.Total) }).ToArray();
+            var visible = candidates.Select(s => s with { Page = new WXPlayer.Core.Page(s.Page.Items.Where(i => ready.Contains(i.Id)).Take(s.Section is "movie" or "series"?48:12).ToArray(), s.Page.Total) }).ToArray();
             Items = visible.SelectMany(s => s.Page.Items).DistinctBy(i => i.Id).ToArray(); Empty = Items.Count == 0;
             Featured = recommendation is not null && ready.Contains(recommendation.Id) ? recommendation : Items.FirstOrDefault(i => i.Kind is ContentKind.Movie or ContentKind.Series) ?? Items.FirstOrDefault();
             if (Featured is null)
@@ -70,7 +72,15 @@ internal sealed partial class HomeView
             foreach (var panel in _shelves.Children.OfType<StackPanel>())
                 if (panel.Tag is string key && offsets.TryGetValue(key, out double offset)) panel.Children.OfType<ScrollViewer>().First().ScrollToHorizontalOffset(offset);
             if (focusedId is not null)
-                _shelves.Children.OfType<StackPanel>().SelectMany(p => p.Children.OfType<ScrollViewer>()).SelectMany(s => ((StackPanel)s.Content).Children.OfType<Button>()).FirstOrDefault(b => b.Tag is ContentItem i && i.Id == focusedId)?.Focus();
+            {
+                var buttons=ShelfButtons().ToArray();
+                var target=buttons.FirstOrDefault(b=>removeFocused?b.Tag is RecentRemoval r&&r.Item.Id==focusedId:b.Tag is ContentItem i&&i.Id==focusedId);
+                target??=removeFocused?buttons.FirstOrDefault(b=>b.Tag is RecentRemoval)??buttons.FirstOrDefault(b=>b.Tag is ContentItem):null;
+                // Rebuilt ScrollViewer templates must be measured before their buttons
+                // can accept keyboard focus.
+                UpdateLayout();
+                if(target is not null)target.Focus();else if(removeFocused)Search.Focus();
+            }
             ScrollToVerticalOffset(vertical);
         }
     }

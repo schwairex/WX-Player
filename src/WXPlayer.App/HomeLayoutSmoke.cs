@@ -71,6 +71,7 @@ internal static class HomeLayoutSmoke
             window.Width = 1920; window.Height = 1080; await Task.Delay(100); window.UpdateLayout();
             CheckGeometry(home, results, "Wide"); Save(window, "WX-Player-1.5.3-wide.png");
             window.Width = 1440; window.Height = 960;
+            await RecentAndDiscoveryChecks(window,results,movies[0],shows[0]);
             home.Loading(); window.UpdateLayout(); double loadingHeight = Feature(home).ActualHeight; Save(window, "WX-Player-1.5.3-loading.png");
             home.Error(() => retried = true); window.UpdateLayout();
             Descendants<Button>(Feature(home)).Single().RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
@@ -94,6 +95,49 @@ internal static class HomeLayoutSmoke
         Check("home153WheelReachesBottom", Math.Abs(home.VerticalOffset - home.ScrollableHeight) < 1, results);
         for (int i = 0; i < 60; i++) { Wheel(120); home.UpdateLayout(); }
         Check("home153WheelReachesTop", home.VerticalOffset == 0, results);
+    }
+    private static async Task RecentAndDiscoveryChecks(MainWindow window,Dictionary<string,object> results,ContentItem movie,ContentItem show)
+    {
+        var films=Enumerable.Range(0,60).Select(i=>movie with{Id="discovery-film-"+i,Name="Film "+i}).ToArray();
+        var shows=Enumerable.Range(0,60).Select(i=>show with{Id="discovery-show-"+i,Name="Dizi "+i}).ToArray();
+        ContentItem[] recent=[films[0],films[1]];
+        HomeShelf Shelf(string title,string key,ContentItem[] items)=>new(title,key,new WXPlayer.Core.Page(items,items.Length));
+        HomeShelf[] Shelves()=>[Shelf("Son izlenenler","recent",recent),Shelf("Favorilerin","favorites",[films[0]]),Shelf("Filmler","movie",films),Shelf("Diziler","series",shows)];
+        int played=0;HomeView home=null!;
+        home=new HomeView(_=>played++,_=>{},_=>{},()=>{},()=>{},async item=>
+        {
+            recent=recent.Where(i=>i.Id!=item.Id).ToArray();
+            await home.RenderAsync("Test kütüphanesi",Shelves(),"",films[0]);
+        });
+        var original=window.HomeHost.Content;
+        try
+        {
+            window.HomeHost.Content=home;await home.RenderAsync("Test kütüphanesi",Shelves(),"",films[0]);window.UpdateLayout();
+            StackPanel Section(string key)=>Descendants<StackPanel>(home).Single(p=>Equals(p.Tag,key));
+            Button[] RemoveButtons()=>Descendants<Button>(Section("recent")).Where(b=>System.Windows.Automation.AutomationProperties.GetName(b).StartsWith("Son izlenenlerden kaldır · ")).ToArray();
+            Check("home161Discovery48MoviesAndSeries",Cards(Section("movie")).Count()==48&&Cards(Section("series")).Count()==48,results);
+            foreach(var key in new[]{"movie","series"})
+            {
+                var section=Section(key);var scroll=Descendants<ScrollViewer>(section).Single();
+                Descendants<Button>(section).Single(b=>b.ToolTip is string tip&&tip.EndsWith("Sonraki içerikler")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                await Task.Delay(60);window.UpdateLayout();Check("home161HorizontalPaging"+key,scroll.HorizontalOffset>0,results);
+            }
+            var card=Cards(Section("recent")).First();var size=card.RenderSize;
+            var remove=RemoveButtons()[0];card.Focus();window.UpdateLayout();
+            Check("home161RemoveVisibleOnKeyboardFocus",remove.Opacity==1&&remove.IsHitTestVisible,results);
+            Check("home161RemoveDoesNotResizeCard",card.RenderSize==size&&size==Cards(Section("favorites")).First().RenderSize,results);
+            remove.Focus();home.ScrollToVerticalOffset(300);await Task.Delay(60);
+            Check("home161RemoveAcceptsKeyboardFocus",remove.IsKeyboardFocused,results);
+            Save(window,"WX-Player-1.6.1-recent-remove.png");
+            remove.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            await Until(()=>Cards(Section("recent")).Count()==1);window.UpdateLayout();
+            Check("home161RemovalDoesNotPlayOrChangeFavorites",played==0&&Cards(Section("favorites")).Single().Tag is ContentItem i&&i.Id==films[0].Id,results);
+            Check("home161RemovalRestoresKeyboardFocus",RemoveButtons()[0].IsKeyboardFocused,results);
+            RemoveButtons()[0].RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            await Until(()=>!Descendants<StackPanel>(home).Any(p=>Equals(p.Tag,"recent")));
+            Check("home161LastRecentRemovalKeepsOtherShelves",Cards(Section("movie")).Count()==48&&Cards(Section("favorites")).Count()==1,results);
+        }
+        finally { window.HomeHost.Content=original; }
     }
     private static async Task CacheChecks(Dictionary<string, object> results)
     {

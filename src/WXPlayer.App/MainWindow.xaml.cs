@@ -154,7 +154,7 @@ public partial class MainWindow : Window
     }
     private void SetNav()
     {
-        foreach(var b in new[]{HomeNav,LiveNav,MovieNav,SeriesNav,FavoriteNav,EpgNav,RecentNav}){bool selected=(string)b.Tag==_section;b.Background=selected?new SolidColorBrush(Color.FromRgb(34,48,49)):Brushes.Transparent;b.BorderThickness=new Thickness(1);b.BorderBrush=selected?new SolidColorBrush(Color.FromRgb(71,97,84)):Brushes.Transparent;b.FontWeight=selected?FontWeights.SemiBold:FontWeights.Normal;b.Foreground=selected?(Brush)FindResource("Accent"):new SolidColorBrush(Color.FromRgb(171,185,204));}
+        foreach(var b in new[]{HomeNav,LiveNav,MovieNav,SeriesNav,FavoriteNav,EpgNav,RecentNav}){bool selected=(string)b.Tag==_section;b.Background=selected?(Brush)FindResource("SurfaceSelectedBrush"):Brushes.Transparent;b.BorderThickness=new Thickness(0);b.BorderBrush=selected?(Brush)FindResource("AccentPrimaryBrush"):Brushes.Transparent;b.FontWeight=selected?FontWeights.SemiBold:FontWeights.Normal;b.Foreground=(Brush)FindResource(selected?"TextPrimaryBrush":"TextSecondaryBrush");}
         PageTitle.Text=_section switch{"live"=>"Canlı TV","movie"=>"Filmler","series"=>"Diziler","favorites"=>"Favorilerim","epg"=>"Program rehberi","recent"=>"Son izlenenler","all"=>"Tüm içerikler",_=>"Ana sayfa"};
         ListTitle.Text=_section=="home"?"Kütüphaneniz":PageTitle.Text;ApplyGuideLayout();ApplyPageLayout();
     }
@@ -389,13 +389,13 @@ public partial class MainWindow : Window
     {
         bool narrow=ActualWidth<1180||ActualHeight<780;bool expanded=SidebarExpanded;bool compact=!expanded;bool drawer=expanded&&ActualWidth<1180;
         NavColumn.Width=new GridLength(expanded&&!drawer?224:82);Sidebar.Width=expanded?214:72;Grid.SetColumnSpan(Sidebar,drawer?2:1);Sidebar.HorizontalAlignment=HorizontalAlignment.Left;Panel.SetZIndex(Sidebar,20);BrandMark.Visibility=drawer?Visibility.Collapsed:Visibility.Visible;DrawerClose.Visibility=drawer?Visibility.Visible:Visibility.Collapsed;
-        ListColumn.Width=new GridLength(narrow?285:350);GapColumn.Width=new GridLength(narrow?14:20);MainArea.Margin=new Thickness(narrow?16:28,22,narrow?16:28,16);
-        Sidebar.Padding=new Thickness(compact?8:18,26,compact?8:18,18);ContentGrid.Margin=new Thickness(0,20,0,0);VolumeSlider.Width=ActualWidth<1050?76:110;ApplyGuideLayout();
+        ListColumn.Width=new GridLength(narrow?285:350);GapColumn.Width=new GridLength(narrow?14:20);MainArea.Margin=new Thickness(narrow?16:24,24,narrow?16:24,16);
+        Sidebar.Padding=new Thickness(compact?8:16,24,compact?8:16,16);ContentGrid.Margin=new Thickness(0,24,0,0);VolumeSlider.Width=ActualWidth<1050?76:110;ApplyGuideLayout();
         BrandWordmark.Visibility=NavLabel.Visibility=expanded?Visibility.Visible:Visibility.Collapsed;
         PromoCard.Visibility=VersionLabel.Visibility=expanded&&ActualHeight>=780?Visibility.Visible:Visibility.Collapsed;
         SidebarToggle.ToolTip=BrandToggle.ToolTip=expanded?"Menüyü daralt · Ctrl+B":"Menüyü genişlet · Ctrl+B";
         var buttons=new[]{HomeNav,LiveNav,MovieNav,SeriesNav,FavoriteNav,EpgNav,RecentNav,RecordingsNav,SettingsNav};
-        foreach(var button in buttons){if(button.Content is not IconLabel content)continue;content.Compact=compact;button.Padding=narrow?new Thickness(9,9,9,9):new Thickness(14,13,14,13);button.Margin=new Thickness(0,narrow?2:3,0,narrow?2:3);button.ToolTip=content.Label;button.HorizontalContentAlignment=compact?HorizontalAlignment.Center:HorizontalAlignment.Left;System.Windows.Automation.AutomationProperties.SetName(button,content.Label);}
+        foreach(var button in buttons){if(button.Content is not IconLabel content)continue;content.Compact=compact;button.Padding=narrow?new Thickness(8):new Thickness(12,10,12,10);button.Margin=new Thickness(0,narrow?2:4,0,narrow?2:4);button.ToolTip=content.Label;button.HorizontalContentAlignment=compact?HorizontalAlignment.Center:HorizontalAlignment.Left;System.Windows.Automation.AutomationProperties.SetName(button,content.Label);}
     }
     private void Tick()
     {

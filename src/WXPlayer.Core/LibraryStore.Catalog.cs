@@ -52,7 +52,7 @@ public sealed partial class LibraryStore
             INSERT OR IGNORE INTO favorites SELECT DISTINCT series_id FROM items i JOIN favorites f ON f.id=i.id WHERE i.source=$s AND i.series_id<>'';
             DELETE FROM favorites WHERE id IN(SELECT id FROM items WHERE source=$s AND kind=3 AND series_id<>'');
             INSERT INTO history SELECT series_id,MAX(h.played) FROM items i JOIN history h ON h.id=i.id WHERE i.source=$s AND i.series_id<>'' GROUP BY series_id
-            ON CONFLICT(id) DO UPDATE SET played=MAX(history.played,excluded.played);
+            ON CONFLICT(id) DO UPDATE SET played=MAX(history.played,excluded.played) WHERE history.played>0;
             """;
         cmd.ExecuteNonQuery();
     }
@@ -79,7 +79,8 @@ public sealed partial class LibraryStore
         using var cmd=c.CreateCommand();cmd.CommandText="""
             INSERT INTO playback_progress VALUES($i,$s,$p,$n,$pos,$dur,$done,$t)
             ON CONFLICT(item) DO UPDATE SET name=excluded.name,series=excluded.series,position=excluded.position,duration=excluded.duration,completed=excluded.completed,updated=excluded.updated;
-            INSERT OR REPLACE INTO history SELECT $owner,$t WHERE EXISTS(SELECT 1 FROM items WHERE id=$owner);
+            INSERT INTO history SELECT $owner,$t WHERE EXISTS(SELECT 1 FROM items WHERE id=$owner)
+            ON CONFLICT(id) DO UPDATE SET played=excluded.played WHERE history.played>0;
             """;
         cmd.Parameters.AddWithValue("$i",item.Id);cmd.Parameters.AddWithValue("$s",item.SourceId);cmd.Parameters.AddWithValue("$p",item.SeriesId);cmd.Parameters.AddWithValue("$n",item.Kind==ContentKind.Episode&&item.Episode>0?(item.Season>0?$"S{item.Season:00} · B{item.Episode:00}":$"Bölüm {item.Episode}"):item.Name);cmd.Parameters.AddWithValue("$pos",position);cmd.Parameters.AddWithValue("$dur",duration);cmd.Parameters.AddWithValue("$done",completed);cmd.Parameters.AddWithValue("$t",DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());cmd.Parameters.AddWithValue("$owner",item.SeriesId.Length>0?item.SeriesId:item.Id);cmd.ExecuteNonQuery();
     });

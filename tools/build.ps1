@@ -1,15 +1,17 @@
-param([string]$OutputPath = (Join-Path $PSScriptRoot '..\artifacts'), [switch]$SkipTests)
+param([string]$OutputPath = (Join-Path $PSScriptRoot '..\artifacts'), [switch]$SkipTests, [switch]$NoRestore)
 $ErrorActionPreference = 'Stop'
 $repo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $outDir = [IO.Path]::GetFullPath($OutputPath)
 New-Item -ItemType Directory -Force $outDir | Out-Null
+$restoreArgs = @()
+if ($NoRestore) { $restoreArgs = @('--no-restore') }
 if (-not $SkipTests) {
-    & dotnet run --project (Join-Path $repo 'tests\WXPlayer.Tests') -c Release -p:UseSharedCompilation=false -- (Join-Path $outDir 'test-results.json')
+    & dotnet run --project (Join-Path $repo 'tests\WXPlayer.Tests') -c Release -p:UseSharedCompilation=false @restoreArgs -- (Join-Path $outDir 'test-results.json')
     if ($LASTEXITCODE -ne 0) { throw 'Tests failed' }
 }
 $portable = Join-Path $outDir 'WXPlayer-win-x64'
 if (Test-Path $portable) { throw "Output already exists: $portable. Select a new output directory to avoid stale files." }
-& dotnet publish (Join-Path $repo 'src\WXPlayer.App\WXPlayer.App.csproj') -c Release -m:1 -p:UseSharedCompilation=false -r win-x64 --self-contained true -p:VlcWindowsX86Enabled=false -p:VlcWindowsArm64Enabled=false -p:DebugType=None -o $portable
+& dotnet publish (Join-Path $repo 'src\WXPlayer.App\WXPlayer.App.csproj') -c Release -m:1 -p:UseSharedCompilation=false -r win-x64 --self-contained true -p:VlcWindowsX86Enabled=false -p:VlcWindowsArm64Enabled=false -p:DebugType=None @restoreArgs -o $portable
 if ($LASTEXITCODE -ne 0) { throw 'Publish failed' }
 Copy-Item -LiteralPath (Join-Path $repo 'README.md'),(Join-Path $repo 'LICENSE'),(Join-Path $repo 'THIRD-PARTY-NOTICES.md') -Destination $portable
 Copy-Item -LiteralPath (Join-Path $repo 'licenses') -Destination $portable -Recurse

@@ -10,17 +10,26 @@ public partial class MainWindow
     private HomeView _home=null!;
     private CancellationTokenSource? _homeLoad;
     private int _homeVersion;
+    private int _homeShuffleSeed = Random.Shared.Next();
+    private bool _homeVisible;
     private (string? Source,string Search)? _homeContext;
     private readonly Dictionary<string,string> _recommendations=new();
     private bool SidebarExpanded=>_settings.SidebarExpanded??(ActualWidth>=1180&&ActualHeight>=780);
     private void InitializeHome()
     {
-        _home=new HomeView(async item=>await SafeAsync(()=>OpenHomeItemAsync(item)),async item=>await SafeAsync(()=>ToggleFavoriteAsync(item)),async section=>await SafeAsync(()=>BrowseSectionAsync(section)),()=>AddSource_Click(this,new RoutedEventArgs()),async()=>await SafeAsync(()=>BrowseSectionAsync(_current?.Kind switch{ContentKind.Movie=>"movie",ContentKind.Series or ContentKind.Episode=>"series",_=>"live"})));
+        _home=new HomeView(async item=>await SafeAsync(()=>OpenHomeItemAsync(item)),async item=>await SafeAsync(()=>ToggleFavoriteAsync(item)),async section=>await SafeAsync(()=>BrowseSectionAsync(section)),()=>AddSource_Click(this,new RoutedEventArgs()),async()=>await SafeAsync(()=>BrowseSectionAsync(_current?.Kind switch{ContentKind.Movie=>"movie",ContentKind.Series or ContentKind.Episode=>"series",_=>"live"})),item=>SafeAsync(async()=>
+        {
+            await _store.RemoveRecentAsync(item.Id);
+            await RefreshHomeAsync();
+            Status("İçerik son izlenenlerden kaldırıldı.");
+        }));
         _home.Search.SetBinding(TextBox.TextProperty,new Binding("Text"){Source=SearchBox,Mode=BindingMode.TwoWay,UpdateSourceTrigger=UpdateSourceTrigger.PropertyChanged});HomeHost.Content=_home;
     }
     private void ApplyPageLayout()
     {
         bool home=_section=="home"&&!_fullscreen;HomeHost.Visibility=home?Visibility.Visible:Visibility.Collapsed;ContentGrid.Visibility=home?Visibility.Collapsed:Visibility.Visible;
+        if(home&&!_homeVisible)_homeShuffleSeed=Random.Shared.Next();
+        _homeVisible=home;
         _home?.NowPlaying(_current?.Name);
     }
     private async Task RefreshHomeAsync()
@@ -32,11 +41,13 @@ public partial class MainWindow
         {
             await SavePlaybackProgressAsync();
             var definitions=new[]{("Son izlenenler","recent",(ContentKind?)null,false,true),("Favorilerin","favorites",(ContentKind?)null,true,false),("Filmler","movie",(ContentKind?)ContentKind.Movie,false,false),("Diziler","series",(ContentKind?)ContentKind.Series,false,false),("Şimdi canlı","live",(ContentKind?)ContentKind.Live,false,false)};
-            var pages=await Task.WhenAll(definitions.Select(d=>_store.QueryAsync(source,d.Item3,null,search,d.Item4,d.Item5,0,24,cts.Token,artworkOnly:true)));
+            bool Discovery(string section)=>section is "movie" or "series";
+            int seed=_homeShuffleSeed;
+            var pages=await Task.WhenAll(definitions.Select(d=>_store.QueryAsync(source,d.Item3,null,search,d.Item4,d.Item5,0,Discovery(d.Item2)?72:24,cts.Token,artworkOnly:true,shuffleSeed:Discovery(d.Item2)?seed:null)));
             if(ArtworkService.Enabled)
             {
-                var all=await Task.WhenAll(definitions.Select(d=>_store.QueryAsync(source,d.Item3,null,search,d.Item4,d.Item5,0,24,cts.Token)));
-                pages=pages.Select((p,i)=>new WXPlayer.Core.Page(p.Items.Take(12).Concat(all[i].Items).Concat(p.Items).DistinctBy(x=>x.Id).Take(36).ToArray(),all[i].Total)).ToArray();
+                var all=await Task.WhenAll(definitions.Select(d=>_store.QueryAsync(source,d.Item3,null,search,d.Item4,d.Item5,0,Discovery(d.Item2)?72:24,cts.Token,shuffleSeed:Discovery(d.Item2)?seed:null)));
+                pages=pages.Select((p,i)=>new WXPlayer.Core.Page(p.Items.Take(Discovery(definitions[i].Item2)?48:12).Concat(all[i].Items).Concat(p.Items).DistinctBy(x=>x.Id).Take(Discovery(definitions[i].Item2)?96:36).ToArray(),all[i].Total)).ToArray();
             }
             if(cts.IsCancellationRequested||version!=_homeVersion||source!=SelectedSource?.Id||_section!="home"||_fullscreen)return;
             ContentItem? recommended=null;
