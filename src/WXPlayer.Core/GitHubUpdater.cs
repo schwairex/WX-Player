@@ -37,12 +37,16 @@ public sealed class GitHubUpdater : IDisposable
         if(root.GetProperty("draft").GetBoolean()||root.GetProperty("prerelease").GetBoolean())return null;
         string tag=root.GetProperty("tag_name").GetString()??"";if(!TryVersion(tag,out var version)||version<=new Version(current.Major,current.Minor,Math.Max(0,current.Build)))return null;
         var assets=root.GetProperty("assets").EnumerateArray().ToArray();
-        var choices=assets.Where(a=>Regex.IsMatch(a.GetProperty("name").GetString()??"",@"^WXPlayer(?:-\d+\.\d+\.\d+)?(?:-win-x64)?\.exe$",RegexOptions.IgnoreCase)).ToArray();
-        if(choices.Length!=1)throw new InvalidOperationException("Sürümde tek bir WXPlayer Windows x64 EXE dosyası bulunmalı.");
+        // Releases may include both the versioned distribution and a generic EXE alias.
+        // Prefer the asset whose name matches this release; never select an older EXE.
+        string[] names=["WXPlayer-"+version.ToString(3)+".exe","WXPlayer-"+version.ToString(3)+"-win-x64.exe","WXPlayer.exe","WXPlayer-win-x64.exe"];
+        var choices=names.Select(name=>assets.Where(a=>string.Equals(a.GetProperty("name").GetString(),name,StringComparison.OrdinalIgnoreCase)).ToArray()).FirstOrDefault(group=>group.Length>0)??[];
+        if(choices.Length!=1)throw new InvalidOperationException("Bu sürüm için uygun WXPlayer Windows x64 EXE dosyası bulunamadı.");
         var asset=choices[0];long size=asset.GetProperty("size").GetInt64();if(size<1024||size>1024L*1024*1024)throw new InvalidOperationException("Güncelleme boyutu geçerli değil.");
         string? digest=asset.TryGetProperty("digest",out var d)?d.GetString():null;
         string? hash=digest is not null&&Regex.IsMatch(digest,@"^sha256:[a-fA-F0-9]{64}$")?digest[7..].ToLowerInvariant():null;
-        Uri? sums=null;foreach(var a in assets)if(Regex.IsMatch(a.GetProperty("name").GetString()??"",@"^SHA256SUMS(?:-\d+\.\d+\.\d+)?\.txt$",RegexOptions.IgnoreCase))sums=AssetUrl(a.GetProperty("browser_download_url").GetString()!);
+        Uri? sums=null;foreach(string name in new[]{"SHA256SUMS-"+version.ToString(3)+".txt","SHA256SUMS.txt"})
+        {var match=assets.FirstOrDefault(a=>string.Equals(a.GetProperty("name").GetString(),name,StringComparison.OrdinalIgnoreCase));if(match.ValueKind!=JsonValueKind.Undefined){sums=AssetUrl(match.GetProperty("browser_download_url").GetString()!);break;}}
         if(hash is null&&sums is null)throw new InvalidOperationException("Güncelleme için SHA-256 doğrulama bilgisi eksik.");
         return new(version,tag,asset.GetProperty("name").GetString()!,AssetUrl(asset.GetProperty("browser_download_url").GetString()!),size,hash,sums);
     }

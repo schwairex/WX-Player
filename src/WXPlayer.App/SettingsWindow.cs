@@ -13,11 +13,11 @@ internal sealed class SettingsWindow : PremiumWindow
     internal SettingsWindow(Window owner,PlayerSettings settings,LibraryStore store,UpdateController updates,Func<SourceConfig,Task> edit,Func<string?,Task> remove,Func<LibraryCleanup,Task> clear):base(owner,"Ayarlar","İzleme deneyiminizi kendinize göre düzenleyin.","settings",850,760)
     {
         var grid=new Grid();grid.RowDefinitions.Add(new(){Height=GridLength.Auto});grid.RowDefinitions.Add(new(){Height=new GridLength(1,GridUnitType.Star)});Body.Children.Add(grid);
-        var nav=new StackPanel{Orientation=Orientation.Horizontal,Margin=new(0,0,0,20)};grid.Children.Add(nav);
+        var nav=new StackPanel{Orientation=Orientation.Horizontal,Margin=new(0,0,0,24)};grid.Children.Add(nav);
         var scroll=new ScrollViewer{Content=_pages,VerticalScrollBarVisibility=ScrollBarVisibility.Auto};Grid.SetRow(scroll,1);grid.Children.Add(scroll);
         StackPanel Page(string name,string icon)
         {
-            var page=new StackPanel();_pages.Children.Add(page);var button=new Button{Content=new IconLabel{Icon=icon,Label=name},Margin=new(0,0,10,0),Padding=new(16,10,16,10)};
+            var page=new StackPanel();_pages.Children.Add(page);var button=new Button{Content=new IconLabel{Icon=icon,Label=name},Margin=new(0,0,8,0),Padding=new(16,10,16,10)};
             int index=_tabs.Count;button.Click+=(_,_)=>SelectTab(index);nav.Children.Add(button);_tabs.Add((button,page));return page;
         }
         var playback=Page("Oynatma","play");var library=Page("Kütüphane","library");var updatePage=Page("Güncellemeler","refresh");
@@ -37,8 +37,8 @@ internal sealed class SettingsWindow : PremiumWindow
         foreach(var (key,label) in new[]{("Space","Oynat / duraklat"),("F / Esc","Tam ekran / çıkış"),("← / →","10 saniye geri / ileri"),("↑ / ↓","Ses seviyesi"),("M","Sesi kapat / aç"),("Z","Görüntüyü sığdır / doldur"),("I","Yayın istatistikleri"),("Ctrl + K","Kütüphanede ara"),("Ctrl + B","Menüyü daralt / genişlet"),("PgUp / PgDn","Önceki / sonraki kanal")})
         {
             var row=new Grid{Margin=new(0,4,0,4)};row.ColumnDefinitions.Add(new(){Width=new GridLength(1,GridUnitType.Star)});row.ColumnDefinitions.Add(new(){Width=GridLength.Auto});
-            var description=Text(label,12,"#ACBDCA");description.VerticalAlignment=VerticalAlignment.Center;row.Children.Add(description);
-            var cap=new Border{Background=Brush("#101B24"),BorderBrush=Brush("#40515F"),BorderThickness=new(1,1,1,3),CornerRadius=new(7),Padding=new(12,6,12,6),MinWidth=66,Child=Text(key,11)};Grid.SetColumn(cap,1);row.Children.Add(cap);keys.Children.Add(row);
+            var description=Text(label,12,"TextSecondaryBrush");description.VerticalAlignment=VerticalAlignment.Center;row.Children.Add(description);
+            var cap=new Border{Background=Brush("SurfaceElevatedBrush"),BorderBrush=Brush("BorderSubtleBrush"),BorderThickness=new(1),CornerRadius=new(7),Padding=new(12,6,12,6),MinWidth=66,Child=Text(key,11)};Grid.SetColumn(cap,1);row.Children.Add(cap);keys.Children.Add(row);
         }        var sources=Card(library,"Bağlı kaynaklar","Kayıtlı kaynakları düzenleyin veya tek tek kaldırın.");
         var sourceRows=new StackPanel();sources.Children.Add(sourceRows);
         var message=Text("",12,"#C1EC8B");library.Children.Add(message);
@@ -82,6 +82,6 @@ internal sealed class SettingsWindow : PremiumWindow
         SelectTab(0);Loaded+=async(_,_)=>{try{await LoadSources();}catch{message.Text="Kaynaklar okunamadı.";}};
     }
     internal void SmokeShowShortcuts(){SelectTab(0);_tabs[0].Page.Children.OfType<Border>().Last().BringIntoView();}
-    internal void SelectTab(int index){for(int i=0;i<_tabs.Count;i++){_tabs[i].Page.Visibility=i==index?Visibility.Visible:Visibility.Collapsed;_tabs[i].Button.Background=Brush(i==index?"#2D3D26":"#202734");_tabs[i].Button.Foreground=Brush(i==index?"#C1EC8B":"#A8B5C7");}}
+    internal void SelectTab(int index){for(int i=0;i<_tabs.Count;i++){_tabs[i].Page.Visibility=i==index?Visibility.Visible:Visibility.Collapsed;_tabs[i].Button.Background=Brush(i==index?"SurfaceSelectedBrush":"SurfaceBrush");_tabs[i].Button.Foreground=Brush(i==index?"AccentPrimaryBrush":"TextSecondaryBrush");}}
 }
 

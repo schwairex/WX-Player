@@ -24,7 +24,7 @@ internal sealed partial class HomeView : ScrollViewer
     internal ContentItem? Featured { get; private set; }
     internal bool Empty { get; private set; }
     private static Brush Color(string value) => PremiumWindow.Brush(value);
-    private static TextBlock Text(string value, int size = 13, string color = "#E9EEF5") => PremiumWindow.Text(value, size, color);
+    private static TextBlock Text(string value, int size = 13, string color = "TextPrimaryBrush") => PremiumWindow.Text(value, size, color);
 
     internal HomeView(Action<ContentItem> play, Action<ContentItem> favorite, Action<string> browse, Action add, Action resume, Func<ContentItem,Task>? removeRecent = null)
     {
@@ -33,7 +33,7 @@ internal sealed partial class HomeView : ScrollViewer
         VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
         HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled;
         Content = _body; _body.Margin = new Thickness(0, 0, 12, 0);
-        _toolbar.Margin = new Thickness(0, 0, 0, 20);
+        _toolbar.Margin = new Thickness(0, 0, 0, 24);
         _toolbar.ColumnDefinitions.Add(new() { Width = new GridLength(1, GridUnitType.Star) });
         _toolbar.ColumnDefinitions.Add(new() { Width = new GridLength(270) });
         _toolbar.RowDefinitions.Add(new() { Height = GridLength.Auto });
@@ -42,16 +42,16 @@ internal sealed partial class HomeView : ScrollViewer
         foreach (var (label, section) in new[] { ("Canlı TV", "live"), ("Filmler", "movie"), ("Diziler", "series"), ("Favoriler", "favorites") })
         {
             var button = Action(label, () => browse(section));
-            button.Margin = new Thickness(0, 0, 8, 0); button.Padding = new Thickness(12, 8, 12, 8);
+            button.Margin = new Thickness(0, 0, 8, 0); button.Padding = new Thickness(14, 8, 14, 8);
             shortcuts.Children.Add(button);
         }
         _toolbar.Children.Add(shortcuts); _searchBox.Children.Add(Search);
-        var hint = Text("Kütüphanende ara…", 12, "#98A3B6");
+        var hint = Text("Kütüphanende ara…", 12, "TextMutedBrush");
         hint.Margin = new Thickness(14, 0, 0, 0); hint.VerticalAlignment = VerticalAlignment.Center; hint.IsHitTestVisible = false;
         _searchBox.Children.Add(hint);
         Search.TextChanged += (_, _) => hint.Visibility = Search.Text.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
-        Search.GotKeyboardFocus += (_, _) => Search.BorderBrush = Color("#C1EC8B");
-        Search.LostKeyboardFocus += (_, _) => Search.BorderBrush = Color("#303A4B");
+        Search.GotKeyboardFocus += (_, _) => Search.BorderBrush = Color("AccentPrimaryBrush");
+        Search.LostKeyboardFocus += (_, _) => Search.BorderBrush = Color("BorderSubtleBrush");
         System.Windows.Automation.AutomationProperties.SetName(Search, "Ana sayfada içerik ara");
         Grid.SetColumn(_searchBox, 1); _toolbar.Children.Add(_searchBox); _body.Children.Add(_toolbar);
         SizeChanged += (_, _) => LayoutToolbar();
@@ -59,8 +59,8 @@ internal sealed partial class HomeView : ScrollViewer
         _return = Action("İzlemeye dön", resume);
         _return.HorizontalAlignment = HorizontalAlignment.Left; _return.Margin = new Thickness(0, 0, 0, 16);
         _return.MaxWidth = 600; _return.Visibility = Visibility.Collapsed; _body.Children.Add(_return);
-        _feature.Margin = new Thickness(0, 0, 0, 24); _body.Children.Add(_feature);
-        _shelves.Margin = new Thickness(0, 0, 0, 24); _body.Children.Add(_shelves);
+        _feature.Margin = new Thickness(0, 0, 0, 30); _body.Children.Add(_feature);
+        _shelves.Margin = new Thickness(0, 0, 0, 30); _body.Children.Add(_shelves);
     }
 
     private void LayoutToolbar()
@@ -86,7 +86,7 @@ internal sealed partial class HomeView : ScrollViewer
         CancelArtwork(); if (!clear && Items.Count > 0) return; Reset(); ScrollToTop(); Empty = false;
         ShowState("Kütüphanen hazırlanıyor", "İçerikleriniz listeleniyor…", null, null);
         var skeletons = new StackPanel { Orientation = Orientation.Horizontal, ClipToBounds = true, Height = 200 };
-        for (int i = 0; i < 8; i++) skeletons.Children.Add(new Border { Width = 160, Height = 200, Background = Color("#141922"), CornerRadius = new CornerRadius(8), Margin = new Thickness(0, 0, 16, 0) });
+        for (int i = 0; i < 8; i++) skeletons.Children.Add(new Border { Width = 160, Height = 200, Background = Color("SurfaceBrush"), CornerRadius = new CornerRadius(8), Margin = new Thickness(0, 0, 16, 0) });
         _shelves.Children.Add(skeletons);
     }
     internal void Error(Action retry)
@@ -99,31 +99,26 @@ internal sealed partial class HomeView : ScrollViewer
     {
         var copy = new StackPanel { Margin = new Thickness(28), VerticalAlignment = VerticalAlignment.Center };
         var heading = Text(title, 24); heading.FontWeight = FontWeights.SemiBold; copy.Children.Add(heading);
-        var detail = Text(description, 13, "#98A3B6"); detail.Margin = new Thickness(0, 12, 0, 20); copy.Children.Add(detail);
+        var detail = Text(description, 13, "TextMutedBrush"); detail.Margin = new Thickness(0, 12, 0, 20); copy.Children.Add(detail);
         if (action is not null && callback is not null)
         {
             var button = Action(action, callback, true); button.HorizontalAlignment = HorizontalAlignment.Left; copy.Children.Add(button);
         }
-        _feature.Children.Add(new Border { Background = Color("#141922"), BorderBrush = Color("#252C38"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10), Child = copy });
+        _feature.Children.Add(new Border { Background = Color("SurfaceBrush"), CornerRadius = new CornerRadius(12), Child = copy });
     }
     private void BuildHero(ContentItem item, string source)
     {
-        var hero = new Grid { Height = FeatureHeight - 2, ClipToBounds = true, Background = Color("#141B24") };
+        var hero = new Grid { Height = FeatureHeight - 2, ClipToBounds = true, Background = Color("SurfaceBrush") };
         Round(hero, 12);
-        var art = new ChannelLogo { Url = item.Logo, Initials = "", DecodeWidth = 480, ImageStretch = Stretch.UniformToFill, ImagePadding = new Thickness(0), Opacity = .35, HorizontalAlignment = HorizontalAlignment.Right, Width = 510, Height = FeatureHeight - 2 };
+        var art = new ChannelLogo { Url = item.Logo, Initials = "", DecodeWidth = 480, ImageStretch = Stretch.UniformToFill, ImagePadding = new Thickness(0), Opacity = .18, HorizontalAlignment = HorizontalAlignment.Right, Width = 510, Height = FeatureHeight - 2 };
         hero.Children.Add(art);
-        var shade = new LinearGradientBrush(); shade.StartPoint = new Point(0, .5); shade.EndPoint = new Point(1, .5);
-        shade.GradientStops.Add(new GradientStop(((SolidColorBrush)Color("#141B24")).Color, 0));
-        shade.GradientStops.Add(new GradientStop(((SolidColorBrush)Color("#FF141B24")).Color, .43));
-        shade.GradientStops.Add(new GradientStop(((SolidColorBrush)Color("#24141B24")).Color, 1));
-        hero.Children.Add(new Border { Background = shade, IsHitTestVisible = false });
         var poster = Artwork(item, 172, 258); poster.HorizontalAlignment = HorizontalAlignment.Right; poster.VerticalAlignment = VerticalAlignment.Center; poster.Margin = new Thickness(0, 0, 28, 0); hero.Children.Add(poster);
         var copy = new StackPanel { Margin = new Thickness(30, 22, 24, 22), VerticalAlignment = VerticalAlignment.Center, MaxWidth = 580, HorizontalAlignment = HorizontalAlignment.Left };
         hero.Children.Add(copy);
-        var eyebrow = Text("SENİN İÇİN SEÇTİK  ·  " + item.KindLabel, 10, "#C1EC8B"); eyebrow.FontWeight = FontWeights.SemiBold; copy.Children.Add(eyebrow);
-        var title = Text(item.Name, 30); title.FontWeight = FontWeights.SemiBold; title.LineHeight = 36;
+        var eyebrow = Text("ÖNE ÇIKAN  /  " + item.KindLabel, 10, "AccentPrimaryBrush"); eyebrow.FontWeight = FontWeights.SemiBold; copy.Children.Add(eyebrow);
+        var title = Text(item.Name, 29); title.FontWeight = FontWeights.SemiBold; title.LineHeight = 36;
         title.MaxHeight = 72; title.TextTrimming = TextTrimming.CharacterEllipsis; title.ToolTip = item.Name; title.Margin = new Thickness(0, 14, 0, 12); copy.Children.Add(title);
-        var metadata = Text(item.Category + "  ·  " + source, 12, "#B1BECC"); metadata.TextWrapping = TextWrapping.NoWrap; metadata.TextTrimming = TextTrimming.CharacterEllipsis; metadata.Margin = new Thickness(0, 0, 0, 22); copy.Children.Add(metadata);
+        var metadata = Text(item.Category + "  ·  " + source, 12, "TextSecondaryBrush"); metadata.TextWrapping = TextWrapping.NoWrap; metadata.TextTrimming = TextTrimming.CharacterEllipsis; metadata.Margin = new Thickness(0, 0, 0, 22); copy.Children.Add(metadata);
         var actions = new WrapPanel();
         string playLabel = item.Kind == ContentKind.Series ? "Bölümleri keşfet" : item.Kind == ContentKind.Live ? "Canlı izle" : "Filmi izle";
         var play = Action(playLabel, () => _play(item), true); play.Margin = new Thickness(0, 0, 8, 6); actions.Children.Add(play);
@@ -133,7 +128,6 @@ internal sealed partial class HomeView : ScrollViewer
             bool narrow = hero.ActualWidth < 800;
             copy.MaxWidth = Math.Max(200, Math.Min(580, hero.ActualWidth - 254));
             art.Width = Math.Min(510, hero.ActualWidth * .58);
-            shade.GradientStops[1].Offset = Math.Max(.43, 1 - art.Width / Math.Max(1, hero.ActualWidth));
             title.FontSize = narrow ? 25 : 30; title.LineHeight = narrow ? 30 : 36; title.MaxHeight = narrow ? 90 : 72;
         };
         _feature.Children.Add(hero);

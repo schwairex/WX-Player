@@ -14,7 +14,7 @@ public partial class MainWindow
     private bool _homeVisible;
     private (string? Source,string Search)? _homeContext;
     private readonly Dictionary<string,string> _recommendations=new();
-    private bool SidebarExpanded=>_settings.SidebarExpanded??(ActualWidth>=1180&&ActualHeight>=780);
+    private bool SidebarExpanded=>_settings.SidebarExpanded??false;
     private void InitializeHome()
     {
         _home=new HomeView(async item=>await SafeAsync(()=>OpenHomeItemAsync(item)),async item=>await SafeAsync(()=>ToggleFavoriteAsync(item)),async section=>await SafeAsync(()=>BrowseSectionAsync(section)),()=>AddSource_Click(this,new RoutedEventArgs()),async()=>await SafeAsync(()=>BrowseSectionAsync(_current?.Kind switch{ContentKind.Movie=>"movie",ContentKind.Series or ContentKind.Episode=>"series",_=>"live"})),item=>SafeAsync(async()=>

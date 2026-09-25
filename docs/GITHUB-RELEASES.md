@@ -5,9 +5,9 @@ Hedef depo: https://github.com/schwairex/WX-Player
 ## 1.6.0'ü yayımlama
 
 1. Kaynak ZIP içindeki `WXPlayer` klasörünün **içeriğini** deponun köküne yükleyin. `.github/workflows/windows.yml` ve `Directory.Build.props` kökte olmalı.
-2. GitHub **Releases → Draft a new release** yolundan `v1.6.0` etiketiyle kararlı bir sürüm hazırlayın.
-3. Teslim edilen **WXPlayer-1.6.0.exe** dosyasını sürümün Assets alanına ekleyin. Dosya adı `WXPlayer.exe` olarak da kullanılabilir. Aynı sürüme yalnız **bir** WXPlayer EXE ekleyin. İsteğe bağlı kaynak/portable ZIP eklenebilir. Taşınabilir ZIP içindeki küçük EXE güncelleme paketi değildir; tek dosya dağıtım EXE'sini ekleyin.
-4. GitHub'ın asset digest alanı SHA-256 sağlıyorsa başka manifest gerekmez. Ek güvence ve eski API uyumluluğu için teslim edilen `SHA256SUMS-1.6.0.txt` dosyasını da ekleyin. EXE adını değiştirirseniz bu dosyadaki ad da aynı olmalı. “Pre-release” seçmeden **Publish release** yapın.
+2. GitHub **Releases → Draft a new release** yolundan `v1.7.0` etiketiyle kararlı bir sürüm hazırlayın.
+3. Teslim edilen **WXPlayer-1.7.0.exe** dosyasını sürümün Assets alanına ekleyin; isterseniz adını `WXPlayer.exe` yapın. **Eski sürümlerden otomatik güncellemenin çalışması için aynı Release'e bu iki adı birlikte yüklemeyin.** Aynı sürüme yalnız **bir** WXPlayer Windows x64 EXE ekleyin. İsteğe bağlı kaynak/portable ZIP eklenebilir. Taşınabilir ZIP içindeki küçük EXE güncelleme paketi değildir; tek dosya dağıtım EXE'sini ekleyin.
+4. GitHub'ın asset digest alanı SHA-256 sağlıyorsa başka manifest gerekmez. Ek güvence ve eski API uyumluluğu için teslim edilen `SHA256SUMS-1.7.0.txt` dosyasını da ekleyin. EXE adını değiştirirseniz bu dosyadaki ad da aynı olmalı. “Pre-release” seçmeden **Publish release** yapın.
 
 Kaynak kodunu yüklemek veya commit oluşturmak tek başına güncelleme yayımlamaz. Taslak ve ön sürümler otomatik kurulmaz. Kontrol noktası: https://api.github.com/repos/schwairex/WX-Player/releases/latest
 

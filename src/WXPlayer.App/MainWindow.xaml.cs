@@ -388,12 +388,14 @@ public partial class MainWindow : Window
     private void Window_SizeChanged(object sender,SizeChangedEventArgs e){if(MainArea is not null&&!_fullscreen)ApplyLayout();}
     private void ApplyLayout()
     {
-        bool narrow=ActualWidth<1180||ActualHeight<780;bool expanded=SidebarExpanded;bool compact=!expanded;bool drawer=expanded&&ActualWidth<1180;
-        NavColumn.Width=new GridLength(expanded&&!drawer?224:82);Sidebar.Width=expanded?214:72;Grid.SetColumnSpan(Sidebar,drawer?2:1);Sidebar.HorizontalAlignment=HorizontalAlignment.Left;Panel.SetZIndex(Sidebar,20);BrandMark.Visibility=drawer?Visibility.Collapsed:Visibility.Visible;DrawerClose.Visibility=drawer?Visibility.Visible:Visibility.Collapsed;
-        ListColumn.Width=new GridLength(narrow?285:350);GapColumn.Width=new GridLength(narrow?14:20);MainArea.Margin=new Thickness(narrow?16:24,24,narrow?16:24,16);
-        Sidebar.Padding=new Thickness(compact?8:16,24,compact?8:16,16);ContentGrid.Margin=new Thickness(0,24,0,0);VolumeSlider.Width=ActualWidth<1050?76:110;ApplyGuideLayout();
+        bool narrow=ActualWidth<1180||ActualHeight<780;bool expanded=SidebarExpanded;bool compact=!expanded;
+        // The icon rail always owns the same width. Opening the drawer overlays the
+        // content rather than resizing Home, the video host or the EPG columns.
+        NavColumn.Width=new GridLength(76);Sidebar.Width=expanded?232:76;Grid.SetColumnSpan(Sidebar,expanded?2:1);Sidebar.HorizontalAlignment=HorizontalAlignment.Left;Panel.SetZIndex(Sidebar,20);BrandMark.Visibility=expanded?Visibility.Collapsed:Visibility.Visible;DrawerClose.Visibility=expanded?Visibility.Visible:Visibility.Collapsed;
+        ListColumn.Width=new GridLength(narrow?292:344);GapColumn.Width=new GridLength(narrow?16:22);MainArea.Margin=new Thickness(narrow?20:32,26,narrow?20:32,18);
+        Sidebar.Padding=new Thickness(compact?10:16,24,compact?10:16,16);ContentGrid.Margin=new Thickness(0,24,0,0);VolumeSlider.Width=ActualWidth<1050?76:110;ApplyGuideLayout();
         BrandWordmark.Visibility=NavLabel.Visibility=expanded?Visibility.Visible:Visibility.Collapsed;
-        PromoCard.Visibility=VersionLabel.Visibility=expanded&&ActualHeight>=780?Visibility.Visible:Visibility.Collapsed;
+        PromoCard.Visibility=Visibility.Collapsed;VersionLabel.Visibility=expanded?Visibility.Visible:Visibility.Collapsed;
         SidebarToggle.ToolTip=BrandToggle.ToolTip=expanded?"Menüyü daralt · Ctrl+B":"Menüyü genişlet · Ctrl+B";
         var buttons=new[]{HomeNav,LiveNav,MovieNav,SeriesNav,FavoriteNav,EpgNav,RecentNav,RecordingsNav,SettingsNav};
         foreach(var button in buttons){if(button.Content is not IconLabel content)continue;content.Compact=compact;button.Padding=narrow?new Thickness(8):new Thickness(12,10,12,10);button.Margin=new Thickness(0,narrow?2:4,0,narrow?2:4);button.ToolTip=content.Label;button.HorizontalContentAlignment=compact?HorizontalAlignment.Center:HorizontalAlignment.Left;System.Windows.Automation.AutomationProperties.SetName(button,content.Label);}

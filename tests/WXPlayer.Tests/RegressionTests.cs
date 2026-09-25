@@ -69,6 +69,18 @@ internal static class RegressionTests
         {
             assert(GitHubUpdater.ParseRelease(Release(),new(1,2,0))!.Version==new Version(1,3,0),"newer");assert(GitHubUpdater.ParseRelease(Release("v1.10.0"),new(1,9,0)) is not null,"numeric version");assert(GitHubUpdater.ParseRelease(Release("v1.1.0"),new(1,2,0)) is null&&GitHubUpdater.ParseRelease(Release(prerelease:true),new(1,2,0)) is null,"older/prerelease excluded");bool rejected=false;try{GitHubUpdater.ParseRelease(Release(url:"https://evil.test/WXPlayer.exe"),new(1,2,0));}catch(InvalidOperationException){rejected=true;}assert(rejected,"foreign asset rejected");return Task.CompletedTask;
         });
+        await test("Updater selects the matching versioned EXE when Releases also contains WXPlayer.exe",()=>
+        {
+            string url="https://github.com/schwairex/WX-Player/releases/download/v1.7.0/";
+            string json=JsonSerializer.Serialize(new{tag_name="v1.7.0",draft=false,prerelease=false,assets=new object[]{
+                new{name="WXPlayer.exe",size=4096,digest="sha256:"+hash,browser_download_url=url+"WXPlayer.exe"},
+                new{name="WXPlayer-1.7.0.exe",size=4096,digest="sha256:"+hash,browser_download_url=url+"WXPlayer-1.7.0.exe"},
+                new{name="WXPlayer-1.7.0-portable.zip",size=4096,digest="sha256:"+hash,browser_download_url=url+"WXPlayer-1.7.0-portable.zip"}
+            }});
+            var selected=GitHubUpdater.ParseRelease(json,new(1,6,3));
+            assert(selected?.AssetName=="WXPlayer-1.7.0.exe","matching EXE preferred");
+            return Task.CompletedTask;
+        });
         await test("Updater download verifies hash and size then atomically stages executable",async()=>
         {
             using var updater=new GitHubUpdater(new Handler((req,_)=>Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK){Content=req.RequestUri!.Host=="api.github.com"?new StringContent(Release()):new ByteArrayContent(payload)})));

@@ -8,7 +8,7 @@ Windows için modern, yerel IPTV ve medya oynatıcısı.<br>
 Canlı TV, filmler ve diziler — tek bir kütüphanede.
 
 <p>
-  <a href="docs/RELEASE-NOTES-1.6.3.md"><img src="https://img.shields.io/badge/s%C3%BCr%C3%BCm-1.6.3-bce784?style=for-the-badge&amp;labelColor=151b23" alt="Bu kaynak sürümü: 1.6.3"></a>
+  <a href="docs/RELEASE-NOTES-1.7.0.md"><img src="https://img.shields.io/badge/s%C3%BCr%C3%BCm-1.7.0-bce784?style=for-the-badge&amp;labelColor=151b23" alt="Bu kaynak sürümü: 1.7.0"></a>
   <img src="https://img.shields.io/badge/Windows-10%20%2F%2011%20x64-e6edf3?style=for-the-badge&amp;labelColor=151b23" alt="Windows 10 ve 11 x64">
   <img src="https://img.shields.io/badge/.NET-10-9b8afb?style=for-the-badge&amp;logo=dotnet&amp;logoColor=white&amp;labelColor=151b23" alt=".NET 10">
   <a href="LICENSE"><img src="https://img.shields.io/badge/lisans-MIT-bce784?style=for-the-badge&amp;labelColor=151b23" alt="Uygulama kodu: MIT lisansı"></a>
@@ -34,6 +34,8 @@ Canlı TV, filmler ve diziler — tek bir kütüphanede.
 WX Player; M3U oynatma listelerinizi, Xtream Codes hesabınızı ve uyumlu Stalker portalınızı bir araya getirir. Kaynaklardan gelen kanalları, filmleri ve dizileri yerel kütüphanenize kaydeder; favoriler, yayın rehberi ve kaldığınız yerden devam etme özellikleriyle izlemeyi kolaylaştırır.
 
 Uygulama **kanal paketi, IPTV aboneliği veya içerik sunucusu sağlamaz**. Kendi erişim hakkınız bulunan kaynakları ekleyerek kullanabilirsiniz. C# / WPF ile geliştirilen istemci, katalog ve veri katmanları WX Player'a; medya oynatma altyapısı açık kaynak LibVLC'ye dayanır.
+
+> **1.7.0 yenilikleri:** Aynı Release içinde birden fazla EXE adı bulunduğunda güncelleyici doğru sürüm varlığını seçer. Daha sakin, koyu bir WPF arayüzü; içeriği yeniden boyutlandırmadan açılan ikon menüsü ve ortak renk sistemi. [Sürüm notları →](docs/RELEASE-NOTES-1.7.0.md)
 
 > **1.6.3 yenilikleri:** Discord etkinliğinde eşleşen kanal logosu veya film/dizi afişi; bulunamazsa WX Player simgesi. Canlı TV'deki program süresi gizlendi, film ve dizi kalan süresi korundu. Mevcut Discord Application ID değişmedi. [Sürüm notları →](docs/RELEASE-NOTES-1.6.3.md)
 
@@ -96,7 +98,7 @@ Uygulama **kanal paketi, IPTV aboneliği veya içerik sunucusu sağlamaz**. Kend
 ### Seçenek 1 — Tek EXE
 
 1. **[Releases sayfasını](https://github.com/schwairex/WX-Player/releases/latest)** açın.
-2. Sürümün **Assets** bölümünden `WXPlayer-1.6.3.exe` veya o sürüme ait `WXPlayer.exe` dosyasını indirin.
+2. Sürümün **Assets** bölümünden `WXPlayer-1.7.0.exe` veya o sürüme ait `WXPlayer.exe` dosyasını indirin.
 3. EXE'yi çalıştırın. İlk açılışta dosyalar kullanıcı klasörüne açılır; sonraki açılışlarda bu dosyalar kullanılır.
 4. **Kaynak ekle** düğmesiyle kütüphanenizi bağlayın.
 
@@ -104,7 +106,7 @@ Yönetici yetkisi isteyen bir sistem kurulumu yapılmaz. Uygulama dosyaları `%L
 
 ### Seçenek 2 — Taşınabilir ZIP
 
-1. Releases içinden `WXPlayer-1.5.3-portable.zip` veya `WXPlayer-win-x64.zip` dosyasını indirin.
+1. Releases içinden `WXPlayer-1.7.0-portable.zip` veya `WXPlayer-win-x64.zip` dosyasını indirin.
 2. ZIP'in **tamamını** bir klasöre çıkarın.
 3. Klasördeki `WXPlayer.exe` dosyasını çalıştırın.
 
@@ -232,7 +234,7 @@ WX Player **açılışta**, uygulama açık kaldığında **4 saatte bir** ve Ay
 
 Aktif kayıt varken önce kaydı durdurmanız gerekir. İndirme hatası mevcut uygulamanın kullanılmasını engellemez. Taslaklar ve ön sürümler otomatik kurulmaz. **1.0 / 1.1 kullanıcıları ilk geçişi elle yapmalıdır; otomatik güncelleme 1.2 ile eklenmiştir.**
 
-Üstteki **GitHub Release** rozeti yayımlanmış sürümü, **Windows build** rozeti GitHub Actions durumunu gösterir; bu kaynak ağacının sürümü **1.6.3**'tür. Dinamik rozetler, ilgili GitHub yayını/iş akışı mevcut olduğunda Shields.io tarafından güncellenir.
+Üstteki **GitHub Release** rozeti yayımlanmış sürümü, **Windows build** rozeti GitHub Actions durumunu gösterir; bu kaynak ağacının sürümü **1.7.0**'dır. Dinamik rozetler, ilgili GitHub yayını/iş akışı mevcut olduğunda Shields.io tarafından güncellenir.
 
 <a id="veriler"></a>
 ## Yerel veriler ve gizlilik
@@ -375,7 +377,7 @@ Betik testleri çalıştırır, .NET çalışma zamanı ve medya bileşenleri da
 
 1. Kaynak dosyalarını deponun köküne yerleştirin; `.github`, `src`, `tools` ve `Directory.Build.props` aynı kaynak ağacında bulunmalıdır.
 2. `Directory.Build.props` içindeki sürümü `major.minor.patch` biçiminde güncelleyin.
-3. Aynı sürüm için `v1.5.3` gibi bir Git etiketi gönderin. Dahil edilen Windows Actions akışı test, derleme ve Release paketleme işlemlerini yapar; etiket ile uygulama sürümü eşleşmelidir.
+3. Aynı sürüm için `v1.7.0` gibi bir Git etiketi gönderin. Dahil edilen Windows Actions akışı test, derleme ve Release paketleme işlemlerini yapar; etiket ile uygulama sürümü eşleşmelidir.
 4. Elle yayımlıyorsanız Assets'e **tek bir dağıtım EXE'si**, isteğe bağlı portable ZIP ve SHA-256 dosyasını ekleyin. ZIP içindeki küçük EXE güncelleme paketi değildir.
 5. Otomatik güncelleme için yayını kararlı sürüm olarak yayımlayın; taslak veya ön sürüm bırakmayın.
 
@@ -385,6 +387,14 @@ EXE dosyalarını Git kaynak ağacına eklemek yerine **Releases** alanında da�
 ## Sürüm geçmişi
 
 Bu bölüm değişiklikleri sürüme göre özetler. Sürüm notları kapsamı, test raporları doğrulanan davranışları ve sınırları açıklar.
+
+### 1.7.0 · Koyu arayüz ve güvenilir güncelleme seçimi
+
+- Ana pencere ve içerik alanı daha sade koyu palet, ortak tipografi ve yüzeylerle yenilendi. Sol menü varsayılan olarak ikonlardan oluşur; açıldığında içerik genişliğini değiştirmez.
+- Ana sayfa rafları, kartlar, canlı TV/EPG, arama ve ayarlar aynı görsel dile yaklaştırıldı. Oynatma, kaynak ve kullanıcı verisi akışları korundu.
+- Güncelleyici, bir Release'de hem `WXPlayer.exe` hem de sürüm numaralı EXE varsa o sürüme ait EXE'yi seçer; SHA-256 doğrulaması sürer.
+
+[Sürüm notları](docs/RELEASE-NOTES-1.7.0.md)
 
 ### 1.6.3 · Discord görselleri ve canlı TV süresi
 
