@@ -16,6 +16,11 @@ internal static class SmokeTest
         var results=new Dictionary<string,object>();
         try
         {
+            if(App.Arguments.Contains("--discord-presence"))
+            {
+                await DiscordPresenceSmoke.RunAsync(window,store,engine,results);results["success"]=true;
+                File.WriteAllText(Path.Combine(App.DataDirectory,"smoke-results.json"),JsonSerializer.Serialize(results,new JsonSerializerOptions{WriteIndented=true}));window.Close();return;
+            }
             if(App.Arguments.Contains("--experience-160"))
             {
                 await Experience160Smoke.RunAsync(window,store,engine,results);results["success"]=true;
@@ -119,8 +124,10 @@ internal static class SmokeTest
                 results["normalCropCleared"]=string.IsNullOrEmpty(engine.Player.CropGeometry);
                 foreach(var key in new[]{"rendererIsEmbedded","noDetachedOverlayInNormalView","embeddedInterFont","fullscreenCoversMonitor","fullscreenVideoFillsClient","fullscreenKeepsNativeHandle","fullscreenHasFillCrop","fullscreenControlsAutoHide","fullscreenControlsReveal","fitPreservesAspectRatio","windowPlacementRestored","normalUiRestoredAfterFullscreen","normalCropCleared"})
                     if(!Equals(results[key],true))throw new Exception("UI regression failed: "+key);
-                window.WindowState=WindowState.Maximized;await Task.Delay(200);var maximized=FullscreenPlacement.WindowBounds(window);
-                window.SmokeFullscreen();await Task.Delay(200);window.SmokeFullscreen();await Task.Delay(200);var back=FullscreenPlacement.WindowBounds(window);
+                window.WindowState=WindowState.Maximized;await Task.Delay(500);var maximized=FullscreenPlacement.WindowBounds(window);
+                window.SmokeFullscreen();await Task.Delay(200);window.SmokeFullscreen();
+                await WaitUntil(()=>{var bounds=FullscreenPlacement.WindowBounds(window);return window.WindowState==WindowState.Maximized&&bounds.Width==maximized.Width&&bounds.Height==maximized.Height;},TimeSpan.FromSeconds(5));
+                var back=FullscreenPlacement.WindowBounds(window);
                 results["maximizedRoundTrip"]=window.WindowState==WindowState.Maximized&&maximized.Width==back.Width&&maximized.Height==back.Height;
                 if(!Equals(results["maximizedRoundTrip"],true))throw new Exception("Maximized placement regression.");window.WindowState=WindowState.Normal;await Task.Delay(200);
                 var epgSource=new SourceConfig{Id="smoke-epg",Name="EPG testi · Yerel örnek",EpgUrl=Path.Combine(App.DataDirectory,"fixture-epg.xml")};
@@ -136,6 +143,10 @@ internal static class SmokeTest
                 results["epgFollowsLatestChannel"]=window.EpgList.Items.Cast<Programme>().All(p=>p.ChannelId=="wx.culture")&&window.EpgList.Items.Count==2&&window.GuideTitle.Text.Contains("WX Kültür");
                 if(!Equals(results["epgAutomaticallyLoaded"],true)||!Equals(results["epgFollowsLatestChannel"],true))throw new Exception("EPG UI integration failed.");
                 await WaitUntil(()=>engine.Player.IsPlaying,TimeSpan.FromSeconds(15));await Task.Delay(900);
+                window.SmokeDiscordEnabled(true);
+                await WaitUntil(()=>window.SmokeDiscordActivity?.Details=="Kültür Atlası · Test programı",TimeSpan.FromSeconds(35));
+                results["discordLiveEpgLatestChannel"]=window.SmokeDiscordActivity is {Start:>0,End:>0}&&window.SmokeDiscordActivity.State.Contains("WX Kültür");
+                if(!Equals(results["discordLiveEpgLatestChannel"],true))throw new Exception("Discord live EPG integration failed.");
                                 await window.SmokePlayAsync(news);window.SmokeFullscreen();await Task.Delay(200);window.CategoryPicker.SelectedItem="Kültür";
                 await WaitUntil(()=>window.FullscreenChannels?.Items.Count==1,TimeSpan.FromSeconds(5));window.FullscreenChannels!.SelectedIndex=0;
                 await WaitUntil(()=>window.NowTitle.Text=="WX Kültür HD",TimeSpan.FromSeconds(5));await Task.Delay(1000);
@@ -168,11 +179,20 @@ internal static class SmokeTest
                 async IAsyncEnumerable<ContentItem> HomeItems(){for(int i=0;i<36;i++){yield return new ContentItem{Id="home-"+i,SourceId=homeSource.Id,Name="Test içeriği "+i.ToString("D2"),Category=i<24?"Filmler":"Diziler",Kind=i<24?ContentKind.Movie:ContentKind.Series,Logo=logos.Url,Url=target.Url};await Task.Yield();}}
                 await store.ImportAsync(homeSource,HomeItems(),null,default);await store.FavoriteAsync("home-1",true);await store.RememberAsync("home-2");
                 await window.SmokeRefreshAsync(homeSource.Id);await window.SmokeBrowseAsync("home");window.UpdateLayout();
-                results["homeShelvesBoundedAndIsolated"]=window.SmokeHome.Items.Count==24&&window.SmokeHome.Items.All(i=>i.SourceId==homeSource.Id);
+                // 1.6.1 expanded discovery shelves to 48; this fixture has 24 movies + 12 series.
+                results["homeShelvesBoundedAndIsolated"]=window.SmokeHome.Items.Count==36&&window.SmokeHome.Items.Count(i=>i.Kind==ContentKind.Movie)==24&&window.SmokeHome.Items.Count(i=>i.Kind==ContentKind.Series)==12&&window.SmokeHome.Items.All(i=>i.SourceId==homeSource.Id);
                 results["homeFavoritesAndHistory"]=window.SmokeHome.Items.Any(i=>i.Id=="home-1"&&i.IsFavorite)&&window.SmokeHome.Items.Any(i=>i.Id=="home-2");
                 await WaitUntil(()=>Descendants<ChannelLogo>(window.SmokeHome).Any(l=>l.DecodeWidth>=480&&l.HasImage),TimeSpan.FromSeconds(6));results["homeProviderPostersLoaded"]=true;
                 var homeItem=window.SmokeHome.Items.First(i=>i.Kind==ContentKind.Movie);await window.SmokeOpenHomeAsync(homeItem);await WaitUntil(()=>engine.Player.IsPlaying,TimeSpan.FromSeconds(12));await Task.Delay(400);
                 results["homeCardStartsPlayback"]=window.NowTitle.Text==homeItem.Name&&window.ContentGrid.IsVisible&&!window.HomeHost.IsVisible;
+                await WaitUntil(()=>window.SmokeDiscordActivity?.Details==homeItem.Name&&window.SmokeDiscordActivity.End is >0,TimeSpan.FromSeconds(5));
+                results["discordMovieFromRealPlayback"]=true;
+                engine.Player.SetPause(true);await WaitUntil(()=>window.SmokeDiscordActivity is {End:null}&&window.SmokeDiscordActivity.State.Contains("Paused"),TimeSpan.FromSeconds(5));
+                results["discordPauseFreezesTimer"]=true;
+                engine.Player.SetPause(false);await WaitUntil(()=>engine.Player.IsPlaying&&window.SmokeDiscordActivity?.End is >0,TimeSpan.FromSeconds(5));
+                engine.Player.Time=20000;await Task.Delay(500);
+                await WaitUntil(()=>window.SmokeDiscordActivity?.End is{} end&&Math.Abs(end-DateTimeOffset.UtcNow.ToUnixTimeSeconds()-(engine.Player.Length-engine.Player.Time)/1000d)<3,TimeSpan.FromSeconds(5));
+                results["discordResumeSeekCountdown"]=true;
                 var homeHandle=window.Video.Handle;await window.SmokeBrowseAsync("home");await Task.Delay(200);results["homeNavigationKeepsPlayback"]=engine.Player.IsPlaying&&engine.Player.Hwnd==homeHandle&&window.HomeHost.IsVisible;
                 await window.SmokeBrowseAsync("movie");results["homeReturnKeepsPlayer"]=engine.Player.IsPlaying&&window.Video.Handle==homeHandle&&window.Video.IsVisible;
                 foreach(string key in new[]{"homeShelvesBoundedAndIsolated","homeFavoritesAndHistory","homeProviderPostersLoaded","homeCardStartsPlayback","homeNavigationKeepsPlayback","homeReturnKeepsPlayer"})if(!Equals(results[key],true))throw new Exception("Home integration: "+key);
@@ -194,6 +214,10 @@ internal static class SmokeTest
                 var updatedChoices=await window.SmokeEpisodesAsync(seriesSource,watched);var progressPicker=new EpisodeWindow(window,watched,updatedChoices);progressPicker.Show();await Task.Delay(150);results["episodePickerSelectsLastEpisode"]=((ContentItem?)progressPicker.Episodes.SelectedItem)?.Episode==2;SaveWindow(progressPicker,Path.Combine(App.DataDirectory,"WX-Player-episode-progress.png"));progressPicker.Close();
                 await window.SmokePlayAsync(culture);await ChooseEpisode(1);await WaitUntil(()=>engine.Player.IsPlaying&&engine.Player.Time>=15500,TimeSpan.FromSeconds(15));results["episodeResumesFromStoredPosition"]=true;
                 foreach(string key in new[]{"moviePositionStored","movieResumesFromStoredPosition","homeSeriesHasOneCard","seriesLastEpisodeAndTimeVisible","episodePickerSelectsLastEpisode","episodeResumesFromStoredPosition"})if(!Equals(results[key],true))throw new Exception("1.5.1 playback progress: "+key);
+                await WaitUntil(()=>window.SmokeDiscordActivity?.State.Contains("S01E02")==true,TimeSpan.FromSeconds(5));
+                results["discordSeriesEpisodeFromRealPlayback"]=window.SmokeDiscordActivity!.Details.Contains("500T");
+                await engine.StopAsync();await WaitUntil(()=>window.SmokeDiscordActivity is null,TimeSpan.FromSeconds(5));results["discordStopClears"]=true;
+                window.SmokeDiscordEnabled(false);
             }
             if(App.Arguments.Contains("--timeshift")&&mediaArg>=0)
             {
