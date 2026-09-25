@@ -382,6 +382,7 @@ EXE dosyalarını Git kaynak ağacına eklemek yerine **Releases** alanında da�
 
 Bu bölüm değişiklikleri sürüme göre özetler. Sürüm notları kapsamı, test raporları doğrulanan davranışları ve sınırları açıklar.
 
+<<<<<<< HEAD
 ### 1.6.1 · Kişisel geçmiş ve değişen seçkiler
 
 - Son izlenen kartlarında fare/klavye odağıyla görünen X ile tekli kaldırma; favoriler ve izleme konumu korunur.
@@ -392,6 +393,10 @@ Bu bölüm değişiklikleri sürüme göre özetler. Sürüm notları kapsamı, 
 [Sürüm notları](docs/RELEASE-NOTES-1.6.1.md)
 
 ### 1.6.0 · Akıcı bölüm geçişleri ve otomatik görsel tamamlama
+=======
+<details>
+<summary><strong>1.6.0 · Akıcı bölüm geçişleri ve otomatik görsel tamamlama</strong></summary>
+>>>>>>> 58aba22020d646003232edcadc31fc247484260e
 
 - **Dizi bölümleri oynatıcının altında:** Normal görünümde yayın akışı alanı sezon seçicili bölüm listesine dönüşür. İzlenen bölüm vurgulanır; sezon/bölüm seçimi ve önceki/sonraki düğmeleriyle kolayca geçilir. Canlı TV'de EPG korunur.
 - **Tam ekranda sonraki bölüm:** Bölümün son 30 saniyesinde öneri çıkar. Tıklanınca sıradaki bölüm baştan açılır; tam ekran ve önceki bölümün izleme konumu korunur. Sezon geçişi desteklenir; son bölümde veya süre bilinmiyorsa öneri çıkmaz.
@@ -400,8 +405,10 @@ Bu bölüm değişiklikleri sürüme göre özetler. Sürüm notları kapsamı, 
 - **Kontrol sizde:** Ayarlar → Kütüphane'den görsel tamamlamayı kapatabilirsiniz. Harici servislere temizlenmiş içerik adı/yılı gider; hesap, kaynak ve oynatma URL'leri gönderilmez. Katalog kapsamı ve servis yanıtı nedeniyle her içerik için afiş bulunması garanti değildir.
 
 [Sürüm notları](docs/RELEASE-NOTES-1.6.0.md) · [Test raporu](docs/TEST-REPORT-1.6.0.md)
+</details>
 
-### 1.5.3 · Kesintisiz kaydırma ve hızlı afişler
+<details>
+<summary><strong>1.5.3 · Kesintisiz kaydırma ve hızlı afişler</strong></summary>
 
 - İç içe rafların tekerleği yakalayarak ana sayfa kaydırmasını engellemesi düzeltildi; Shift + tekerlek yatay gezinmeye ayrıldı.
 - Afişlerde tek indirme paylaşımı, LRU bellek ve kalıcı disk önbelleği eklendi; bozuk görsellerin tekrar yüklenmesi sınırlandı.
@@ -409,8 +416,10 @@ Bu bölüm değişiklikleri sürüme göre özetler. Sürüm notları kapsamı, 
 - 2:3 film/dizi afişleri, sınırlı sinematik öneri ve raf düzeni iyileştirildi; aynı görünümde kaydırma konumu korundu.
 
 [Sürüm notları](docs/RELEASE-NOTES-1.5.3.md) · [Test raporu](docs/TEST-REPORT-1.5.3.md)
+</details>
 
-<details open>
+
+<details>
 <summary><strong>1.5.2 · Dengeli ana sayfa ve eşit kartlar</strong></summary>
 
 - Büyük afişin tüm sayfayı kaplaması giderildi; öneri alanının yüksekliği sınırlandı.
