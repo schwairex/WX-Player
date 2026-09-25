@@ -1,14 +1,15 @@
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Net;
 
 namespace WXPlayer.Core;
 
 public enum PresencePlayback { Opening, Playing, Paused, Buffering, Stopped, Error, Ended }
-public sealed record DiscordActivity(string Details,string State,long? Start,long? End,string? Image);
+public sealed record DiscordActivity(string Details,string State,long? Start,long? End,string? Image,bool PublicCatalogueImage=false);
 public sealed record PresenceProgramme(string Title,DateTimeOffset Start,DateTimeOffset End);
 
 // Deliberately excludes source config, stream address, headers, IDs and credentials.
-public sealed record PresenceMedia(ContentKind Kind,string Title,string EpisodeTitle,int Season,int Episode,string? Image)
+public sealed record PresenceMedia(ContentKind Kind,string Title,string EpisodeTitle,int Season,int Episode,string? Image,bool PublicCatalogueImage=false)
 {
     public static PresenceMedia FromContent(ContentItem item,IEnumerable<string>? privateValues=null)
     {
@@ -50,6 +51,19 @@ public sealed record PresenceMedia(ContentKind Kind,string Title,string EpisodeT
         };
         return safe?uri.AbsoluteUri:null;
     }
+    public static string? PublicCatalogueArtwork(DiscoveredArtwork artwork,IEnumerable<string>? privateValues=null)
+    {
+        if(artwork.Provider is not ("IPTV-org" or "TVmaze" or "Wikipedia"))return null;
+        if(!Uri.TryCreate(artwork.Url,UriKind.Absolute,out var uri)||uri.Scheme!="https"||!uri.IsDefaultPort||
+           uri.UserInfo.Length>0||uri.Query.Length>0||uri.Fragment.Length>0||uri.AbsoluteUri.Length>512||
+           uri.HostNameType!=UriHostNameType.Dns||uri.Host.Equals("localhost",StringComparison.OrdinalIgnoreCase)||
+           uri.Host.EndsWith(".local",StringComparison.OrdinalIgnoreCase)||uri.Host.EndsWith(".internal",StringComparison.OrdinalIgnoreCase)||
+           uri.Host.EndsWith(".test",StringComparison.OrdinalIgnoreCase)||uri.AbsolutePath.Contains('%')||
+           !Regex.IsMatch(uri.AbsolutePath,@"\.(?:jpg|jpeg|png|webp|gif)$",RegexOptions.IgnoreCase))return null;
+        if(IPAddress.TryParse(uri.Host,out _))return null;
+        if(privateValues?.Any(s=>!string.IsNullOrWhiteSpace(s)&&s.Length>=3&&uri.AbsoluteUri.Contains(s,StringComparison.OrdinalIgnoreCase))==true)return null;
+        return uri.AbsoluteUri;
+    }
 }
 
 // Updated on the application dispatcher. Generation rejects results from older media.
@@ -82,7 +96,6 @@ public sealed class DiscordPresenceState
                 details=PresenceMedia.PublicText(programme.Title);
                 if(details.Length==0)details=_media.Title;
                 state=_media.Title+" · Live TV";
-                if(running){start=programme.Start.ToUnixTimeSeconds();end=programme.End.ToUnixTimeSeconds();}
             }
         }
         else
@@ -100,7 +113,16 @@ public sealed class DiscordPresenceState
         // Reserve room for status so long episode titles cannot truncate "Paused".
         string label=PresenceMedia.PublicText(state);
         while(Encoding.UTF8.GetByteCount(label+suffix)>120&&label.Length>0)label=label[..^1];
-        Activity=new(PresenceMedia.PublicText(details),PresenceMedia.PublicText(label+suffix),start,end,_media.Image);
+        Activity=new(PresenceMedia.PublicText(details),PresenceMedia.PublicText(label+suffix),start,end,_media.Image,_media.PublicCatalogueImage);
         _previous=playback;
+    }
+    public bool SetArtwork(long generation,DiscoveredArtwork artwork,IEnumerable<string>? privateValues=null)
+    {
+        if(generation!=_generation||_media is null||!_started||Activity is null)return false;
+        string? image=PresenceMedia.PublicCatalogueArtwork(artwork,privateValues);
+        if(image is null)return false;
+        _media=_media with{Image=image,PublicCatalogueImage=true};
+        Activity=Activity with{Image=image,PublicCatalogueImage=true};
+        return true;
     }
 }

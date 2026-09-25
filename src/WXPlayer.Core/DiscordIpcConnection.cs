@@ -53,7 +53,10 @@ public sealed class DiscordIpcConnection:IDiscordConnection
         {
             wire=new(){["type"]=3,["details"]=PresenceMedia.PublicText(activity.Details),["state"]=PresenceMedia.PublicText(activity.State)};
             if(activity.Start is >0&&activity.End>activity.Start)wire["timestamps"]=new{start=activity.Start,end=activity.End};
-            if(PresenceMedia.PublicImage(activity.Image??"") is {} image)wire["assets"]=new{large_image=image,large_text=PresenceMedia.PublicText(activity.Details)};
+            string? image=activity.PublicCatalogueImage
+                ?PresenceMedia.PublicCatalogueArtwork(new DiscoveredArtwork(activity.Image??"","IPTV-org","",DateTimeOffset.MaxValue))
+                :PresenceMedia.PublicImage(activity.Image??"");
+            if(image is not null)wire["assets"]=new{large_image=image,large_text=PresenceMedia.PublicText(activity.Details)};
         }
         return JsonSerializer.Serialize(new{cmd="SET_ACTIVITY",args=new{pid,activity=wire},nonce});
     }

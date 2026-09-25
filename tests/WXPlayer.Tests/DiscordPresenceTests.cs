@@ -33,7 +33,7 @@ internal static class DiscordPresenceTests
             long old=state.Begin(PresenceMedia.FromContent(live));
             var programme=new PresenceProgramme("Evening News",now.AddMinutes(-10),now.AddMinutes(20));
             state.Observe(old,PresencePlayback.Playing,0,0,now,programme);
-            assert(state.Activity is {Details:"Evening News",State:"Channel One · Live TV",Start:1799999400,End:1800001200},"EPG timestamps");
+            assert(state.Activity is {Details:"Evening News",State:"Channel One · Live TV",Start:null,End:null},"live EPG has no Discord timer");
             state.Observe(old,PresencePlayback.Playing,0,0,now.AddMinutes(21),programme);
             assert(state.Activity is {Details:"Channel One",Start:null,End:null},"expired EPG falls back");
             var second=programme with{Title="Next Programme",Start=now.AddMinutes(20),End=now.AddMinutes(40)};
@@ -43,6 +43,25 @@ internal static class DiscordPresenceTests
             state.Observe(current,PresencePlayback.Playing,0,0,now);
             state.Observe(old,PresencePlayback.Playing,0,0,now,programme);
             assert(state.Activity?.Details=="Channel Two","old async result rejected");
+            return Task.CompletedTask;
+        });
+        await test("Discord public catalogue artwork updates only the current selection",()=>
+        {
+            var state=new DiscordPresenceState();
+            long old=state.Begin(PresenceMedia.FromContent(film));
+            state.Observe(old,PresencePlayback.Playing,10000,100000,now);
+            var artwork=new DiscoveredArtwork("https://logos.example.org/films/test.png","IPTV-org","https://github.com/iptv-org/database",now.AddDays(1));
+            assert(state.SetArtwork(old,artwork,["private-pass"]),"catalogue artwork accepted");
+            assert(state.Activity?.Image==artwork.Url&&state.Activity.Start==now.ToUnixTimeSeconds()-10,"artwork preserves film timing");
+            assert(DiscordIpcConnection.SerializeActivity(state.Activity,"n",123).Contains(artwork.Url),"public artwork serialized");
+            long current=state.Begin(PresenceMedia.FromContent(film with{Name="Next Film"}));
+            state.Observe(current,PresencePlayback.Playing,0,100000,now);
+            assert(!state.SetArtwork(old,artwork),"old selection rejected");
+            assert(state.Activity?.Image is null,"old artwork cannot overwrite current film");
+            assert(!state.SetArtwork(current,artwork with{Url="https://provider.example/private-pass/poster.png"},["private-pass"]),"credential path rejected");
+            assert(!state.SetArtwork(current,artwork with{Url="https://user:password@logos.example.org/poster.png"}),"URL credentials rejected");
+            assert(!state.SetArtwork(current,artwork with{Url="https://127.0.0.1/poster.png"}),"local address rejected");
+            assert(!state.SetArtwork(current,artwork with{Provider="Unknown"}),"unknown catalogue rejected");
             return Task.CompletedTask;
         });
         await test("Discord series fields, duration bounds and private artwork filtering",()=>
@@ -119,6 +138,10 @@ internal static class DiscordPresenceTests
             service.SetEnabled(true);service.Publish(new("Title","Movie",null,null,"https://image.tmdb.org/t/p/w500/a.jpg"));
             await Until(()=>connection.Sent.Any(a=>a is {Image:null}));
             assert(connection.Sent.Last()?.Details=="Title","safe imageless fallback");
+            connection.RejectImages=false;
+            service.Publish(new("Next Title","Movie",null,null,"https://image.tmdb.org/t/p/w500/b.jpg"));
+            await Until(()=>connection.Sent.Any(a=>a?.Image=="https://image.tmdb.org/t/p/w500/b.jpg"));
+            assert(connection.Sent.Last()?.Image?.EndsWith("/b.jpg")==true,"different artwork retried after rejection");
         });
     }
     internal static async Task Until(Func<bool> condition)

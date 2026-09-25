@@ -30,7 +30,7 @@ public sealed class DiscordPresenceService:IAsyncDisposable
     private async Task RunAsync()
     {
         IDiscordConnection? connection=null;DiscordActivity? sent=null;
-        bool sentAny=false,withoutImages=false;DateTimeOffset retryAt=DateTimeOffset.MinValue,sendAt=DateTimeOffset.MinValue;
+        bool sentAny=false;string? rejectedImage=null;DateTimeOffset retryAt=DateTimeOffset.MinValue,sendAt=DateTimeOffset.MinValue;
         var ct=_stop.Token;
         try
         {
@@ -50,18 +50,18 @@ public sealed class DiscordPresenceService:IAsyncDisposable
                         if(connection is not null&&!connection.IsConnected){await connection.DisposeAsync();connection=null;sentAny=false;}
                         if(connection is null&&DateTimeOffset.UtcNow>=retryAt)
                         {
-                            connection=await _connect(ct);sent=null;sentAny=false;withoutImages=false;
+                            connection=await _connect(ct);sent=null;sentAny=false;rejectedImage=null;
                             // A selection or OFF may have arrived while connect was pending.
                             lock(_sync){enabled=_enabled&&!_disposed;desired=_desired;}
                         }
                         if(connection is not null&&enabled)
                         {
-                            var activity=withoutImages&&desired is not null?desired with {Image=null}:desired;
+                            var activity=desired is not null&&rejectedImage is not null&&desired.Image==rejectedImage?desired with {Image=null}:desired;
                             if((!sentAny||activity!=sent)&&(activity is null||DateTimeOffset.UtcNow>=sendAt))
                             {
                                 try{await connection.SetActivityAsync(activity,ct);}
                                 catch(DiscordCommandException) when(activity?.Image is not null)
-                                {withoutImages=true;activity=activity with{Image=null};await connection.SetActivityAsync(activity,ct);}
+                                {rejectedImage=activity.Image;activity=activity with{Image=null};await connection.SetActivityAsync(activity,ct);}
                                 sent=activity;sentAny=true;
                                 // Coalesce rapid seeks/channel changes; clears are never rate limited.
                                 sendAt=DateTimeOffset.UtcNow+_cadence;

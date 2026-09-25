@@ -14,6 +14,8 @@ public partial class MainWindow
     private bool _discordAccepted,_discordForceTiming;
     private CancellationTokenSource? _discordGuideCancellation;
     private Task? _discordGuideTask;
+    private Task? _discordArtworkTask;
+    private long _discordArtworkRequestedGeneration=-1;
     private DateTimeOffset _discordGuideNext;
     private IReadOnlyList<PresenceProgramme> _discordProgrammes=[];
 
@@ -45,6 +47,7 @@ public partial class MainWindow
         _discordAccepted=false;_discordItem=null;_discordForceTiming=false;
         _discordGuideCancellation?.Cancel();_discordGuideCancellation?.Dispose();
         _discordGuideCancellation=CancellationTokenSource.CreateLinkedTokenSource(_life.Token);
+        _discordArtworkRequestedGeneration=-1;
         // Keep the cancelled job owned until it completes, including at shutdown.
         _discordGuideNext=DateTimeOffset.MinValue;_discordProgrammes=[];
         _discordGeneration=_discordState.Begin(null);_discord?.Publish(null);
@@ -85,12 +88,32 @@ public partial class MainWindow
         var programme=_discordProgrammes.FirstOrDefault(p=>p.Start<=now&&p.End>now);
         _discordState.Observe(_discordGeneration,status,player.Time,player.Length,now,programme,_discordForceTiming,player.Rate);
         _discordForceTiming=false;_discord.Publish(_discordState.Activity);
+        if(_settings.DiscordRichPresence&&_discordState.Activity is{Image:null}&&
+           _discordArtworkRequestedGeneration!=_discordGeneration&&
+           (_discordArtworkTask is null||_discordArtworkTask.IsCompleted))
+        {
+            _discordArtworkRequestedGeneration=_discordGeneration;
+            _discordArtworkTask=RefreshDiscordArtworkAsync(_discordItem,_discordGeneration,_discordGuideCancellation?.Token??_life.Token);
+        }
         if(_settings.DiscordRichPresence&&_discordItem.Kind==ContentKind.Live&&status is PresencePlayback.Playing or PresencePlayback.Paused
             &&now>=_discordGuideNext&&(_discordGuideTask is null||_discordGuideTask.IsCompleted))
         {
             _discordGuideNext=now.AddSeconds(30);
             _discordGuideTask=RefreshDiscordGuideAsync(_discordItem,_discordGeneration,_discordGuideCancellation?.Token??_life.Token);
         }
+    }
+    private async Task RefreshDiscordArtworkAsync(ContentItem item,long generation,CancellationToken ct)
+    {
+        try
+        {
+            // Use only title/EPG ID for public catalogues. Never submit IPTV URLs or credentials.
+            var lookup=new ContentItem{Name=item.Name,Kind=item.Kind,SeriesName=item.SeriesName,EpgId=item.EpgId};
+            var artwork=await ArtworkService.Discovery.ResolveAsync(lookup,ct);
+            if(artwork is null||ct.IsCancellationRequested||_closing||generation!=_discordGeneration)return;
+            if(_discordState.SetArtwork(generation,artwork,DiscordPrivateValues(item)))_discord?.Publish(_discordState.Activity);
+        }
+        catch(OperationCanceledException){}
+        catch{ /* Artwork lookup must not affect playback or Discord text presence. */ }
     }
     private async Task RefreshDiscordGuideAsync(ContentItem item,long generation,CancellationToken ct)
     {
@@ -131,6 +154,7 @@ public partial class MainWindow
         _discordGuideCancellation?.Cancel();
         if(_discord is not null)await _discord.DisposeAsync();
         if(_discordGuideTask is not null)try{await _discordGuideTask;}catch{}
+        if(_discordArtworkTask is not null)try{await _discordArtworkTask;}catch{}
         _discordGuideCancellation?.Dispose();_discord=null;
     }
 }
