@@ -53,8 +53,7 @@ internal static class HomeLayoutSmoke
             var favorite = Descendants<StackPanel>(home).Single(p => Equals(p.Tag, "favorites"));
             var last = Cards(favorite).Last(); last.BringIntoView(); await Task.Delay(80);
             Check("home152KeyboardNavigationRevealsLastCard", Descendants<ScrollViewer>(favorite).Single().HorizontalOffset > 0, results);
-            var chosen = Cards(favorite).First(); window.Activate(); chosen.Focus();
-            await Until(()=>chosen.IsKeyboardFocused); window.UpdateLayout();
+            var chosen = Cards(favorite).First(); chosen.Focus(); window.UpdateLayout();
             var chrome = (Border)chosen.Template.FindName("Chrome", chosen);
             Check("home152CardFocusVisible", chosen.IsKeyboardFocused && chosen.BorderThickness.Left >= 1 && chrome.BorderBrush.ToString() == "#FFC1EC8B", results);
             chosen.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));

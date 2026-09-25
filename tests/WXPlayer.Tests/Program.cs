@@ -77,8 +77,6 @@ await Test("Source deletion removes its content, favorites and guide",async()=>{
 await RegressionTests.RunAsync(Test,Assert,folder);
 await CatalogTests.RunAsync(Test,Assert,folder);
 await HomeLibraryTests.RunAsync(Test,Assert,folder);
-await DiscordPresenceTests.RunAsync(Test,Assert);
-await DiscordIpcTests.RunAsync(Test,Assert);
 await Experience160Tests.RunAsync(Test,Assert,folder);
 if(args.Contains("--artwork-live"))await Test("Public artwork services integration",()=>Experience160Tests.LiveAsync(folder));
 Console.WriteLine($"{results.Count-failures}/{results.Count} passed");

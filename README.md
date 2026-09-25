@@ -8,7 +8,7 @@ Windows için modern, yerel IPTV ve medya oynatıcısı.<br>
 Canlı TV, filmler ve diziler — tek bir kütüphanede.
 
 <p>
-  <a href="docs/RELEASE-NOTES-1.6.2.md"><img src="https://img.shields.io/badge/s%C3%BCr%C3%BCm-1.6.2-bce784?style=for-the-badge&amp;labelColor=151b23" alt="Bu kaynak sürümü: 1.6.2"></a>
+  <a href="docs/RELEASE-NOTES-1.6.1.md"><img src="https://img.shields.io/badge/s%C3%BCr%C3%BCm-1.6.1-bce784?style=for-the-badge&amp;labelColor=151b23" alt="Bu kaynak sürümü: 1.6.1"></a>
   <img src="https://img.shields.io/badge/Windows-10%20%2F%2011%20x64-e6edf3?style=for-the-badge&amp;labelColor=151b23" alt="Windows 10 ve 11 x64">
   <img src="https://img.shields.io/badge/.NET-10-9b8afb?style=for-the-badge&amp;logo=dotnet&amp;logoColor=white&amp;labelColor=151b23" alt=".NET 10">
   <a href="LICENSE"><img src="https://img.shields.io/badge/lisans-MIT-bce784?style=for-the-badge&amp;labelColor=151b23" alt="Uygulama kodu: MIT lisansı"></a>
@@ -34,8 +34,6 @@ Canlı TV, filmler ve diziler — tek bir kütüphanede.
 WX Player; M3U oynatma listelerinizi, Xtream Codes hesabınızı ve uyumlu Stalker portalınızı bir araya getirir. Kaynaklardan gelen kanalları, filmleri ve dizileri yerel kütüphanenize kaydeder; favoriler, yayın rehberi ve kaldığınız yerden devam etme özellikleriyle izlemeyi kolaylaştırır.
 
 Uygulama **kanal paketi, IPTV aboneliği veya içerik sunucusu sağlamaz**. Kendi erişim hakkınız bulunan kaynakları ekleyerek kullanabilirsiniz. C# / WPF ile geliştirilen istemci, katalog ve veri katmanları WX Player'a; medya oynatma altyapısı açık kaynak LibVLC'ye dayanır.
-
-> **1.6.2 yenilikleri:** İsteğe bağlı Discord Rich Presence, canlı EPG ve film/dizi ilerlemesi, güvenli yeniden bağlantı ve eski yeşil vurgu paletine dönüş. Discord için kendi Application ID değerinizle derleme gerekir. [Kurulum ve gizlilik →](docs/DISCORD-PRESENCE.md) · [Sürüm notları →](docs/RELEASE-NOTES-1.6.2.md)
 
 > **1.6.1 yenilikleri:** Son izlenenlerden tekli kaldırma, her ana sayfa ziyaretinde değişen ve 48 karta kadar genişleyen film/dizi rafları, yenilenen ana pencere ve sidebar. [Sürüm notları →](docs/RELEASE-NOTES-1.6.1.md)
 
@@ -94,7 +92,7 @@ Uygulama **kanal paketi, IPTV aboneliği veya içerik sunucusu sağlamaz**. Kend
 ### Seçenek 1 — Tek EXE
 
 1. **[Releases sayfasını](https://github.com/schwairex/WX-Player/releases/latest)** açın.
-2. Sürümün **Assets** bölümünden `WXPlayer-1.6.2.exe` veya o sürüme ait `WXPlayer.exe` dosyasını indirin.
+2. Sürümün **Assets** bölümünden `WXPlayer-1.5.3.exe` veya o sürüme ait `WXPlayer.exe` dosyasını indirin.
 3. EXE'yi çalıştırın. İlk açılışta dosyalar kullanıcı klasörüne açılır; sonraki açılışlarda bu dosyalar kullanılır.
 4. **Kaynak ekle** düğmesiyle kütüphanenizi bağlayın.
 
@@ -230,7 +228,7 @@ WX Player **açılışta**, uygulama açık kaldığında **4 saatte bir** ve Ay
 
 Aktif kayıt varken önce kaydı durdurmanız gerekir. İndirme hatası mevcut uygulamanın kullanılmasını engellemez. Taslaklar ve ön sürümler otomatik kurulmaz. **1.0 / 1.1 kullanıcıları ilk geçişi elle yapmalıdır; otomatik güncelleme 1.2 ile eklenmiştir.**
 
-Üstteki **GitHub Release** rozeti yayımlanmış sürümü, **Windows build** rozeti GitHub Actions durumunu gösterir; bu kaynak ağacının sürümü **1.6.2**'tür. Dinamik rozetler, ilgili GitHub yayını/iş akışı mevcut olduğunda Shields.io tarafından güncellenir.
+Üstteki **GitHub Release** rozeti yayımlanmış sürümü, **Windows build** rozeti GitHub Actions durumunu gösterir; bu kaynak ağacının sürümü **1.6.1**'tür. Dinamik rozetler, ilgili GitHub yayını/iş akışı mevcut olduğunda Shields.io tarafından güncellenir.
 
 <a id="veriler"></a>
 ## Yerel veriler ve gizlilik
@@ -383,17 +381,6 @@ EXE dosyalarını Git kaynak ağacına eklemek yerine **Releases** alanında da�
 ## Sürüm geçmişi
 
 Bu bölüm değişiklikleri sürüme göre özetler. Sürüm notları kapsamı, test raporları doğrulanan davranışları ve sınırları açıklar.
-
-### 1.6.2 · Discord Rich Presence ve yeşil vurgu paleti
-
-- Ayarlar → Oynatma bölümünde kalıcı Discord Rich Presence seçeneği; varsayılan kapalıdır.
-- Canlı TV için güncel EPG programı/kanal ve program zamanları; EPG yoksa kanal adı.
-- Film/dizi için ad, sezon/bölüm ve kalan süre; duraklatma, devam ve ileri sarma takibi.
-- Discord sonradan açıldığında veya yeniden başladığında arka planda bağlantı; durdurma, hata, bitiş ve kapanışta temizleme.
-- Kaynak adresi, hesap bilgileri ve sağlayıcı görsel adresleri paylaşılmaz; güvenli genel afiş veya görselsiz durum kullanılır.
-- Sidebar, ana eylemler ve odak göstergeleri eski yeşil renge döndürüldü.
-
-[Sürüm notları](docs/RELEASE-NOTES-1.6.2.md) · [Discord kurulumu](docs/DISCORD-PRESENCE.md)
 
 ### 1.6.1 · Kişisel geçmiş ve değişen seçkiler
 

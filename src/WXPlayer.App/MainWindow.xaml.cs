@@ -50,7 +50,7 @@ public partial class MainWindow : Window
         InitializeComponent();InitializeHome();InitializeSeries();VersionLabel.Text="WX PLAYER  /  "+UpdateController.Current.ToString(3);
         Loaded+=async(_,_)=>await InitializeAsync();
         SourceInitialized+=(_,_)=>{try{int dark=1;DwmSetWindowAttribute(new WindowInteropHelper(this).Handle,20,ref dark,sizeof(int));}catch{/* Older Windows falls back to the system title bar. */}};
-        SeekSlider.InteractionCommitted+=async(_,_)=>{if(!_ready)return;if(_engine.HasLiveBuffer)await SafeAsync(()=>_engine.RewindLiveAsync((1-SeekSlider.Value)*_engine.BufferedSeconds,_life.Token));else if(_engine.Player.IsSeekable){_engine.Player.Position=(float)SeekSlider.Value;_discordForceTiming=true;}};
+        SeekSlider.InteractionCommitted+=async(_,_)=>{if(!_ready)return;if(_engine.HasLiveBuffer)await SafeAsync(()=>_engine.RewindLiveAsync((1-SeekSlider.Value)*_engine.BufferedSeconds,_life.Token));else if(_engine.Player.IsSeekable)_engine.Player.Position=(float)SeekSlider.Value;};
         SeekSlider.ValueChanged+=(_,_)=>{if(SeekSlider.IsInteracting&&_engine is not null)PlaybackBadge.Text=_engine.HasLiveBuffer?$"−{(1-SeekSlider.Value)*_engine.BufferedSeconds:0} sn · Bırakarak git":TimeSpan.FromMilliseconds(Math.Max(0,_engine.Player.Length*SeekSlider.Value)).ToString(@"hh\:mm\:ss")+" · Bırakarak git";};
         _search.Tick+=async(_,_)=>{_search.Stop();_offset=0;await SafeAsync(async()=>{await QueryAsync();await RefreshHomeAsync();});};
         _clock.Tick+=(_,_)=>Tick();
@@ -71,7 +71,7 @@ public partial class MainWindow : Window
         await SafeAsync(async()=>
         {
             await _store.InitializeAsync();
-            _engine=new PlaybackEngine(_settings);Video.MediaPlayer=_engine.Player;InitializeDiscord();
+            _engine=new PlaybackEngine(_settings);Video.MediaPlayer=_engine.Player;
             _epgService=new EpgService(_providers,_store,_life.Token);_updates=new UpdateController(_settings,_life.Token);_updates.Available+=()=>Ui(ShowUpdate);
             _engine.Player.Playing+=(_,_)=>Ui(()=>{PlaybackBadge.Text="OYNATILIYOR";SetButtonIcon(PlayButton,"pause");_appliedCrop=null;UpdateVideoSizing();});
             _engine.Player.Paused+=(_,_)=>Ui(()=>{PlaybackBadge.Text="DURAKLATILDI";SetButtonIcon(PlayButton,"play");});
@@ -139,7 +139,7 @@ public partial class MainWindow : Window
     {
         var menu=new ContextMenu();var edit=new MenuItem{Header="Kaynağı düzenle"};edit.Click+=async(_,_)=>{if(SelectedSource is{} s&&_load is null&&Dialogs.Source(this,s) is{} updated)await ImportSourceAsync(updated);};menu.Items.Add(edit);
         var delete=new MenuItem{Header="Kaynağı kütüphaneden kaldır"};delete.Click+=async(_,_)=>{if(SelectedSource is not{} s||_load is not null)return;if(MessageBox.Show(this,$"'{s.Name}' kaynağı ve bu kaynağın favorileri kaldırılsın mı?","Kaynağı kaldır",MessageBoxButton.YesNo,MessageBoxImage.Question)!=MessageBoxResult.Yes)return;await SafeAsync(()=>RemoveSourceFromSettingsAsync(s.Id));};menu.Items.Add(delete);
-        menu.Items.Add(new Separator());var direct=new MenuItem{Header="DirectShow yakalama aygıtını aç…"};direct.Click+=async(_,_)=>{if(Dialogs.Capture(this) is{} capture)await SafeAsync(async()=>{await SavePlaybackProgressAsync();_progressReady=false;_play?.Cancel();BeginDiscordSelection();_current=null;ApplySeriesVisibility();_target=null;_epg?.Cancel();++_epgVersion;EpgList.ItemsSource=null;EpgEmptyPanel.Visibility=Visibility.Visible;EpgEmpty.Text="DirectShow aygıtında program rehberi bulunmaz.";GuideTitle.Text="Yayın akışı";ShowVideo();NowTitle.Text="DirectShow · "+(capture.Video.Length>0?capture.Video:"Varsayılan aygıt");await _engine.PlayCaptureAsync(capture.Video,capture.Audio,_settings);});};menu.Items.Add(direct);menu.IsOpen=true;
+        menu.Items.Add(new Separator());var direct=new MenuItem{Header="DirectShow yakalama aygıtını aç…"};direct.Click+=async(_,_)=>{if(Dialogs.Capture(this) is{} capture)await SafeAsync(async()=>{await SavePlaybackProgressAsync();_progressReady=false;_play?.Cancel();_current=null;ApplySeriesVisibility();_target=null;_epg?.Cancel();++_epgVersion;EpgList.ItemsSource=null;EpgEmptyPanel.Visibility=Visibility.Visible;EpgEmpty.Text="DirectShow aygıtında program rehberi bulunmaz.";GuideTitle.Text="Yayın akışı";ShowVideo();NowTitle.Text="DirectShow · "+(capture.Video.Length>0?capture.Video:"Varsayılan aygıt");await _engine.PlayCaptureAsync(capture.Video,capture.Audio,_settings);});};menu.Items.Add(direct);menu.IsOpen=true;
     }
     private async void Demo_Click(object sender,RoutedEventArgs e)
     {
@@ -164,7 +164,6 @@ public partial class MainWindow : Window
     {
         CloseNextEpisode();
         _play?.Cancel();_play?.Dispose();var cts=_play=CancellationTokenSource.CreateLinkedTokenSource(_life.Token);int version=++_playVersion;
-        BeginDiscordSelection();
         var source=_sources.FirstOrDefault(s=>s.Id==item.SourceId);if(source is null)return;
         var historyId=item.Id;
         try
@@ -176,7 +175,7 @@ public partial class MainWindow : Window
             var progress=restart?null:await _store.ProgressAsync(item.Id);if(cts.IsCancellationRequested)return;
             var target=await _providers.ResolveAsync(source,item,cts.Token);if(version!=_playVersion)return;
             _progressReady=false;_lastPosition=_lastDuration=0;_current=item;_dismissedEpisode=null;ApplySeriesVisibility();_target=target;_epg?.Cancel();++_epgVersion;EpgList.ItemsSource=null;EpgEmptyPanel.Visibility=Visibility.Visible;EpgEmpty.Text="Rehber hazırlanıyor…";GuideTitle.Text=item.Name;NowTitle.Text=item.Name;PlaybackBadge.Text="BAĞLANIYOR";ShowVideo();
-            await _engine.PlayAsync(target,_settings,cts.Token,item.Kind==ContentKind.Live && new Uri(target.Url).Scheme is "http" or "https");if(version!=_playVersion)return;AcceptDiscordPlayback(item,version);await _store.RememberAsync(historyId);Status($"{item.Name} · Tampon {_engine.CacheMs(_settings)} ms · F: tam ekran"+(_engine.TimeshiftStatus.Length>0?" · "+_engine.TimeshiftStatus:""));_guideDay=new(DateTime.Today);
+            await _engine.PlayAsync(target,_settings,cts.Token,item.Kind==ContentKind.Live && new Uri(target.Url).Scheme is "http" or "https");if(version!=_playVersion)return;await _store.RememberAsync(historyId);Status($"{item.Name} · Tampon {_engine.CacheMs(_settings)} ms · F: tam ekran"+(_engine.TimeshiftStatus.Length>0?" · "+_engine.TimeshiftStatus:""));_guideDay=new(DateTime.Today);
             if(item.Kind is ContentKind.Movie or ContentKind.Episode)_ = RestorePlaybackProgressAsync(progress,version,cts.Token);
             await LoadGuideAsync();
         }catch(OperationCanceledException){/* A later channel selection wins. */}
@@ -256,11 +255,11 @@ public partial class MainWindow : Window
     private async void Epg_DoubleClick(object sender,MouseButtonEventArgs e)
     {
         if(_current is null||EpgList.SelectedItem is not Programme p)return;var source=_sources.First(s=>s.Id==_current.SourceId);
-        await SafeAsync(async()=>{var item=_current;var target=ProviderClient.CatchupTarget(source,item,p);_play?.Cancel();int version=++_playVersion;BeginDiscordSelection();_target=target;NowTitle.Text=item.Name+" · "+p.Title;await _engine.PlayAsync(target,_settings,_life.Token);AcceptDiscordPlayback(item with{Kind=ContentKind.Movie,Name=p.Title},version);Status("Tekrar izleme · "+p.Title);});
+        await SafeAsync(async()=>{var target=ProviderClient.CatchupTarget(source,_current,p);_play?.Cancel();_target=target;NowTitle.Text=_current.Name+" · "+p.Title;await _engine.PlayAsync(target,_settings,_life.Token);Status("Tekrar izleme · "+p.Title);});
     }
     private async void PlayPause_Click(object sender,RoutedEventArgs e)
     {
-        if(!_ready)return;if(_engine.Player.IsPlaying||_engine.Player.State==LibVLCSharp.Shared.VLCState.Paused){await SafeAsync(()=>SavePlaybackProgressAsync());_engine.Player.Pause();}else if(_target is not null)await SafeAsync(ReplayWithDiscordAsync);else if(ChannelList.SelectedItem is ContentItem i)await SafeAsync(()=>PlayItemAsync(i));
+        if(!_ready)return;if(_engine.Player.IsPlaying||_engine.Player.State==LibVLCSharp.Shared.VLCState.Paused){await SafeAsync(()=>SavePlaybackProgressAsync());_engine.Player.Pause();}else if(_target is not null)await SafeAsync(()=>_engine.PlayAsync(_target,_settings,_life.Token));else if(ChannelList.SelectedItem is ContentItem i)await SafeAsync(()=>PlayItemAsync(i));
     }
     private async void Record_Click(object sender,RoutedEventArgs e)
     {
@@ -278,7 +277,7 @@ public partial class MainWindow : Window
     private void Settings_Click(object sender,RoutedEventArgs e)
     {
         if(!_ready)return;if(_fullscreen)ToggleFullscreen();
-        var w=CreateSettingsWindow();w.ShowDialog();if(w.Saved){UpdateDiscordPlayback();ArtworkService.Enabled=_settings.DiscoverArtwork;UpdateVideoSizing();_ = SafeAsync(RefreshHomeAsync);Status("Ayarlar kaydedildi.");}
+        var w=CreateSettingsWindow();w.ShowDialog();if(w.Saved){ArtworkService.Enabled=_settings.DiscoverArtwork;UpdateVideoSizing();_ = SafeAsync(RefreshHomeAsync);Status("Ayarlar kaydedildi.");}
     }
     internal SettingsWindow CreateSettingsWindow()=>new(this,_settings,_store,_updates,ImportSourceAsync,RemoveSourceFromSettingsAsync,ClearFromSettingsAsync);
     private async Task ResetEpgJobsAsync(){_epg?.Cancel();++_epgVersion;await _epgService.StopAsync();_epgService=new EpgService(_providers,_store,_life.Token);}
@@ -315,8 +314,8 @@ public partial class MainWindow : Window
     private void Mute_Click(object sender,RoutedEventArgs e){if(!_ready)return;_engine.Player.Mute=!_engine.Player.Mute;SetButtonIcon(MuteButton,_engine.Player.Mute?"volume-off":"volume");}
     private void Video_MouseWheel(object sender,MouseWheelEventArgs e){VolumeSlider.Value=Math.Clamp(VolumeSlider.Value+(e.Delta>0?5:-5),0,100);e.Handled=true;}
     private void Video_Click(object sender,MouseButtonEventArgs e){if(e.ClickCount==2)ToggleFullscreen();else Focus();}
-    private void Seek_Released(object sender,MouseButtonEventArgs e){if(_ready&&_engine.Player.IsSeekable){_engine.Player.Position=(float)SeekSlider.Value;_discordForceTiming=true;}}
-    private async void Seek(long ms){if(_engine.HasLiveBuffer){await SafeAsync(()=>_engine.RewindLiveAsync(_engine.BehindLive-ms/1000d,_life.Token));return;}if(_engine.Player.IsSeekable){_engine.Player.Time=Math.Clamp(_engine.Player.Time+ms,0,Math.Max(0,_engine.Player.Length));_discordForceTiming=true;}else Status("Bu canlı yayın ileri / geri sarmayı desteklemiyor. Geçmiş programlar için Catch-Up kullanın.");}
+    private void Seek_Released(object sender,MouseButtonEventArgs e){if(_ready&&_engine.Player.IsSeekable)_engine.Player.Position=(float)SeekSlider.Value;}
+    private async void Seek(long ms){if(_engine.HasLiveBuffer){await SafeAsync(()=>_engine.RewindLiveAsync(_engine.BehindLive-ms/1000d,_life.Token));return;}if(_engine.Player.IsSeekable)_engine.Player.Time=Math.Clamp(_engine.Player.Time+ms,0,Math.Max(0,_engine.Player.Length));else Status("Bu canlı yayın ileri / geri sarmayı desteklemiyor. Geçmiş programlar için Catch-Up kullanın.");}
     private void PreviousChannel_Click(object sender,RoutedEventArgs e)=>ChangeChannel(-1);
     private void NextChannel_Click(object sender,RoutedEventArgs e)=>ChangeChannel(1);
     private async void ChangeChannel(int delta)
@@ -403,7 +402,7 @@ public partial class MainWindow : Window
         if(!_ready||_closing)return;var player=_engine.Player;_ = _engine.MaintainLiveAsync();LiveEdgeButton.Visibility=_engine.HasLiveBuffer?Visibility.Visible:Visibility.Collapsed;LiveEdgeButton.Content=_engine.IsReplay?"↗ CANLIYA DÖN":"● CANLI";SeekSlider.IsEnabled=_engine.HasLiveBuffer?_engine.BufferedSeconds>=2:player.IsSeekable;SeekSlider.ToolTip=_engine.HasLiveBuffer?$"Son {_engine.BufferedSeconds:0} saniye · Yerel tampon":"Yayın konumu";
         if(!SeekSlider.IsInteracting&&player.Position>=0)SeekSlider.Value=_engine.HasLiveBuffer?Math.Clamp(1-_engine.BehindLive/Math.Max(1,_engine.BufferedSeconds),0,1):player.Position;
         if(player.IsPlaying&&!SeekSlider.IsInteracting)PlaybackBadge.Text=_engine.HasLiveBuffer?(_engine.IsReplay?$"−{_engine.BehindLive:0} sn":$"{_engine.BufferedSeconds:0} sn hazır"):player.IsSeekable?TimeSpan.FromMilliseconds(Math.Max(0,player.Time)).ToString(@"hh\:mm\:ss")+" / "+TimeSpan.FromMilliseconds(Math.Max(0,player.Length)).ToString(@"hh\:mm\:ss"):"● CANLI";
-        UpdateNextEpisode();PlaceNextEpisode();UpdateDiscordPlayback();
+        UpdateNextEpisode();PlaceNextEpisode();
         if(++_tick%5==0)_ = SafeAsync(()=>SavePlaybackProgressAsync());if(_tick%30==0)EpgList.Items.Refresh();if(_tick%300==0&&_current?.Kind==ContentKind.Live)_ = LoadGuideAsync();if(_tick%15==0)App.SaveSettings(_settings);
     }
     private async void GoLive_Click(object sender,RoutedEventArgs e)=>await SafeAsync(_engine.GoLiveAsync);
@@ -427,7 +426,7 @@ public partial class MainWindow : Window
         if(_closed)return;e.Cancel=true;if(_closing)return;
         if(_engine?.Recording==true&&MessageBox.Show(this,"Devam eden kayıt sonlandırılıp uygulama kapatılsın mı?","Kayıt devam ediyor",MessageBoxButton.YesNo,MessageBoxImage.Question)!=MessageBoxResult.Yes)return;
         if(_fullscreen)ToggleFullscreen();_closing=true;_life.Cancel();_load?.Cancel();_play?.Cancel();_epg?.Cancel();_query?.Cancel();_homeLoad?.Cancel();_clock.Stop();_search.Stop();_hideControls.Stop();
-        try{await DisposeDiscordAsync();await SavePlaybackProgressAsync();App.SaveSettings(_settings);_statistics?.Close();_updateWindow?.Close();if(_epgService is not null)await _epgService.StopAsync();if(_engine is not null){Video.MediaPlayer=null;await _engine.DisposeAsync();}ArtworkService.Discovery.Dispose();_providers.Dispose();_updates?.Dispose();}finally{_closed=true;Close();}
+        try{await SavePlaybackProgressAsync();App.SaveSettings(_settings);_statistics?.Close();_updateWindow?.Close();if(_epgService is not null)await _epgService.StopAsync();if(_engine is not null){Video.MediaPlayer=null;await _engine.DisposeAsync();}ArtworkService.Discovery.Dispose();_providers.Dispose();_updates?.Dispose();}finally{_closed=true;Close();}
     }
     internal Task SmokePlayAsync(ContentItem item)=>PlayItemAsync(item);
     internal async Task SmokeRefreshAsync(string id){await ReloadSourcesAsync(id);await RefreshViewAsync();}
@@ -439,7 +438,6 @@ public partial class MainWindow : Window
     internal void SmokeRevealControls()=>RevealFullscreenControls();
     internal void SmokeFit()=>Fit_Click(this,new RoutedEventArgs());
 }
-
 
 
 

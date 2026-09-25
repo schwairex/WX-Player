@@ -8,17 +8,17 @@
   <Color x:Key="SurfaceColor">#151C26</Color><SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}"/>
   <Color x:Key="SurfaceElevatedColor">#1B2430</Color><SolidColorBrush x:Key="SurfaceElevatedBrush" Color="{StaticResource SurfaceElevatedColor}"/>
   <Color x:Key="SurfaceHoverColor">#202B38</Color><SolidColorBrush x:Key="SurfaceHoverBrush" Color="{StaticResource SurfaceHoverColor}"/>
-  <Color x:Key="SurfaceSelectedColor">#203026</Color><SolidColorBrush x:Key="SurfaceSelectedBrush" Color="{StaticResource SurfaceSelectedColor}"/>
+  <Color x:Key="SurfaceSelectedColor">#183247</Color><SolidColorBrush x:Key="SurfaceSelectedBrush" Color="{StaticResource SurfaceSelectedColor}"/>
   <Color x:Key="BorderSubtleColor">#263241</Color><SolidColorBrush x:Key="BorderSubtleBrush" Color="{StaticResource BorderSubtleColor}"/>
   <Color x:Key="BorderStrongColor">#3A4A5E</Color><SolidColorBrush x:Key="BorderStrongBrush" Color="{StaticResource BorderStrongColor}"/>
   <Color x:Key="TextPrimaryColor">#F4F7FA</Color><SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}"/>
   <Color x:Key="TextSecondaryColor">#B7C2CF</Color><SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}"/>
   <Color x:Key="TextMutedColor">#7F8C9B</Color><SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource TextMutedColor}"/>
   <Color x:Key="TextDisabledColor">#566271</Color><SolidColorBrush x:Key="TextDisabledBrush" Color="{StaticResource TextDisabledColor}"/>
-  <Color x:Key="AccentPrimaryColor">#C1EC8B</Color><SolidColorBrush x:Key="AccentPrimaryBrush" Color="{StaticResource AccentPrimaryColor}"/>
-  <Color x:Key="AccentHoverColor">#D1F4A8</Color><SolidColorBrush x:Key="AccentHoverBrush" Color="{StaticResource AccentHoverColor}"/>
-  <Color x:Key="AccentPressedColor">#A5D36F</Color><SolidColorBrush x:Key="AccentPressedBrush" Color="{StaticResource AccentPressedColor}"/>
-  <Color x:Key="AccentSubtleColor">#2D3D26</Color><SolidColorBrush x:Key="AccentSubtleBrush" Color="{StaticResource AccentSubtleColor}"/>
+  <Color x:Key="AccentPrimaryColor">#42B8F5</Color><SolidColorBrush x:Key="AccentPrimaryBrush" Color="{StaticResource AccentPrimaryColor}"/>
+  <Color x:Key="AccentHoverColor">#62C7FA</Color><SolidColorBrush x:Key="AccentHoverBrush" Color="{StaticResource AccentHoverColor}"/>
+  <Color x:Key="AccentPressedColor">#2398D4</Color><SolidColorBrush x:Key="AccentPressedBrush" Color="{StaticResource AccentPressedColor}"/>
+  <Color x:Key="AccentSubtleColor">#1E3E52</Color><SolidColorBrush x:Key="AccentSubtleBrush" Color="{StaticResource AccentSubtleColor}"/>
   <Color x:Key="SuccessColor">#55C88A</Color><SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}"/>
   <Color x:Key="WarningColor">#E8B45C</Color><SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}"/>
   <Color x:Key="ErrorColor">#F06A74</Color><SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource ErrorColor}"/>
@@ -26,7 +26,7 @@
   <Color x:Key="PlayerOverlayColor">#B30A0E14</Color><SolidColorBrush x:Key="PlayerOverlayBrush" Color="{StaticResource PlayerOverlayColor}"/>
   <Color x:Key="PlayerControlBackgroundColor">#CC151C26</Color><SolidColorBrush x:Key="PlayerControlBackgroundBrush" Color="{StaticResource PlayerControlBackgroundColor}"/>
   <Color x:Key="PlayerProgressTrackColor">#5969798A</Color><SolidColorBrush x:Key="PlayerProgressTrackBrush" Color="{StaticResource PlayerProgressTrackColor}"/>
-  <Color x:Key="PlayerProgressFillColor">#C1EC8B</Color><SolidColorBrush x:Key="PlayerProgressFillBrush" Color="{StaticResource PlayerProgressFillColor}"/>
+  <Color x:Key="PlayerProgressFillColor">#42B8F5</Color><SolidColorBrush x:Key="PlayerProgressFillBrush" Color="{StaticResource PlayerProgressFillColor}"/>
 
   <sys:Double x:Key="DisplayFontSize">32</sys:Double><sys:Double x:Key="PageTitleFontSize">24</sys:Double><sys:Double x:Key="SectionTitleFontSize">18</sys:Double>
   <sys:Double x:Key="CardTitleFontSize">14</sys:Double><sys:Double x:Key="BodyFontSize">14</sys:Double><sys:Double x:Key="BodySecondaryFontSize">13</sys:Double>
@@ -100,7 +100,6 @@
 </Style>
  </Application.Resources>
 </Application>
-
 
 
 

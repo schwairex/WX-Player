@@ -82,7 +82,7 @@ All colors should be implemented as semantic resources. Components should refere
 | `Surface` | `#151C26` | Cards, grouped controls, and standard containers |
 | `SurfaceElevated` | `#1B2430` | Popups, elevated cards, menus, and dialogs |
 | `SurfaceHover` | `#202B38` | Hovered neutral surfaces |
-| `SurfaceSelected` | `#203026` | Selected surfaces with restrained accent presence |
+| `SurfaceSelected` | `#183247` | Selected surfaces with restrained accent presence |
 
 ### Border Colors
 
@@ -104,12 +104,12 @@ All colors should be implemented as semantic resources. Components should refere
 
 | Token | Value | Use |
 |---|---:|---|
-| `AccentPrimary` | `#C1EC8B` | Primary actions, focus, selected indicators, and progress |
-| `AccentHover` | `#D1F4A8` | Hovered primary actions |
-| `AccentPressed` | `#A5D36F` | Pressed primary actions |
-| `AccentSubtle` | `#2D3D26` | Low-emphasis accent backgrounds and selection fills |
+| `AccentPrimary` | `#42B8F5` | Primary actions, focus, selected indicators, and progress |
+| `AccentHover` | `#62C7FA` | Hovered primary actions |
+| `AccentPressed` | `#2398D4` | Pressed primary actions |
+| `AccentSubtle` | `#1E3E52` | Low-emphasis accent backgrounds and selection fills |
 
-As of 1.6.2, the accent returns to the original WXPlayer soft green, shared by navigation and media controls. Use it sparingly. Large areas should remain neutral.
+The accent is a refined cool cyan-blue that reads clearly on dark surfaces while retaining a native Windows character. Use it sparingly. Large areas should remain neutral.
 
 ### Status Colors
 
@@ -127,7 +127,7 @@ As of 1.6.2, the accent returns to the original WXPlayer soft green, shared by n
 | `PlayerOverlay` | `#B30A0E14` | Dark translucent player overlay, approximately 70% opacity |
 | `PlayerControlBackground` | `#CC151C26` | Floating player-control surfaces, approximately 80% opacity |
 | `PlayerProgressTrack` | `#5969798A` | Unplayed progress track |
-| `PlayerProgressFill` | `#C1EC8B` | Played progress and active seek state |
+| `PlayerProgressFill` | `#42B8F5` | Played progress and active seek state |
 
 Avoid excessive gradients. Gradients are appropriate for selective hero and artwork readability overlays, usually from transparent to `BackgroundBase`. Do not use gradients as decoration on standard controls, cards, settings, or lists.
 
@@ -618,17 +618,17 @@ These tokens are the consolidated implementation reference. They should later be
 | `Surface` | `#151C26` |
 | `SurfaceElevated` | `#1B2430` |
 | `SurfaceHover` | `#202B38` |
-| `SurfaceSelected` | `#203026` |
+| `SurfaceSelected` | `#183247` |
 | `BorderSubtle` | `#263241` |
 | `BorderStrong` | `#3A4A5E` |
 | `TextPrimary` | `#F4F7FA` |
 | `TextSecondary` | `#B7C2CF` |
 | `TextMuted` | `#7F8C9B` |
 | `TextDisabled` | `#566271` |
-| `AccentPrimary` | `#C1EC8B` |
-| `AccentHover` | `#D1F4A8` |
-| `AccentPressed` | `#A5D36F` |
-| `AccentSubtle` | `#2D3D26` |
+| `AccentPrimary` | `#42B8F5` |
+| `AccentHover` | `#62C7FA` |
+| `AccentPressed` | `#2398D4` |
+| `AccentSubtle` | `#1E3E52` |
 | `Success` | `#55C88A` |
 | `Warning` | `#E8B45C` |
 | `Error` | `#F06A74` |
@@ -636,7 +636,7 @@ These tokens are the consolidated implementation reference. They should later be
 | `PlayerOverlay` | `#B30A0E14` |
 | `PlayerControlBackground` | `#CC151C26` |
 | `PlayerProgressTrack` | `#5969798A` |
-| `PlayerProgressFill` | `#C1EC8B` |
+| `PlayerProgressFill` | `#42B8F5` |
 
 ### Typography
 
