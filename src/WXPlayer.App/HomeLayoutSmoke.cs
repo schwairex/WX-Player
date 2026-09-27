@@ -73,6 +73,7 @@ internal static class HomeLayoutSmoke
             CheckGeometry(home, results, "Wide"); Save(window, "WX-Player-1.5.3-wide.png");
             window.Width = 1440; window.Height = 960;
             await RecentAndDiscoveryChecks(window,results,movies[0],shows[0]);
+            await CatalogFixtureChecks(window, results, movies, shows);
             home.Loading(); window.UpdateLayout(); double loadingHeight = Feature(home).ActualHeight; Save(window, "WX-Player-1.5.3-loading.png");
             home.Error(() => retried = true); window.UpdateLayout();
             Descendants<Button>(Feature(home)).Single().RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
@@ -84,6 +85,66 @@ internal static class HomeLayoutSmoke
             Check("home152StableStateHeight", Feature(home).ActualHeight == loadingHeight, results);
         }
         finally { window.HomeHost.Content = original; window.Width = width; window.Height = height; }
+    }
+    private static async Task CatalogFixtureChecks(MainWindow window, Dictionary<string, object> results,
+        ContentItem[] movies, ContentItem[] shows)
+    {
+        var original = window.CatalogHost.Content;
+        var homeVisibility = window.HomeHost.Visibility;
+        var catalogVisibility = window.CatalogHost.Visibility;
+        string originalTitle = window.PageTitle.Text;
+        var catalog = new CatalogView(_ => { }, _ => { }, () => { });
+        var filmItems = Enumerable.Range(0, 20).Select(i => movies[i % movies.Length] with
+        {
+            Id = "catalog-film-" + i,
+            Name = movies[i % movies.Length].Name + " (2024)"
+        }).ToArray();
+        var showItems = Enumerable.Range(0, 18).Select(i => shows[i % shows.Length] with
+        {
+            Id = "catalog-series-" + i,
+            Name = shows[i % shows.Length].Name + " (2025)"
+        }).ToArray();
+        try
+        {
+            window.HomeHost.Visibility = Visibility.Collapsed;
+            window.CatalogHost.Visibility = Visibility.Visible;
+            window.CatalogHost.Content = catalog;
+            WXPlayer.Core.Page Fetch(ContentItem[] items, int offset, int limit) =>
+                new(items.Skip(offset).Take(limit).ToArray(), items.Length);
+            void Render(bool series, ContentItem[] items)
+            {
+                catalog.Render(series, "Örnek kütüphane", "",
+                    [new CatalogShelf(series ? "Tüm diziler" : "Tüm filmler", null, Fetch(items, 0, 12)),
+                     new CatalogShelf(series ? "Dram dizileri" : "Dram filmleri", "Dram", Fetch(items, 0, 8))],
+                    (_, offset, limit, _) => Task.FromResult(Fetch(items, offset, limit)), CancellationToken.None);
+                window.PageTitle.Text = series ? "Diziler" : "Filmler";
+                window.UpdateLayout();
+            }
+            Render(false, filmItems);
+            await Until(() => Descendants<ChannelLogo>(catalog).Count(l => l.HasImage) >= 10);
+            window.UpdateLayout();
+            Check("catalog171PosterTiles", Descendants<Grid>(catalog).Count(g => g.Width == 164 &&
+                g.Children.OfType<ChannelLogo>().Any(l => l.HasImage)) >= 10, results);
+            Check("catalog171MovieYear", Descendants<TextBlock>(catalog).Any(t => t.Text == "2024"), results);
+            Save(window, "WX-Player-1.7.1-movies-fixture.png");
+            var next = Descendants<Button>(catalog).First(b => Equals(b.ToolTip, "Tüm filmler · ileri"));
+            next.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            window.UpdateLayout();
+            Check("catalog171CarouselScroll", Descendants<ScrollViewer>(catalog).Any(s => s.HorizontalOffset > 0), results);
+            Render(true, showItems);
+            await Until(() => Descendants<ChannelLogo>(catalog).Count(l => l.HasImage) >= 10);
+            window.UpdateLayout();
+            Check("catalog171SeriesPosterTiles", Descendants<Grid>(catalog).Count(g => g.Width == 164 &&
+                g.Children.OfType<ChannelLogo>().Any(l => l.HasImage)) >= 10, results);
+            Save(window, "WX-Player-1.7.1-series-fixture.png");
+        }
+        finally
+        {
+            window.CatalogHost.Content = original;
+            window.CatalogHost.Visibility = catalogVisibility;
+            window.HomeHost.Visibility = homeVisibility;
+            window.PageTitle.Text = originalTitle;
+        }
     }
     private static async Task WheelChecks(HomeView home, Dictionary<string, object> results)
     {

@@ -27,10 +27,16 @@ public partial class MainWindow
     }
     private void ApplyPageLayout()
     {
-        bool home=_section=="home"&&!_fullscreen;HomeHost.Visibility=home?Visibility.Visible:Visibility.Collapsed;ContentGrid.Visibility=home?Visibility.Collapsed:Visibility.Visible;
+        bool home=_section=="home"&&!_fullscreen;
+        bool catalog=CatalogVisible;
+        HomeHost.Visibility=home?Visibility.Visible:Visibility.Collapsed;
+        CatalogHost.Visibility=catalog?Visibility.Visible:Visibility.Collapsed;
+        ContentGrid.Visibility=home||catalog?Visibility.Collapsed:Visibility.Visible;
+        CatalogBackButton.Visibility=CatalogSection&&_catalogPlaying&&!_fullscreen?Visibility.Visible:Visibility.Collapsed;
         if(home&&!_homeVisible)_homeShuffleSeed=Random.Shared.Next();
         _homeVisible=home;
         _home?.NowPlaying(_current?.Name);
+        _catalog?.NowPlaying(_current?.Name);
     }
     private async Task RefreshHomeAsync()
     {
@@ -58,11 +64,13 @@ public partial class MainWindow
     }
     private async Task BrowseSectionAsync(string section)
     {
-        _section=section;_offset=0;_suppress=true;CategoryPicker.SelectedIndex=0;_suppress=false;SetNav();ApplyLayout();await RefreshViewAsync();
+        _section=section;_catalogPlaying=false;_offset=0;_suppress=true;CategoryPicker.SelectedIndex=0;_suppress=false;SetNav();ApplyLayout();await RefreshViewAsync();
     }
     private async Task OpenHomeItemAsync(ContentItem item)
     {
-        await BrowseSectionAsync(item.Kind switch{ContentKind.Movie=>"movie",ContentKind.Series or ContentKind.Episode=>"series",_=>"live"});await PlayItemAsync(item);
+        await BrowseSectionAsync(item.Kind switch{ContentKind.Movie=>"movie",ContentKind.Series or ContentKind.Episode=>"series",_=>"live"});
+        if(CatalogSection){_catalogPlaying=true;ApplyPageLayout();}
+        await PlayItemAsync(item);
     }
     private void SidebarToggle_Click(object sender,RoutedEventArgs e)
     { _settings.SidebarExpanded=!SidebarExpanded;App.SaveSettings(_settings);if(!_fullscreen)ApplyLayout(); }

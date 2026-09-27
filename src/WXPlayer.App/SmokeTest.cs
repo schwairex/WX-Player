@@ -62,8 +62,16 @@ internal static class SmokeTest
             double width=window.Width;window.Width=940;window.UpdateLayout();SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-compact.png"));results["responsive"]=window.ActualWidth<=950;
             window.SmokeSidebar();window.UpdateLayout();results["sidebarSmallDrawer"]=window.NavColumn.Width.Value==76&&window.Sidebar.ActualWidth==232&&window.BrandToggle.IsVisible;SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-home-small.png"));window.SmokeSidebar();window.Width=width;
             foreach(string key in new[]{"homeUsesSelectedSource","homeSearchVisible","homeEmptySearch","sidebarCollapses","sidebarExpands","sidebarSmallDrawer"})if(!Equals(results[key],true))throw new Exception("1.5 home regression: "+key);
-            await window.SmokeBrowseAsync("live");
             await window.SmokeBrowseAsync("movie");
+            window.UpdateLayout();results["movieCatalogVisible"]=window.CatalogHost.IsVisible&&!window.ContentGrid.IsVisible&&window.SmokeCatalog.Shelves.First().Page.Items.All(i=>i.Kind==ContentKind.Movie)&&window.SmokeCatalog.Shelves.First().Page.Total>=2;
+            SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-movies.png"));
+            window.SmokeCatalog.Search.Text="Sintel";await WaitUntil(()=>window.SmokeCatalog.Shelves.FirstOrDefault()?.Page.Total==1,TimeSpan.FromSeconds(5));
+            results["catalogSearchVisible"]=window.SmokeCatalog.Search.GetRectFromCharacterIndex(0).Height>=14&&window.SmokeCatalog.IsVisible;
+            window.SmokeCatalog.Search.Clear();await WaitUntil(()=>window.SmokeCatalog.Shelves.FirstOrDefault()?.Page.Total>=2,TimeSpan.FromSeconds(5));
+            await window.SmokeBrowseAsync("series");window.UpdateLayout();results["seriesCatalogVisible"]=window.CatalogHost.IsVisible&&!window.ContentGrid.IsVisible&&window.SmokeCatalog.Shelves.First().Page.Total==0;
+            SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-series.png"));
+            foreach(string key in new[]{"movieCatalogVisible","catalogSearchVisible","seriesCatalogVisible"})if(!Equals(results[key],true))throw new Exception("1.7.1 catalog regression: "+key);
+            await window.SmokeBrowseAsync("all");
             window.SearchBox.Text="Sintel";await WaitUntil(()=>window.ChannelList.Items.Count==1,TimeSpan.FromSeconds(4));window.UpdateLayout();
             var caret=window.SearchBox.GetRectFromCharacterIndex(0);results["searchTextVisible"]=caret.Height>=14&&window.SearchBox.ActualHeight>=24&&window.SearchHint.Visibility==Visibility.Collapsed;
             results["searchFiltersChannels"]=window.ChannelList.Items.Cast<ContentItem>().Single().Name.Contains("Sintel");
@@ -77,7 +85,7 @@ internal static class SmokeTest
             var sourceWindow=new SourceWindow(window);sourceWindow.Show();await Task.Delay(150);SaveWindow(sourceWindow,Path.Combine(App.DataDirectory,"WX-Player-source.png"));sourceWindow.Close();
             var settingsWindow=window.CreateSettingsWindow();settingsWindow.Show();await Task.Delay(150);
             SaveWindow(settingsWindow,Path.Combine(App.DataDirectory,"WX-Player-settings.png"));settingsWindow.SelectTab(1);settingsWindow.UpdateLayout();await Task.Delay(100);SaveWindow(settingsWindow,Path.Combine(App.DataDirectory,"WX-Player-library-settings.png"));settingsWindow.SelectTab(2);settingsWindow.UpdateLayout();SaveWindow(settingsWindow,Path.Combine(App.DataDirectory,"WX-Player-update-settings.png"));settingsWindow.SmokeShowShortcuts();await Task.Delay(150);SaveWindow(settingsWindow,Path.Combine(App.DataDirectory,"WX-Player-shortcuts.png"));settingsWindow.Close();results["settingsPages"]=true;
-            var updateWindow=new UpdateWindow(window,new PreparedUpdate(new Version(1,7,0),"test-only",new string('0',64)),()=>Task.CompletedTask);updateWindow.Show();await Task.Delay(100);SaveWindow(updateWindow,Path.Combine(App.DataDirectory,"WX-Player-update-prompt.png"));updateWindow.Close();results["updatePrompt"]=true;
+            var updateWindow=new UpdateWindow(window,new PreparedUpdate(new Version(1,7,1),"test-only",new string('0',64)),()=>Task.CompletedTask);updateWindow.Show();await Task.Delay(100);SaveWindow(updateWindow,Path.Combine(App.DataDirectory,"WX-Player-update-prompt.png"));updateWindow.Close();results["updatePrompt"]=true;
             int mediaArg=Array.IndexOf(App.Arguments,"--media");
             if(mediaArg>=0&&mediaArg+1<App.Arguments.Length)
             {
@@ -140,13 +148,14 @@ internal static class SmokeTest
                 async IAsyncEnumerable<ContentItem> Channels(){yield return news;yield return culture;await Task.Yield();}
                 await store.ImportAsync(epgSource,Channels(),null,default);window.SmokeNavigate("live");await window.SmokeRefreshAsync(epgSource.Id);
                 await window.SmokePlayAsync(news);results["epgAutomaticallyLoaded"]=window.EpgList.Items.Cast<Programme>().Single().Title.StartsWith("Güne Bakış");
+                results["epgNowSummary"]=window.GuideNowTitle.Text.StartsWith("Güne Bakış")&&window.GuideNowProgress.Value>0;
                 var first=window.SmokePlayAsync(news);await Task.Delay(10);var second=window.SmokePlayAsync(culture);await Task.WhenAll(first,second);
-                results["epgFollowsLatestChannel"]=window.EpgList.Items.Cast<Programme>().All(p=>p.ChannelId=="wx.culture")&&window.EpgList.Items.Count==2&&window.GuideTitle.Text.Contains("WX Kültür");
-                if(!Equals(results["epgAutomaticallyLoaded"],true)||!Equals(results["epgFollowsLatestChannel"],true))throw new Exception("EPG UI integration failed.");
+                results["epgFollowsLatestChannel"]=window.EpgList.Items.Cast<Programme>().All(p=>p.ChannelId=="wx.culture")&&window.EpgList.Items.Count==2&&window.GuideTitle.Text.Contains("WX Kültür")&&window.GuideNowTitle.Text.Contains("Kültür Atlası");
+                if(!Equals(results["epgAutomaticallyLoaded"],true)||!Equals(results["epgFollowsLatestChannel"],true)||!Equals(results["epgNowSummary"],true))throw new Exception("EPG UI integration failed.");
                 await WaitUntil(()=>engine.Player.IsPlaying,TimeSpan.FromSeconds(15));await Task.Delay(900);
                 window.SmokeDiscordEnabled(true);
                 await WaitUntil(()=>window.SmokeDiscordActivity?.Details=="Kültür Atlası · Test programı",TimeSpan.FromSeconds(35));
-                results["discordLiveEpgLatestChannel"]=window.SmokeDiscordActivity is {Start:>0,End:>0}&&window.SmokeDiscordActivity.State.Contains("WX Kültür");
+                results["discordLiveEpgLatestChannel"]=window.SmokeDiscordActivity is {Start:null,End:null}&&window.SmokeDiscordActivity.State.Contains("WX Kültür");
                 if(!Equals(results["discordLiveEpgLatestChannel"],true))throw new Exception("Discord live EPG integration failed.");
                                 await window.SmokePlayAsync(news);window.SmokeFullscreen();await Task.Delay(200);window.CategoryPicker.SelectedItem="Kültür";
                 await WaitUntil(()=>window.FullscreenChannels?.Items.Count==1,TimeSpan.FromSeconds(5));window.FullscreenChannels!.SelectedIndex=0;
@@ -157,6 +166,9 @@ internal static class SmokeTest
                 await WaitUntil(()=>Descendants<ChannelLogo>(window.ChannelList).Any(l=>l.HasImage),TimeSpan.FromSeconds(6));
                 results["channelLogosLoaded"]=Descendants<ChannelLogo>(window.ChannelList).Any(l=>l.HasImage);results["logoDownloadDeduplicated"]=logos.Connections==1;
                 window.VolumeSlider.Focus();results["volumeFocusHasNoGreenFill"]=window.VolumeSlider.Background is SolidColorBrush brush&&brush.Color.A==0;
+                results["epgGuideHeight"]=Math.Round(window.GuidePanel.ActualHeight);
+                results["epgNowPanelVisible"]=window.GuideNowPanel.IsVisible;
+                if(!Equals(results["epgNowPanelVisible"],true))throw new Exception("Current EPG programme panel is hidden after fullscreen.");
                 SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-epg.png"));
                 var statistics=new StatisticsWindow(window,()=> ("Sintel · Yerel test videosu",target),engine,settings);statistics.Show();await Task.Delay(1200);SaveWindow(statistics,Path.Combine(App.DataDirectory,"WX-Player-statistics.png"));statistics.Close();
                 using(var statsMedia=engine.Player.Media){var tracks=statsMedia!.Tracks;results["statisticsVideoTrack"]=tracks.Any(t=>t.TrackType==LibVLCSharp.Shared.TrackType.Video&&t.Data.Video.Width==854);results["statisticsAudioTrack"]=tracks.Any(t=>t.TrackType==LibVLCSharp.Shared.TrackType.Audio&&t.Data.Audio.Rate>0);}
@@ -195,7 +207,7 @@ internal static class SmokeTest
                 await WaitUntil(()=>window.SmokeDiscordActivity?.End is{} end&&Math.Abs(end-DateTimeOffset.UtcNow.ToUnixTimeSeconds()-(engine.Player.Length-engine.Player.Time)/1000d)<3,TimeSpan.FromSeconds(5));
                 results["discordResumeSeekCountdown"]=true;
                 var homeHandle=window.Video.Handle;await window.SmokeBrowseAsync("home");await Task.Delay(200);results["homeNavigationKeepsPlayback"]=engine.Player.IsPlaying&&engine.Player.Hwnd==homeHandle&&window.HomeHost.IsVisible;
-                await window.SmokeBrowseAsync("movie");results["homeReturnKeepsPlayer"]=engine.Player.IsPlaying&&window.Video.Handle==homeHandle&&window.Video.IsVisible;
+                await window.SmokeBrowseAsync("movie");results["homeReturnKeepsPlayer"]=engine.Player.IsPlaying&&window.Video.Handle==homeHandle&&window.CatalogHost.IsVisible;
                 foreach(string key in new[]{"homeShelvesBoundedAndIsolated","homeFavoritesAndHistory","homeProviderPostersLoaded","homeCardStartsPlayback","homeNavigationKeepsPlayback","homeReturnKeepsPlayer"})if(!Equals(results[key],true))throw new Exception("Home integration: "+key);
                 await Task.Delay(500);engine.Player.Time=12000;await Task.Delay(800);await window.SmokeSaveProgressAsync();
                 var checkpoint=await store.ProgressAsync(homeItem.Id);results["moviePositionStored"]=checkpoint is{PositionMs:>=11500,Completed:false};

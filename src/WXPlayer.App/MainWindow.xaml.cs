@@ -40,6 +40,7 @@ public partial class MainWindow : Window
     private string _section="home";
     private int _offset,_total,_playVersion,_epgVersion,_viewVersion;
     private DateTimeOffset _guideDay=new(DateTime.Today);
+    private Programme? _guideNow;
     private int _tick;
     private SourceConfig? SelectedSource=>SourcePicker.SelectedItem as SourceConfig;
     private ContentKind? FilterKind=>_section switch{"live" or "epg"=>ContentKind.Live,"movie"=>ContentKind.Movie,"series"=>ContentKind.Series,_=>null};
@@ -47,12 +48,12 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         ArtworkService.Enabled=_settings.DiscoverArtwork&&!App.Arguments.Contains("--smoke");
-        InitializeComponent();InitializeHome();InitializeSeries();VersionLabel.Text="WX PLAYER  /  "+UpdateController.Current.ToString(3);
+        InitializeComponent();InitializeHome();InitializeCatalog();InitializeSeries();VersionLabel.Text="WX PLAYER  /  "+UpdateController.Current.ToString(3);
         Loaded+=async(_,_)=>await InitializeAsync();
         SourceInitialized+=(_,_)=>{try{int dark=1;DwmSetWindowAttribute(new WindowInteropHelper(this).Handle,20,ref dark,sizeof(int));}catch{/* Older Windows falls back to the system title bar. */}};
         SeekSlider.InteractionCommitted+=async(_,_)=>{if(!_ready)return;if(_engine.HasLiveBuffer)await SafeAsync(()=>_engine.RewindLiveAsync((1-SeekSlider.Value)*_engine.BufferedSeconds,_life.Token));else if(_engine.Player.IsSeekable){_engine.Player.Position=(float)SeekSlider.Value;_discordForceTiming=true;}};
         SeekSlider.ValueChanged+=(_,_)=>{if(SeekSlider.IsInteracting&&_engine is not null)PlaybackBadge.Text=_engine.HasLiveBuffer?$"−{(1-SeekSlider.Value)*_engine.BufferedSeconds:0} sn · Bırakarak git":TimeSpan.FromMilliseconds(Math.Max(0,_engine.Player.Length*SeekSlider.Value)).ToString(@"hh\:mm\:ss")+" · Bırakarak git";};
-        _search.Tick+=async(_,_)=>{_search.Stop();_offset=0;await SafeAsync(async()=>{await QueryAsync();await RefreshHomeAsync();});};
+        _search.Tick+=async(_,_)=>{_search.Stop();_offset=0;await SafeAsync(async()=>{await QueryAsync();await RefreshHomeAsync();await RefreshCatalogAsync();});};
         _clock.Tick+=(_,_)=>Tick();
         Video.PointerMoved+=RevealFullscreenControls;
         Video.WheelMoved+=delta=>VolumeSlider.Value=Math.Clamp(VolumeSlider.Value+(delta>0?5:-5),0,100);
@@ -61,6 +62,7 @@ public partial class MainWindow : Window
         Video.KeyPressed+=key=>HandleShortcut(key);
         Video.SizeChanged+=(_,_)=>UpdateVideoSizing();
         VideoBorder.SizeChanged+=(_,_)=>{bool small=VideoBorder.ActualHeight<285;WelcomeFull.Visibility=small?Visibility.Collapsed:Visibility.Visible;WelcomeCompact.Visibility=small?Visibility.Visible:Visibility.Collapsed;};
+        GuidePanel.SizeChanged+=(_,_)=>UpdateGuideNowVisibility();
         _hideControls.Tick+=(_,_)=>{if(_floatingControls?.IsMouseOver==true||Mouse.Captured is not null||_fullscreenCategory?.IsDropDownOpen==true||Keyboard.FocusedElement is ComboBox{IsDropDownOpen:true})return;_hideControls.Stop();_floatingControls?.Hide();};
         Activated+=(_,_)=>{if(_fullscreen)Topmost=true;};
         Deactivated+=(_,_)=>{if(_fullscreen&&_floatingControls?.IsActive!=true&&_nextEpisodeWindow?.IsActive!=true){Topmost=false;_floatingControls?.Hide();_nextEpisodeWindow?.Hide();}};
@@ -108,7 +110,7 @@ public partial class MainWindow : Window
         if(version!=_viewVersion)return;
         var stats=await statsTask;LiveCount.Text=stats.Live.ToString("N0");MovieCount.Text=stats.Movies.ToString("N0");SeriesCount.Text=stats.Series.ToString("N0");FavoriteCount.Text=stats.Favorites.ToString("N0");
         string? old=CategoryPicker.SelectedItem as string;var cats=await categoriesTask;_suppress=true;CategoryPicker.ItemsSource=cats;CategoryPicker.SelectedItem=cats.Contains(old??"")?old:cats[0];_suppress=false;await QueryAsync();
-        await RefreshHomeAsync();if(SelectedSource?.UpdatedAt is{} time)Status($"●  Yerel kütüphane hazır · Son güncelleme: {time.LocalDateTime:dd MMM HH:mm}");
+        await RefreshHomeAsync();await RefreshCatalogAsync();if(SelectedSource?.UpdatedAt is{} time)Status($"●  Yerel kütüphane hazır · Son güncelleme: {time.LocalDateTime:dd MMM HH:mm}");
     }
     private async Task QueryAsync()
     {
@@ -150,7 +152,7 @@ public partial class MainWindow : Window
     private void Search_Changed(object sender,TextChangedEventArgs e){if(SearchHint is not null)SearchHint.Visibility=SearchBox.Text.Length==0?Visibility.Visible:Visibility.Collapsed;if(ClearSearch is not null)ClearSearch.Visibility=SearchBox.Text.Length>0?Visibility.Visible:Visibility.Collapsed;if(!_ready)return;_search.Stop();_search.Start();}
     private async void Navigate_Click(object sender,RoutedEventArgs e)
     {
-        _section=(string)((Button)sender).Tag;_offset=0;_suppress=true;CategoryPicker.SelectedIndex=0;_suppress=false;SetNav();await SafeAsync(RefreshViewAsync);
+        _section=(string)((Button)sender).Tag;_catalogPlaying=false;_offset=0;_suppress=true;CategoryPicker.SelectedIndex=0;_suppress=false;SetNav();await SafeAsync(RefreshViewAsync);
     }
     private void SetNav()
     {
@@ -200,7 +202,7 @@ public partial class MainWindow : Window
     {
         _epg?.Cancel();_epg?.Dispose();var cts=_epg=CancellationTokenSource.CreateLinkedTokenSource(_life.Token);int version=++_epgVersion;
         var day=_guideDay;GuideDate.Text=day.LocalDateTime.Date==DateTime.Today?"BUGÜN":day.LocalDateTime.ToString("dd MMM");
-        var item=_current;EpgList.ItemsSource=null;EpgEmptyPanel.Visibility=Visibility.Visible;ApplySeriesVisibility();
+        var item=_current;EpgList.ItemsSource=null;EpgEmptyPanel.Visibility=Visibility.Visible;_guideNow=null;UpdateGuideNowVisibility();ApplySeriesVisibility();
         if(item?.Kind==ContentKind.Episode){await LoadSeriesPanelAsync(item,cts.Token);return;}
         GuideTitle.Text=item?.Kind==ContentKind.Live?item.Name:"Bir canlı kanal seçin";
         if(item is null||item.Kind!=ContentKind.Live){EpgEmpty.Text="Program rehberi canlı kanallarda görüntülenir.";return;}
@@ -209,6 +211,7 @@ public partial class MainWindow : Window
         void Display(List<Programme> programmes)
         {
             EpgList.ItemsSource=programmes;EpgEmptyPanel.Visibility=programmes.Count>0?Visibility.Collapsed:Visibility.Visible;
+            ShowGuideNow(programmes);
             if(programmes.FirstOrDefault(p=>p.IsNow) is{} now)EpgList.ScrollIntoView(now);
         }
         try
@@ -232,6 +235,23 @@ public partial class MainWindow : Window
         }
         catch(OperationCanceledException){}
         catch{if(!Stale())EpgEmpty.Text="Rehber alınamadı. Kaynak ayarlarından XMLTV adresini kontrol edin.";}
+    }
+    private void ShowGuideNow(IReadOnlyList<Programme> programmes)
+    {
+        _guideNow=programmes.FirstOrDefault(p=>p.IsNow);
+        if(_guideNow is{} current)
+        {
+            GuideNowTitle.Text=current.Title;
+            GuideNowTitle.ToolTip=current.Description;
+            GuideNowTime.Text=current.TimeLabel;
+            GuideNowProgress.Value=current.Progress;
+        }
+        UpdateGuideNowVisibility();
+    }
+    private void UpdateGuideNowVisibility()
+    {
+        if(GuideNowPanel is not null)
+            GuideNowPanel.Visibility=_guideNow is not null&&GuidePanel.ActualHeight>=275?Visibility.Visible:Visibility.Collapsed;
     }
     private async void RefreshEpg_Click(object sender,RoutedEventArgs e)
     {
@@ -349,7 +369,7 @@ public partial class MainWindow : Window
             VideoBorder.CornerRadius=new CornerRadius(14,14,0,0);VideoBorder.BorderThickness=new Thickness(1);Grid.SetRowSpan(VideoBorder,1);
             _fullscreenPlacement.Exit(this);Sidebar.Visibility=TopBar.Visibility=StatsBar.Visibility=FilterBar.Visibility=LibraryPanel.Visibility=GuidePanel.Visibility=GuideSplitter.Visibility=BottomBar.Visibility=Visibility.Visible;SetNav();ApplyLayout();if(_section=="home")_ = SafeAsync(RefreshHomeAsync);
         }
-        ApplySeriesVisibility();UpdateLayout();UpdateVideoSizing();UpdateNextEpisode();
+        ApplySeriesVisibility();UpdateLayout();UpdateGuideNowVisibility();UpdateVideoSizing();UpdateNextEpisode();
     }
     private void RestartControlsTimer(){_hideControls.Stop();_hideControls.Start();}
     private void RevealFullscreenControls()
@@ -374,7 +394,7 @@ public partial class MainWindow : Window
     }
     private void Window_KeyDown(object sender,KeyEventArgs e)
     {
-        if(!_ready)return;if(e.Key==Key.B&&Keyboard.Modifiers.HasFlag(ModifierKeys.Control)){SidebarToggle_Click(this,new RoutedEventArgs());e.Handled=true;return;}if(_fullscreen)RestartControlsTimer();if(e.Key==Key.K&&Keyboard.Modifiers.HasFlag(ModifierKeys.Control)){if(_fullscreen)ToggleFullscreen();if(_section=="home"){_home.Search.Focus();_home.Search.SelectAll();}else{SearchBox.Focus();SearchBox.SelectAll();}e.Handled=true;return;}
+        if(!_ready)return;if(e.Key==Key.B&&Keyboard.Modifiers.HasFlag(ModifierKeys.Control)){SidebarToggle_Click(this,new RoutedEventArgs());e.Handled=true;return;}if(_fullscreen)RestartControlsTimer();if(e.Key==Key.K&&Keyboard.Modifiers.HasFlag(ModifierKeys.Control)){if(_fullscreen)ToggleFullscreen();if(_section=="home"){_home.Search.Focus();_home.Search.SelectAll();}else if(CatalogVisible){_catalog.Search.Focus();_catalog.Search.SelectAll();}else{SearchBox.Focus();SearchBox.SelectAll();}e.Handled=true;return;}
         if(Keyboard.FocusedElement is TextBoxBase or PasswordBox or ComboBox)return;
         if(Keyboard.FocusedElement is Button&&e.Key is Key.Space or Key.Enter)return;
         if(Keyboard.FocusedElement is Slider && e.Key is Key.Left or Key.Right or Key.Up or Key.Down or Key.Home or Key.End or Key.PageUp or Key.PageDown)return;
@@ -406,7 +426,8 @@ public partial class MainWindow : Window
         if(!SeekSlider.IsInteracting&&player.Position>=0)SeekSlider.Value=_engine.HasLiveBuffer?Math.Clamp(1-_engine.BehindLive/Math.Max(1,_engine.BufferedSeconds),0,1):player.Position;
         if(player.IsPlaying&&!SeekSlider.IsInteracting)PlaybackBadge.Text=_engine.HasLiveBuffer?(_engine.IsReplay?$"−{_engine.BehindLive:0} sn":$"{_engine.BufferedSeconds:0} sn hazır"):player.IsSeekable?TimeSpan.FromMilliseconds(Math.Max(0,player.Time)).ToString(@"hh\:mm\:ss")+" / "+TimeSpan.FromMilliseconds(Math.Max(0,player.Length)).ToString(@"hh\:mm\:ss"):"● CANLI";
         UpdateNextEpisode();PlaceNextEpisode();UpdateDiscordPlayback();
-        if(++_tick%5==0)_ = SafeAsync(()=>SavePlaybackProgressAsync());if(_tick%30==0)EpgList.Items.Refresh();if(_tick%300==0&&_current?.Kind==ContentKind.Live)_ = LoadGuideAsync();if(_tick%15==0)App.SaveSettings(_settings);
+        if(_guideNow is not null)GuideNowProgress.Value=_guideNow.Progress;
+        if(++_tick%5==0)_ = SafeAsync(()=>SavePlaybackProgressAsync());if(_tick%30==0){EpgList.Items.Refresh();if(_current?.Kind==ContentKind.Live&&EpgList.ItemsSource is List<Programme> programmes)ShowGuideNow(programmes);}if(_tick%300==0&&_current?.Kind==ContentKind.Live)_ = LoadGuideAsync();if(_tick%15==0)App.SaveSettings(_settings);
     }
     private async void GoLive_Click(object sender,RoutedEventArgs e)=>await SafeAsync(_engine.GoLiveAsync);
     private void ClearSearch_Click(object sender,RoutedEventArgs e){SearchBox.Clear();SearchBox.Focus();}
@@ -419,7 +440,7 @@ public partial class MainWindow : Window
         if(_fullscreen||GuideRow is null)return;
         double available=ViewingPanel.ActualHeight>0?ViewingPanel.ActualHeight:ActualHeight-160;
         double maximum=Math.Max(190,available-ControlsBorder.ActualHeight-130);
-        GuideRow.Height=new GridLength(Math.Clamp(_guideHeight??(_section=="epg"?available*.58:ActualHeight*.32),190,maximum));
+        GuideRow.Height=new GridLength(Math.Clamp(_guideHeight??(_section=="epg"?available*.58:ActualHeight*.39),190,maximum));
     }
     private void GuideResize_DragDelta(object sender,DragDeltaEventArgs e){_guideHeight=Math.Max(190,GuideRow.ActualHeight-e.VerticalChange);ApplyGuideLayout();UpdateVideoSizing();}
     private void ExpandGuide_Click(object sender,RoutedEventArgs e){_guideHeight=_guideHeight.HasValue?null:Math.Max(220,ViewingPanel.ActualHeight*.65);ApplyGuideLayout();}
@@ -428,7 +449,7 @@ public partial class MainWindow : Window
     {
         if(_closed)return;e.Cancel=true;if(_closing)return;
         if(_engine?.Recording==true&&MessageBox.Show(this,"Devam eden kayıt sonlandırılıp uygulama kapatılsın mı?","Kayıt devam ediyor",MessageBoxButton.YesNo,MessageBoxImage.Question)!=MessageBoxResult.Yes)return;
-        if(_fullscreen)ToggleFullscreen();_closing=true;_life.Cancel();_load?.Cancel();_play?.Cancel();_epg?.Cancel();_query?.Cancel();_homeLoad?.Cancel();_clock.Stop();_search.Stop();_hideControls.Stop();
+        if(_fullscreen)ToggleFullscreen();_closing=true;_life.Cancel();_load?.Cancel();_play?.Cancel();_epg?.Cancel();_query?.Cancel();_homeLoad?.Cancel();_catalogLoad?.Cancel();_clock.Stop();_search.Stop();_hideControls.Stop();
         try{await DisposeDiscordAsync();await SavePlaybackProgressAsync();App.SaveSettings(_settings);_statistics?.Close();_updateWindow?.Close();if(_epgService is not null)await _epgService.StopAsync();if(_engine is not null){Video.MediaPlayer=null;await _engine.DisposeAsync();}ArtworkService.Discovery.Dispose();_providers.Dispose();_updates?.Dispose();}finally{_closed=true;Close();}
     }
     internal Task SmokePlayAsync(ContentItem item)=>PlayItemAsync(item);

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Window x:Class="WXPlayer.App.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="WX Player" Width="1440" Height="920" MinWidth="900" MinHeight="650" Style="{StaticResource AppWindow}" UseLayoutRounding="True" WindowStartupLocation="CenterScreen" PreviewKeyDown="Window_KeyDown" SizeChanged="Window_SizeChanged" Closing="Window_Closing" xmlns:ui="clr-namespace:WXPlayer.App" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType">
+<Window x:Class="WXPlayer.App.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="WX Player" Icon="Assets/wx-logo.png" Width="1440" Height="920" MinWidth="900" MinHeight="650" Style="{StaticResource AppWindow}" UseLayoutRounding="True" WindowStartupLocation="CenterScreen" PreviewKeyDown="Window_KeyDown" SizeChanged="Window_SizeChanged" Closing="Window_Closing" xmlns:ui="clr-namespace:WXPlayer.App" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType">
   <Window.Resources>
     <!-- Explicit shell styles do not affect media pages, dialogs or player controls. -->
     <Style x:Key="ShellButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
@@ -45,7 +45,7 @@
         <StackPanel DockPanel.Dock="Top">
           <StackPanel Orientation="Horizontal" Margin="5,0,0,24">
             <Button x:Name="BrandToggle" Click="SidebarToggle_Click" Style="{StaticResource ShellButton}" Width="42" Height="42" Padding="0" ToolTip="Menüyü daralt / genişlet">
-              <Grid><TextBlock x:Name="BrandMark" Text="W" FontWeight="Black" Foreground="{StaticResource AccentPrimaryBrush}" FontSize="25" HorizontalAlignment="Center" VerticalAlignment="Center" /><ui:SvgIcon x:Name="DrawerClose" Icon="chevron-left" Width="20" Height="20" Foreground="{StaticResource TextSecondaryBrush}" Visibility="Collapsed"/></Grid>
+              <Grid><Image x:Name="BrandMark" Source="Assets/wx-logo.png" Width="32" Height="32" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" /><ui:SvgIcon x:Name="DrawerClose" Icon="chevron-left" Width="20" Height="20" Foreground="{StaticResource TextSecondaryBrush}" Visibility="Collapsed"/></Grid>
             </Button>
             <StackPanel x:Name="BrandWordmark" Margin="11,0,0,0" VerticalAlignment="Center">
               <TextBlock Text="WX Player" FontSize="{StaticResource SectionTitleFontSize}" FontWeight="Bold" />
@@ -114,7 +114,7 @@
           <Button x:Name="SettingsNav" Style="{StaticResource Nav}" Click="Settings_Click">
             <ui:IconLabel Icon="settings" Label="Ayarlar" />
           </Button>
-      <TextBlock x:Name="VersionLabel" Text="WX PLAYER  /  1.7.0" FontSize="9" Foreground="{StaticResource TextMutedBrush}" Margin="12,12,0,0" />
+      <TextBlock x:Name="VersionLabel" Text="WX PLAYER  /  1.7.1" FontSize="9" Foreground="{StaticResource TextMutedBrush}" Margin="12,12,0,0" />
         </StackPanel>
         <Grid />
       </DockPanel>
@@ -268,6 +268,7 @@
           <Border Grid.Row="1" x:Name="ControlsBorder" Background="{StaticResource SurfaceBrush}" CornerRadius="0,0,12,12" Padding="18,14">
             <StackPanel>
               <DockPanel>
+                <Button x:Name="CatalogBackButton" DockPanel.Dock="Left" Click="ReturnCatalog_Click" Content="← Kataloğa dön" Visibility="Collapsed" Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextSecondaryBrush}" Padding="0,4,14,4" Margin="0,0,12,0" ToolTip="Film veya dizi kataloğuna dön" />
                 <Button x:Name="LiveEdgeButton" DockPanel.Dock="Right" Content="● CANLI" Visibility="Collapsed" Click="GoLive_Click" Padding="10,4" Margin="8,0,0,0" FontSize="10" ToolTip="Canlı yayına dön" /><TextBlock x:Name="PlaybackBadge" DockPanel.Dock="Right" Text="HAZIR" Foreground="{StaticResource Accent}" FontSize="11" VerticalAlignment="Center" />
                 <TextBlock x:Name="NowTitle" Text="Bir içerik seçin" FontSize="15" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
               </DockPanel>
@@ -317,21 +318,79 @@
               </Grid>
             </StackPanel>
           </Border>
-          <Border x:Name="GuidePanel" Grid.Row="2" Background="{StaticResource SurfaceBrush}" CornerRadius="{StaticResource RadiusLarge}" Padding="18,16" Margin="0,14,0,0">
-<Grid><Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
-<Grid><Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
-<DockPanel><StackPanel DockPanel.Dock="Right" Orientation="Horizontal"><Button Click="MatchEpg_Click" Padding="8,5" Background="Transparent" BorderThickness="0" ToolTip="EPG kanalını eşleştir"><ui:SvgIcon Icon="epg" Width="17" Height="17" /></Button><Button Click="RefreshEpg_Click" Padding="8,5" Background="Transparent" BorderThickness="0" ToolTip="Rehberi yenile"><ui:SvgIcon Icon="refresh" Width="17" Height="17" /></Button><Button Click="ExpandGuide_Click" Padding="8,5" Background="Transparent" BorderThickness="0" ToolTip="Program rehberini genişlet"><ui:SvgIcon Icon="maximize" Width="17" Height="17" /></Button></StackPanel>
-<StackPanel><TextBlock Text="Yayın akışı" FontSize="17" FontWeight="SemiBold" /><TextBlock x:Name="GuideTitle" Text="Bir canlı kanal seçin" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,10,0" TextTrimming="CharacterEllipsis" /></StackPanel></DockPanel>
-<DockPanel Grid.Row="1" Margin="0,12,0,10"><StackPanel DockPanel.Dock="Right" Orientation="Horizontal"><Button Click="PreviousDay_Click" ToolTip="Önceki gün" Background="Transparent" BorderThickness="0" Padding="7,3"><ui:SvgIcon Icon="chevron-left" Width="16" Height="16" /></Button><TextBlock x:Name="GuideDate" Text="BUGÜN" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10" VerticalAlignment="Center" Margin="6,0" /><Button Click="NextDay_Click" ToolTip="Sonraki gün" Background="Transparent" BorderThickness="0" Padding="7,3"><ui:SvgIcon Icon="chevron-right" Width="16" Height="16" /></Button></StackPanel><TextBlock Text="PROGRAMLAR" Foreground="{StaticResource TextMutedBrush}" FontSize="9" FontWeight="SemiBold" VerticalAlignment="Center" /></DockPanel>
-</Grid>
-<ListBox x:Name="EpgList" Grid.Row="1" MouseDoubleClick="Epg_DoubleClick" AutomationProperties.Name="İzlenen kanalın yayın akışı">
-<ListBox.ItemContainerStyle><Style TargetType="ListBoxItem"><Setter Property="HorizontalContentAlignment" Value="Stretch" /><Setter Property="Margin" Value="0,0,4,8" /><Setter Property="Padding" Value="0" /><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem"><Border x:Name="Row" Background="{StaticResource SurfaceElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="8" Padding="12,10"><ContentPresenter /></Border><ControlTemplate.Triggers><DataTrigger Binding="{Binding IsNow}" Value="True"><Setter TargetName="Row" Property="Background" Value="{StaticResource SurfaceSelectedBrush}" /><Setter TargetName="Row" Property="BorderBrush" Value="{StaticResource AccentSubtleBrush}" /></DataTrigger><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Row" Property="BorderBrush" Value="{StaticResource BorderStrongBrush}" /></Trigger><Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Row" Property="BorderBrush" Value="{StaticResource AccentPrimaryBrush}" /></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter></Style></ListBox.ItemContainerStyle>
-<ListBox.ItemTemplate><DataTemplate><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="94" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-<StackPanel VerticalAlignment="Center"><TextBlock Text="{Binding TimeLabel}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" /><TextBlock Text="{Binding StateLabel}" Foreground="{StaticResource AccentPrimaryBrush}" FontSize="9" Margin="0,5,0,0" /></StackPanel>
-<StackPanel Grid.Column="1" Margin="10,0,0,0"><TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip="{Binding Title}" /><TextBlock Text="{Binding Description}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" MaxHeight="18" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" ToolTip="{Binding Description}" /><ProgressBar Value="{Binding Progress, Mode=OneWay}" Height="3" Margin="0,7,0,0" /></StackPanel>
-</Grid></DataTemplate></ListBox.ItemTemplate></ListBox>
-<Border x:Name="EpgEmptyPanel" Grid.Row="1" Background="{StaticResource SurfaceElevatedBrush}" BorderThickness="0" CornerRadius="12" Padding="18,12"><DockPanel><ui:SvgIcon Icon="epg" Width="28" Height="28" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,14,0" VerticalAlignment="Center" /><StackPanel VerticalAlignment="Center"><TextBlock Text="Program rehberiniz burada" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,6" /><TextBlock x:Name="EpgEmpty" Text="Bir canlı kanal seçin. Yayın akışı otomatik olarak yüklenir." Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" LineHeight="19" TextWrapping="Wrap" /></StackPanel></DockPanel></Border>
-</Grid></Border>
+          <Border x:Name="GuidePanel" Grid.Row="2" Background="{StaticResource SurfaceBrush}" CornerRadius="{StaticResource RadiusLarge}" Padding="20,16" Margin="0,14,0,0">
+            <Grid>
+              <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+              <Grid Grid.Row="0">
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <DockPanel>
+                  <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button Click="MatchEpg_Click" Padding="8,5" Background="Transparent" BorderThickness="0" ToolTip="EPG kanalını eşleştir"><ui:SvgIcon Icon="epg" Width="17" Height="17" /></Button>
+                    <Button Click="RefreshEpg_Click" Padding="8,5" Background="Transparent" BorderThickness="0" ToolTip="Rehberi yenile"><ui:SvgIcon Icon="refresh" Width="17" Height="17" /></Button>
+                    <Button Click="ExpandGuide_Click" Padding="8,5" Background="Transparent" BorderThickness="0" ToolTip="Program rehberini genişlet"><ui:SvgIcon Icon="maximize" Width="17" Height="17" /></Button>
+                  </StackPanel>
+                  <StackPanel>
+                    <TextBlock Text="Yayın akışı" FontSize="17" FontWeight="SemiBold" />
+                    <TextBlock x:Name="GuideTitle" Text="Bir canlı kanal seçin" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,10,0" TextTrimming="CharacterEllipsis" />
+                  </StackPanel>
+                </DockPanel>
+                <DockPanel Grid.Row="1" Margin="0,10,0,4">
+                  <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button Click="PreviousDay_Click" ToolTip="Önceki gün" Background="Transparent" BorderThickness="0" Padding="7,3"><ui:SvgIcon Icon="chevron-left" Width="16" Height="16" /></Button>
+                    <TextBlock x:Name="GuideDate" Text="BUGÜN" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center" Margin="6,0" />
+                    <Button Click="NextDay_Click" ToolTip="Sonraki gün" Background="Transparent" BorderThickness="0" Padding="7,3"><ui:SvgIcon Icon="chevron-right" Width="16" Height="16" /></Button>
+                  </StackPanel>
+                  <TextBlock Text="PROGRAMLAR" Foreground="{StaticResource TextMutedBrush}" FontSize="9" FontWeight="SemiBold" VerticalAlignment="Center" />
+                </DockPanel>
+              </Grid>
+              <Border x:Name="GuideNowPanel" Grid.Row="1" Background="{StaticResource SurfaceSelectedBrush}" CornerRadius="8" Padding="13,10" Margin="0,10,0,10" Visibility="Collapsed">
+                <StackPanel>
+                  <DockPanel>
+                    <TextBlock x:Name="GuideNowTime" DockPanel.Dock="Right" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" VerticalAlignment="Center" />
+                    <TextBlock Text="●  ŞU AN YAYINDA" Foreground="{StaticResource AccentPrimaryBrush}" FontSize="9" FontWeight="SemiBold" />
+                  </DockPanel>
+                  <TextBlock x:Name="GuideNowTitle" FontSize="14" FontWeight="SemiBold" Margin="0,7,0,6" TextTrimming="CharacterEllipsis" />
+                  <ProgressBar x:Name="GuideNowProgress" Minimum="0" Maximum="100" Height="3" />
+                </StackPanel>
+              </Border>
+              <ListBox x:Name="EpgList" Grid.Row="2" MouseDoubleClick="Epg_DoubleClick" AutomationProperties.Name="İzlenen kanalın yayın akışı">
+                <ListBox.ItemContainerStyle>
+                  <Style TargetType="ListBoxItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    <Setter Property="Margin" Value="0,0,4,3"/>
+                    <Setter Property="Padding" Value="0"/>
+                    <Setter Property="Template"><Setter.Value>
+                      <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Row" Background="Transparent" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,0,1" CornerRadius="6" Padding="11,10">
+                          <Grid>
+                            <Border x:Name="ActiveMarker" Width="3" Background="{StaticResource AccentPrimaryBrush}" HorizontalAlignment="Left" Margin="-11,-4,0,-4" CornerRadius="2" Visibility="Collapsed"/>
+                            <ContentPresenter/>
+                          </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                          <DataTrigger Binding="{Binding IsNow}" Value="True"><Setter TargetName="Row" Property="Background" Value="{StaticResource SurfaceSelectedBrush}"/><Setter TargetName="ActiveMarker" Property="Visibility" Value="Visible"/></DataTrigger>
+                          <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Row" Property="Background" Value="{StaticResource SurfaceHoverBrush}"/></Trigger>
+                          <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Row" Property="BorderBrush" Value="{StaticResource AccentPrimaryBrush}"/></Trigger>
+                        </ControlTemplate.Triggers>
+                      </ControlTemplate>
+                    </Setter.Value></Setter>
+                  </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate><DataTemplate>
+                  <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="94"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center"><TextBlock Text="{Binding TimeLabel}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11"/><TextBlock Text="{Binding StateLabel}" Foreground="{StaticResource TextMutedBrush}" FontSize="9" Margin="0,5,0,0"/></StackPanel>
+                    <StackPanel Grid.Column="1" Margin="10,0,0,0"><TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip="{Binding Title}"/><TextBlock Text="{Binding Description}" Foreground="{StaticResource TextMutedBrush}" FontSize="11" MaxHeight="18" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" ToolTip="{Binding Description}"/></StackPanel>
+                  </Grid>
+                </DataTemplate></ListBox.ItemTemplate>
+              </ListBox>
+              <Border x:Name="EpgEmptyPanel" Grid.Row="2" Background="{StaticResource SurfaceElevatedBrush}" CornerRadius="8" Padding="18,12">
+                <DockPanel>
+                  <ui:SvgIcon Icon="epg" Width="26" Height="26" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,14,0" VerticalAlignment="Center"/>
+                  <StackPanel VerticalAlignment="Center"><TextBlock Text="Program rehberiniz burada" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,6"/><TextBlock x:Name="EpgEmpty" Text="Bir canlı kanal seçin. Yayın akışı otomatik olarak yüklenir." Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" LineHeight="19" TextWrapping="Wrap"/></StackPanel>
+                </DockPanel>
+              </Border>
+            </Grid>
+          </Border>
           <Thumb x:Name="GuideSplitter" Grid.Row="2" Height="12" VerticalAlignment="Top" Cursor="SizeNS" DragDelta="GuideResize_DragDelta" ToolTip="Rehber yüksekliğini ayarla">
             <Thumb.Template>
               <ControlTemplate TargetType="Thumb">
@@ -344,6 +403,7 @@
         </Grid>
       </Grid>
       <ContentControl x:Name="HomeHost" Grid.Row="1" Margin="0,24,0,0" Visibility="Collapsed" />
+      <ContentControl x:Name="CatalogHost" Grid.Row="1" Margin="0,24,0,0" Visibility="Collapsed" />
       <Grid x:Name="BottomBar" Grid.Row="2" Margin="0,14,0,0">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*" />
