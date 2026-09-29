@@ -10,6 +10,8 @@ public sealed class PlaybackEngine : IAsyncDisposable
     public float BufferPercent {get;private set;}
     public MediaPlayer Player { get; }
     private MediaPlayer? _recorder;
+    private sealed record ClipRecording(PlaybackTarget Target,PlayerSettings Settings,string Path,int StartSeconds,DateTimeOffset Started);
+    private ClipRecording? _clip;
     private LiveBuffer? _live;
     private PlayerSettings? _liveSettings;
     private PlaybackTarget? _liveTarget;
@@ -23,7 +25,8 @@ public sealed class PlaybackEngine : IAsyncDisposable
     private readonly SemaphoreSlim _gate=new(1,1);
     private int _extraCache;
     private DateTime _lastBuffer;
-    public bool Recording=>_recorder is not null;
+    public bool Recording=>_recorder is not null||_clip is not null;
+    public bool RecordingIsClip=>_clip is not null;
     public string? RecordingPath {get;private set;}
     public event Action<string>? RecordingFailed;
 
@@ -114,25 +117,63 @@ public sealed class PlaybackEngine : IAsyncDisposable
     public async Task PlayCaptureAsync(string video,string audio,PlayerSettings settings)
     {
         await StopAsync();await _gate.WaitAsync();try{await Task.Run(()=>{using var media=new Media(Vlc,"dshow://",FromType.FromLocation);media.AddOption(":dshow-vdev="+AddressPolicy.Header(video));media.AddOption(":dshow-adev="+AddressPolicy.Header(audio));media.AddOption(":live-caching="+settings.NetworkCacheMs);if(!Player.Play(media))throw new InvalidOperationException("DirectShow aygıtı başlatılamadı.");});}finally{_gate.Release();}
-    }    public async Task<string> StartRecordingAsync(PlaybackTarget target,string title,PlayerSettings settings)
+    }
+    public async Task<string> StartRecordingAsync(PlaybackTarget target,string title,PlayerSettings settings,int startSeconds=0,bool onDemand=false)
     {
         await _gate.WaitAsync();try{return await Task.Run(()=>
         {
-            if(_recorder is not null)throw new InvalidOperationException("Bir kayıt zaten devam ediyor.");
+            if(Recording)throw new InvalidOperationException("Bir kayıt zaten devam ediyor.");
             Directory.CreateDirectory(settings.RecordingFolder);
             string safe=string.Concat(title.Select(c=>Path.GetInvalidFileNameChars().Contains(c)?'_':c));if(safe.Length>70)safe=safe[..70];
             string path=Path.Combine(Path.GetFullPath(settings.RecordingFolder),$"{safe}_{DateTime.Now:yyyyMMdd_HHmmss}_{Guid.NewGuid().ToString("N")[..5]}.ts");
             if(path.Contains('\''))throw new InvalidOperationException("Kayıt klasörünün yolunda tek tırnak kullanmayın.");
-            using var media=MakeMedia(target,settings);media.AddOption($":sout=#std{{access=file,mux=ts,dst='{path.Replace('\\','/')}'}}");media.AddOption(":sout-all");
+            if(onDemand){_clip=new ClipRecording(target,settings,path,Math.Max(0,startSeconds),DateTimeOffset.UtcNow);RecordingPath=path;return path;}
+            using var media=MakeMedia(target,settings);
+            if(startSeconds>0)media.AddOption(":start-time="+startSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            media.AddOption($":sout=#std{{access=file,mux=ts,dst='{path.Replace('\\','/')}'}}");media.AddOption(":sout-all");
             var recorder=new MediaPlayer(Vlc);recorder.EncounteredError+=(_,_)=>RecordingFailed?.Invoke("Kayıt akışı kesildi. Dosyayı ve sağlayıcının eşzamanlı bağlantı sınırını kontrol edin.");
             if(!recorder.Play(media)){recorder.Dispose();throw new InvalidOperationException("Kayıt başlatılamadı.");}
             _recorder=recorder;RecordingPath=path;return path;
         });}finally{_gate.Release();}
     }
-    public async Task<string?> StopRecordingAsync()
+    public async Task<string?> StopRecordingAsync(long? endPositionMs=null)
     {
-        await _gate.WaitAsync();try{return await Task.Run(()=>{var p=RecordingPath;_recorder?.Stop();_recorder?.Dispose();_recorder=null;RecordingPath=null;return p;});}finally{_gate.Release();}
+        await _gate.WaitAsync();try
+        {
+            if(_clip is{} clip)
+            {
+                _clip=null;RecordingPath=null;
+                double end=(endPositionMs??clip.StartSeconds*1000+(long)(DateTimeOffset.UtcNow-clip.Started).TotalMilliseconds)/1000d;
+                double seconds=end-clip.StartSeconds;
+                if(seconds<0.7)return null;
+                await ExportClipAsync(clip,seconds);
+                return clip.Path;
+            }
+            return await Task.Run(()=>{var p=RecordingPath;_recorder?.Stop();_recorder?.Dispose();_recorder=null;RecordingPath=null;return p;});
+        }finally{_gate.Release();}
     }
-    public async ValueTask DisposeAsync(){await StopRecordingAsync();await _gate.WaitAsync();try{await Task.Run(()=>{Player.Stop();_live?.Dispose();_live=null;Player.Dispose();Vlc.Dispose();});}finally{_gate.Release();}}
+    private async Task ExportClipAsync(ClipRecording clip,double seconds)
+    {
+        string temporary=clip.Path+".partial";
+        try
+        {
+            using var media=MakeMedia(clip.Target,clip.Settings);
+            media.AddOption(":start-time="+clip.StartSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            media.AddOption(":run-time="+seconds.ToString("0.###",System.Globalization.CultureInfo.InvariantCulture));
+            media.AddOption($":sout=#std{{access=file,mux=ts,dst='{temporary.Replace('\\','/')}'}}");
+            media.AddOption(":sout-all");
+            using var exporter=new MediaPlayer(Vlc);
+            var finished=new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            exporter.EndReached+=(_,_)=>finished.TrySetResult(true);
+            exporter.EncounteredError+=(_,_)=>finished.TrySetException(new IOException("Klip akışı alınamadı."));
+            if(!exporter.Play(media))throw new IOException("Klip dışa aktarılamadı.");
+            await finished.Task.WaitAsync(TimeSpan.FromSeconds(Math.Clamp(seconds*2+20,30,600)));
+            await Task.Run(exporter.Stop);
+            if(!File.Exists(temporary)||new FileInfo(temporary).Length==0)throw new IOException("Klip dosyası boş oluşturuldu.");
+            File.Move(temporary,clip.Path,true);
+        }
+        finally{if(File.Exists(temporary))File.Delete(temporary);}
+    }
+    public async ValueTask DisposeAsync(){await StopRecordingAsync(Player.Time);await _gate.WaitAsync();try{await Task.Run(()=>{Player.Stop();_live?.Dispose();_live=null;Player.Dispose();Vlc.Dispose();});}finally{_gate.Release();}}
 }
 

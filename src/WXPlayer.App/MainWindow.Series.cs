@@ -58,13 +58,14 @@ public partial class MainWindow
         if(_nextEpisodeWindow is not null&&_offeredEpisode==current!.Id){if(IsActive&&!_nextEpisodeWindow.IsVisible)_nextEpisodeWindow.Show();return;}
         if(!IsActive&&_floatingControls?.IsActive!=true)return;
         CloseNextEpisode();_offeredEpisode=current!.Id;
-        var panel=new StackPanel{Margin=new Thickness(16)};
+        var panel=new StackPanel{Margin=new Thickness(20,16,20,18)};
         var header=new DockPanel();panel.Children.Add(header);
-        var dismiss=PremiumWindow.Action("×",()=>{_dismissedEpisode=current.Id;CloseNextEpisode();});dismiss.Padding=new Thickness(6,0,6,0);dismiss.ToolTip="Bu bölüm için öneriyi kapat";System.Windows.Automation.AutomationProperties.SetName(dismiss,"Sonraki bölüm önerisini kapat");DockPanel.SetDock(dismiss,Dock.Right);header.Children.Add(dismiss);
-        header.Children.Add(PremiumWindow.Text("SONRAKİ BÖLÜM",10,"#BDDE9D"));
-        var label=PremiumWindow.Text(next!.EpisodeLabel+" · "+next.Name,12);label.TextWrapping=TextWrapping.NoWrap;label.TextTrimming=TextTrimming.CharacterEllipsis;label.ToolTip=next.Name;label.Margin=new Thickness(0,8,0,12);panel.Children.Add(label);
-        var play=PremiumWindow.Action("Sonraki bölümü oynat  ›",async()=>{if(_current?.Id!=current.Id)return;CloseNextEpisode();await SafeAsync(()=>PlayItemAsync(next,true));},true);play.Margin=new Thickness(0);play.MinHeight=38;panel.Children.Add(play);
-        _nextEpisodeWindow=new Window{Owner=this,Title="Sonraki bölüm",Style=null,WindowStyle=WindowStyle.None,ResizeMode=ResizeMode.NoResize,AllowsTransparency=true,Background=Brushes.Transparent,ShowInTaskbar=false,ShowActivated=false,Width=360,Height=152,FontFamily=(FontFamily)FindResource("AppFont"),Foreground=PremiumWindow.Brush("#E9EEF5"),Content=new Border{Background=PremiumWindow.Brush("#F5131B24"),BorderBrush=PremiumWindow.Brush("#465744"),BorderThickness=new Thickness(1),CornerRadius=new CornerRadius(12),Child=panel}};
+        var dismiss=PremiumWindow.Action("×",()=>{_dismissedEpisode=current.Id;CloseNextEpisode();});dismiss.Padding=new Thickness(6,0,6,0);dismiss.MinWidth=28;dismiss.MinHeight=28;dismiss.ToolTip="Bu bölüm için öneriyi kapat";System.Windows.Automation.AutomationProperties.SetName(dismiss,"Sonraki bölüm önerisini kapat");DockPanel.SetDock(dismiss,Dock.Right);header.Children.Add(dismiss);
+        var heading=PremiumWindow.Text("SIRADAKİ BÖLÜM",10,"AccentPrimaryBrush");heading.FontWeight=FontWeights.SemiBold;heading.VerticalAlignment=VerticalAlignment.Center;header.Children.Add(heading);
+        var episode=PremiumWindow.Text(next!.EpisodeLabel,17);episode.FontWeight=FontWeights.SemiBold;episode.Margin=new Thickness(0,10,0,0);panel.Children.Add(episode);
+        var label=PremiumWindow.Text(next.Name,11,"TextSecondaryBrush");label.TextWrapping=TextWrapping.NoWrap;label.TextTrimming=TextTrimming.CharacterEllipsis;label.ToolTip=next.Name;label.Margin=new Thickness(0,4,0,14);panel.Children.Add(label);
+        var play=PremiumWindow.Action("▶   Sonraki bölümü oynat",async()=>{if(_current?.Id!=current.Id)return;CloseNextEpisode();await SafeAsync(()=>PlayItemAsync(next,true));},true);play.Margin=new Thickness(0);play.MinHeight=42;panel.Children.Add(play);
+        _nextEpisodeWindow=new Window{Owner=this,Title="Sonraki bölüm",Style=null,WindowStyle=WindowStyle.None,ResizeMode=ResizeMode.NoResize,AllowsTransparency=true,Background=Brushes.Transparent,ShowInTaskbar=false,ShowActivated=false,Width=390,Height=166,FontFamily=(FontFamily)FindResource("AppFont"),Foreground=PremiumWindow.Brush("TextPrimaryBrush"),Content=new Border{Background=PremiumWindow.Brush("#F5131A24"),BorderBrush=PremiumWindow.Brush("BorderSubtleBrush"),BorderThickness=new Thickness(1),CornerRadius=new CornerRadius(14),Child=panel}};
         _nextEpisodeWindow.PreviewKeyDown+=Window_KeyDown;_nextEpisodeWindow.Show();PlaceNextEpisode();
     }
     private void PlaceNextEpisode(){if(_nextEpisodeWindow is not null)_fullscreenPlacement.PlaceEpisodePrompt(this,_nextEpisodeWindow,_floatingControls?.IsVisible==true?_floatingControls.Height+36:24);}

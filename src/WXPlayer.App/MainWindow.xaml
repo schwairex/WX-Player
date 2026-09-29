@@ -28,10 +28,10 @@
       <Setter Property="FontWeight" Value="SemiBold"/>
     </Style>
     <DataTemplate x:Key="FullscreenContentTemplate">
-      <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="48"/><ColumnDefinition Width="*"/><ColumnDefinition Width="40"/></Grid.ColumnDefinitions>
-        <Border Width="44" Height="44" Background="{StaticResource SurfaceElevatedBrush}" CornerRadius="8"><ui:ChannelLogo Url="{Binding Logo}" Initials="{Binding Initials}"/></Border>
-        <StackPanel Grid.Column="1" Margin="11,0,7,0" VerticalAlignment="Center"><TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}"/><TextBlock Text="{Binding KindLabel}" FontSize="9" Foreground="{StaticResource AccentPrimaryBrush}" Margin="0,6,0,0"/></StackPanel>
-        <Button Grid.Column="2" MinWidth="36" MinHeight="36" Tag="{Binding}" PreviewMouseLeftButtonDown="Favorite_PreviewMouseDown" Click="Favorite_Click" Padding="4" Background="Transparent" BorderThickness="0" ToolTip="Favori"><ui:SvgIcon Icon="{Binding IsFavorite, Converter={StaticResource FavoriteIcon}}" Width="17" Height="17" Foreground="{StaticResource AccentPrimaryBrush}"/></Button>
+      <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="52"/><ColumnDefinition Width="*"/><ColumnDefinition Width="38"/></Grid.ColumnDefinitions>
+        <Border Width="48" Height="48" Background="{StaticResource SurfaceElevatedBrush}" CornerRadius="9" VerticalAlignment="Center"><ui:ChannelLogo Url="{Binding Logo}" Initials="{Binding Initials}"/></Border>
+        <StackPanel Grid.Column="1" Margin="11,0,6,0" VerticalAlignment="Center"><TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}"/><TextBlock Text="{Binding Category}" FontSize="10" Foreground="{StaticResource TextMutedBrush}" TextTrimming="CharacterEllipsis" Margin="0,5,0,0"/><TextBlock Text="{Binding KindLabel}" FontSize="9" Foreground="{StaticResource AccentPrimaryBrush}" Margin="0,4,0,0"/></StackPanel>
+        <Button Grid.Column="2" MinWidth="34" MinHeight="34" Tag="{Binding}" PreviewMouseLeftButtonDown="Favorite_PreviewMouseDown" Click="Favorite_Click" Padding="4" Background="Transparent" BorderThickness="0" ToolTip="Favori"><ui:SvgIcon Icon="{Binding IsFavorite, Converter={StaticResource FavoriteIcon}}" Width="17" Height="17" Foreground="{StaticResource AccentPrimaryBrush}"/></Button>
       </Grid>
     </DataTemplate>
   </Window.Resources>
@@ -114,7 +114,7 @@
           <Button x:Name="SettingsNav" Style="{StaticResource Nav}" Click="Settings_Click">
             <ui:IconLabel Icon="settings" Label="Ayarlar" />
           </Button>
-      <TextBlock x:Name="VersionLabel" Text="WX PLAYER  /  1.7.1" FontSize="9" Foreground="{StaticResource TextMutedBrush}" Margin="12,12,0,0" />
+      <TextBlock x:Name="VersionLabel" Text="WX PLAYER  /  1.7.2" FontSize="9" Foreground="{StaticResource TextMutedBrush}" Margin="12,12,0,0" />
         </StackPanel>
         <Grid />
       </DockPanel>
@@ -263,6 +263,13 @@
                 </StackPanel>
               </Grid>
               <ui:NativeVideoHost x:Name="Video" Visibility="Collapsed" />
+              <Border x:Name="MiniPlaceholder" Visibility="Collapsed" Background="{StaticResource SurfaceBrush}">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                  <ui:SvgIcon Icon="pip" Width="32" Height="32" Foreground="{StaticResource AccentPrimaryBrush}" HorizontalAlignment="Center" />
+                  <TextBlock Text="Mini oynatıcı açık" FontSize="16" FontWeight="SemiBold" Margin="0,14,0,8" HorizontalAlignment="Center" />
+                  <Button Content="Ana oynatıcıya dön" Click="MiniPlayer_Click" HorizontalAlignment="Center" />
+                </StackPanel>
+              </Border>
             </Grid>
           </Border>
           <Border Grid.Row="1" x:Name="ControlsBorder" Background="{StaticResource SurfaceBrush}" CornerRadius="0,0,12,12" Padding="18,14">
@@ -270,6 +277,7 @@
               <DockPanel>
                 <Button x:Name="CatalogBackButton" DockPanel.Dock="Left" Click="ReturnCatalog_Click" Content="← Kataloğa dön" Visibility="Collapsed" Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextSecondaryBrush}" Padding="0,4,14,4" Margin="0,0,12,0" ToolTip="Film veya dizi kataloğuna dön" />
                 <Button x:Name="LiveEdgeButton" DockPanel.Dock="Right" Content="● CANLI" Visibility="Collapsed" Click="GoLive_Click" Padding="10,4" Margin="8,0,0,0" FontSize="10" ToolTip="Canlı yayına dön" /><TextBlock x:Name="PlaybackBadge" DockPanel.Dock="Right" Text="HAZIR" Foreground="{StaticResource Accent}" FontSize="11" VerticalAlignment="Center" />
+                <Border x:Name="HealthBadge" DockPanel.Dock="Right" Visibility="Collapsed" Background="{StaticResource SurfaceElevatedBrush}" CornerRadius="7" Margin="0,0,10,0" Padding="8,4"><TextBlock x:Name="HealthText" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/></Border>
                 <TextBlock x:Name="NowTitle" Text="Bir içerik seçin" FontSize="15" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
               </DockPanel>
               <ui:MediaSlider x:Name="SeekSlider" Minimum="0" Maximum="1" Value="0" Margin="0,2,0,2" IsEnabled="False" ToolTip="Yayın konumu" Height="36" Style="{StaticResource MediaSliderStyle}" SmallChange="0.01" />
@@ -299,6 +307,7 @@
                   <TextBlock x:Name="VolumeLabel" Text="75" Foreground="{StaticResource Muted}" FontSize="10" Margin="6,0,0,0" VerticalAlignment="Center" />
                 </StackPanel>
                 <StackPanel Grid.Column="3" Orientation="Horizontal">
+                  <Button x:Name="MiniPlayerButton" Click="MiniPlayer_Click" ToolTip="Mini oynatıcı · P" Padding="9,5" Background="Transparent" BorderThickness="0" MinWidth="32" MinHeight="32"><ui:SvgIcon Icon="pip" /></Button>
                   <Button x:Name="FitButton" Click="Fit_Click" ToolTip="Görüntü: sığdır / ekranı doldur · Z" Padding="9,5" Background="Transparent" BorderThickness="0">
                     <ui:SvgIcon Icon="fill" />
                   </Button>

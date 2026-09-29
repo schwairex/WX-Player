@@ -2,7 +2,7 @@
 
 Kullanıcının tercih ettiği kalıcı teslim klasörü:
 
-`C:\Users\Berkay\Documents\Codex\2026-09-05\bu-klas-r-i-indekileri-analiz\outputs`
+`E:\Codex\2026-09-05\bu-klas-r-i-indekileri-analiz\outputs`
 
 Sonraki yerel sürümler de bu klasöre teslim edilir. Yalnız src/.../bin altındaki geliştirme EXE'si teslim sayılmaz.
 

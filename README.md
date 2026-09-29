@@ -31,9 +31,10 @@ WX Player, eklediğiniz M3U, Xtream Codes ve uyumlu Stalker kaynaklarını yerel
 | **Kütüphane** | Büyük listeleri arka planda içe aktarma; SQLite katalog, sayfalama, kategori ve arama. |
 | **Keşif** | Ana sayfada öneriler, son izlenenler ve favoriler; Filmler/Diziler sayfalarında afişli yatay raflar. |
 | **Oynatma** | LibVLC ile canlı TV, film ve dizi; çoklu ses/altyazı, harici altyazı, donanım veya yazılım çözme. |
-| **Devam etme** | Filmin konumunu, dizinin son bölümünü ve izleme konumunu saklama; bölüm seçimi ve sonraki bölüm önerisi. |
+| **Devam etme** | Filmin konumunu, dizinin son bölümünü ve izleme konumunu saklama; yenilenen bölüm seçimi ve sonraki bölüm önerisi. |
 | **Yayın akışı** | XMLTV/XMLTV.gz ve Xtream EPG; izlenen kanalın mevcut programı, sonraki yayınlar ve uygun sağlayıcılarda Catch-Up. |
-| **Canlı yayın** | Desteklenen HTTP/HTTPS akışlarda son 60 saniyeye kadar yerel geri sarma ve canlıya dönüş; manuel kayıt (PVR). |
+| **Canlı yayın** | Desteklenen HTTP/HTTPS akışlarda son 60 saniyeye kadar yerel geri sarma ve canlıya dönüş; manuel kayıt (PVR) ve isteğe bağlı kanal sağlık göstergesi. |
+| **Mini oynatıcı ve klip** | Videoyu ayrı, üstte tutulan mini pencerede izleme; film/dizide kayıt düğmesiyle başlangıç ve bitiş seçip kısa klip kaydetme. |
 | **Kişiselleştirme** | Favoriler, son izlenenlerden tekli kaldırma, görsel önbelleği ve isteğe bağlı Discord Rich Presence. |
 | **Güncelleme** | GitHub Releases üzerinden sürüm denetimi, indirme, SHA-256 doğrulaması ve onayla yeniden başlatma. |
 
@@ -65,7 +66,9 @@ Kaynağınız afiş ya da kanal logosu sağlamıyorsa uygulama uygun herkese aç
 
 - **Filmler ve Diziler:** Sol menüden ilgili sayfayı açın. Gerçek kütüphane kategorileri yatay afiş rafları olarak görünür. Arayın, rafları kaydırın veya bir içeriği favorileyin. Dizi kartını seçtikten sonra sezon ve bölümü belirleyin.
 - **Canlı TV:** Kanal seçildiğinde onun EPG'si oynatıcının altında açılır. “Şu an yayında” alanı mevcut programı ve ilerlemesini, liste sonraki programları gösterir. Rehber gelmiyorsa sağlayıcının EPG bağlantısını ve kanal eşleşmesini kontrol edin.
-- **Tam ekran:** Oynatıcı kontrolleri fare hareketiyle görünür; kanal/kategori seçimi ve favoriler kullanılabilir. Canlı TV'nin yerel 60 saniye tamponu yalnız desteklenen akışlarda işler.
+- **Tam ekran:** Yenilenen oynatıcı kontrolleri fare hareketiyle görünür; kanal/kategori seçimi ve favoriler kullanılabilir. Canlı TV'nin yerel 60 saniye tamponu yalnız desteklenen akışlarda işler.
+- **Mini oynatıcı ve sağlık:** Oynatıcıdaki mini pencere düğmesi veya `P` ile izlemeyi ayrı pencerede sürdürüp geri dönebilirsiniz. Ayarlar'da mini oynatıcıyı kapatabilir veya canlı kanallar için isteğe bağlı sağlık göstergesini açabilirsiniz. Gösterge oynatmanın başlayıp başlamadığını kontrol eder; tüm yayın boyunca kesintisiz çalışacağını garanti etmez.
+- **Kayıt:** Canlı TV kaydı seçilen kanal akışını dosyaya yazar. Film ve dizide kayıt düğmesine ilk basış başlangıcı, ikinci basış bitişi belirler; klip seçilen aralıktan dışa aktarılır. Akış kopyalama nedeniyle başlangıç ve bitiş en yakın anahtar kareye kayabilir.
 - **Veriler:** Favoriler, geçmiş ve kaynaklar yerel veri klasöründe tutulur. Discord Rich Presence varsayılan olarak kapalıdır; açıldığında özel yayın adresleri ve sağlayıcı kimlik bilgileri paylaşılmaz. [Discord kurulumu ve gizlilik](docs/DISCORD-PRESENCE.md).
 
 ### Kısayollar
@@ -77,6 +80,7 @@ Kaynağınız afiş ya da kanal logosu sağlamıyorsa uygulama uygun herkese aç
 | `M` | Sesi kapat / aç | `Z` | Görüntüyü sığdır / doldur |
 | `Page Up`, `Page Down` | Önceki / sonraki içerik | `I` | Yayın istatistikleri |
 | `Ctrl+K` | Arama | `Ctrl+B` | Sol menüyü aç / daralt |
+| `P` | Mini oynatıcıyı aç / ana pencereye dön | | |
 
 Fare tekerleği içerik sayfasını kaydırır; video üzerindeyken sesi ayarlar. Rafları `Shift + tekerlek` ile yatay kaydırabilirsiniz.
 
@@ -103,12 +107,13 @@ Tam oynatma smoke testi için `--media` ile oynatılabilir yerel bir video dosya
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\build.ps1 -OutputPath .\artifacts
 ```
 
-`src/WXPlayer.App` WPF arayüzünü ve oynatıcıyı, `src/WXPlayer.Core` kaynakları ve kütüphaneyi, `tests/WXPlayer.Tests` regresyon testlerini, `tools` dağıtım araçlarını içerir. [Tasarım sistemi](docs/DESIGN_SYSTEM.md) · [1.7.1 test raporu](docs/TEST-REPORT-1.7.1.md).
+`src/WXPlayer.App` WPF arayüzünü ve oynatıcıyı, `src/WXPlayer.Core` kaynakları ve kütüphaneyi, `tests/WXPlayer.Tests` regresyon testlerini, `tools` dağıtım araçlarını içerir. [Tasarım sistemi](docs/DESIGN_SYSTEM.md) · [1.7.2 test raporu](docs/TEST-REPORT-1.7.2.md).
 
 ## Sürüm geçmişi
 
 | Sürüm | Başlıca değişiklik |
 | --- | --- |
+| **[1.7.2](docs/RELEASE-NOTES-1.7.2.md)** | Bölüm ve tam ekran arayüzleri, mini oynatıcı, isteğe bağlı kanal sağlığı ve film/dizi klip kaydı. |
 | **[1.7.1](docs/RELEASE-NOTES-1.7.1.md)** | Afişli film/dizi katalogları, yeni WX simgesi, okunabilir canlı TV rehberi, sade README. |
 | **[1.7.0](docs/RELEASE-NOTES-1.7.0.md)** | Koyu masaüstü arayüzü, açılır ikon menüsü ve daha güvenilir Release varlığı seçimi. |
 | **[1.6.3](docs/RELEASE-NOTES-1.6.3.md)** | Discord'da uygun afiş/logo; canlı TV süre çubuğunu gizleme. |

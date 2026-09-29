@@ -41,7 +41,7 @@ internal static class Experience160Smoke
             Capture(window,"WX-Player-1.6.0-discovered-artwork.png");
             var series=(await store.QueryAsync(source.Id,ContentKind.Series,null,"",false,false,0)).Items.Single();
             var episodes=await window.SmokeEpisodesAsync(source,series);
-            await window.SmokeBrowseAsync("series");await window.SmokePlayAsync(episodes.First(e=>e.Season==1&&e.Episode==1));
+            await window.SmokeOpenHomeAsync(episodes.First(e=>e.Season==1&&e.Episode==1));
             await Wait(()=>engine.Player.IsPlaying&&engine.Player.Length>35000);await Task.Delay(700);
             Check("seriesReplacesGuide",window.SmokeSeriesPanel.IsVisible&&!window.GuidePanel.IsVisible);
             Check("currentSeasonSelected",window.SmokeSeriesPanel.Seasons.SelectedIndex==0&&window.SmokeSeriesPanel.Episodes.Items.Count==2);

@@ -79,6 +79,8 @@ public sealed class PlayerSettings
     public bool? SidebarExpanded { get; set; }
     public bool AutoUpdate { get; set; } = true;
     public bool FullscreenFill { get; set; } = true;
+    public bool MiniPlayerEnabled { get; set; } = true;
+    public bool ChannelHealthCheck { get; set; }
     public bool HardwareAcceleration { get; set; } = true;
     public string VideoOutput { get; set; } = "direct3d11";
     public int NetworkCacheMs { get; set; } = 1200;

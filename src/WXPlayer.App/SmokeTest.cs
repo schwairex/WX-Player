@@ -26,6 +26,25 @@ internal static class SmokeTest
                 await Experience160Smoke.RunAsync(window,store,engine,results);results["success"]=true;
                 File.WriteAllText(Path.Combine(App.DataDirectory,"smoke-results.json"),JsonSerializer.Serialize(results,new JsonSerializerOptions{WriteIndented=true}));window.Close();return;
             }
+            if(App.Arguments.Contains("--recording-172"))
+            {
+                int recordMediaArg=Array.IndexOf(App.Arguments,"--media");if(recordMediaArg<0)throw new InvalidOperationException("A local test video is required.");
+                var target=new PlaybackTarget(new Uri(Path.GetFullPath(App.Arguments[recordMediaArg+1])).AbsoluteUri);
+                await engine.PlayAsync(target,settings,default);await WaitUntil(()=>engine.Player.IsPlaying&&engine.Player.Length>30000,TimeSpan.FromSeconds(12));
+                results["originalLengthMs"]=engine.Player.Length;engine.Player.Time=20000;
+                await WaitUntil(()=>engine.Player.Time>=19000,TimeSpan.FromSeconds(8));
+                long start=engine.Player.Time;settings.RecordingFolder=Path.Combine(App.DataDirectory,"recordings");
+                string path=await engine.StartRecordingAsync(target,"Positioned recording",settings,RecordingStartPolicy.StartAt(ContentKind.Episode,true,start),true);
+                await Task.Delay(2500);results["viewedIntervalMs"]=engine.Player.Time-start;
+                await engine.StopRecordingAsync(engine.Player.Time);results["recordBytes"]=new FileInfo(path).Length;
+                await engine.PlayAsync(new PlaybackTarget(new Uri(path).AbsoluteUri),settings,default);
+                await WaitUntil(()=>engine.Player.IsPlaying,TimeSpan.FromSeconds(10));
+                await Task.Delay(1000);results["recordedLengthMs"]=engine.Player.Length;
+                results["recordedOnlySelectedInterval"]=Convert.ToInt64(results["recordBytes"])>0&&engine.Player.Length>0&&engine.Player.Length<Convert.ToInt64(results["originalLengthMs"])/3&&engine.Player.Length<=Convert.ToInt64(results["viewedIntervalMs"])+5000;
+                if(!Equals(results["recordedOnlySelectedInterval"],true))throw new Exception("Recording includes media outside the selected interval.");
+                results["success"]=true;
+                File.WriteAllText(Path.Combine(App.DataDirectory,"smoke-results.json"),JsonSerializer.Serialize(results,new JsonSerializerOptions{WriteIndented=true}));window.Close();return;
+            }
             await HomeLayoutSmoke.RunAsync(window,results);
             if(App.Arguments.Contains("--home-layout-only"))
             {
@@ -147,7 +166,15 @@ internal static class SmokeTest
                 var culture=new ContentItem{Id="smoke-culture",SourceId=epgSource.Id,Name="WX Kültür HD",Category="Kültür",Logo=logos.Url,Kind=ContentKind.Live,Url=target.Url};
                 async IAsyncEnumerable<ContentItem> Channels(){yield return news;yield return culture;await Task.Yield();}
                 await store.ImportAsync(epgSource,Channels(),null,default);window.SmokeNavigate("live");await window.SmokeRefreshAsync(epgSource.Id);
-                await window.SmokePlayAsync(news);results["epgAutomaticallyLoaded"]=window.EpgList.Items.Cast<Programme>().Single().Title.StartsWith("Güne Bakış");
+                settings.ChannelHealthCheck=true;
+                await window.SmokePlayAsync(news);await WaitUntil(()=>window.SmokeHealthState==ChannelHealthState.Healthy,TimeSpan.FromSeconds(8));results["channelHealthDetectsPlaying"]=true;
+                window.SmokeToggleMiniPlayer();await Task.Delay(300);
+                results["miniPlayerOwnsSamePlayback"]=window.SmokeMiniPlayerVisible&&engine.Player.Hwnd==window.SmokeMiniVideoHandle&&engine.Player.IsPlaying&&!window.Video.IsVisible;
+                if(window.SmokeMiniWindow is{} miniWindow)SaveWindow(miniWindow,Path.Combine(App.DataDirectory,"WX-Player-1.7.2-mini-player.png"));
+                window.SmokeToggleMiniPlayer();await Task.Delay(200);
+                results["miniPlayerRestoresNativeVideo"]=!window.SmokeMiniPlayerVisible&&engine.Player.Hwnd==window.Video.Handle&&engine.Player.IsPlaying;
+                if(!Equals(results["miniPlayerOwnsSamePlayback"],true)||!Equals(results["miniPlayerRestoresNativeVideo"],true))throw new Exception("Mini player transfer interrupted playback.");
+                results["epgAutomaticallyLoaded"]=window.EpgList.Items.Cast<Programme>().Single().Title.StartsWith("Güne Bakış");
                 results["epgNowSummary"]=window.GuideNowTitle.Text.StartsWith("Güne Bakış")&&window.GuideNowProgress.Value>0;
                 var first=window.SmokePlayAsync(news);await Task.Delay(10);var second=window.SmokePlayAsync(culture);await Task.WhenAll(first,second);
                 results["epgFollowsLatestChannel"]=window.EpgList.Items.Cast<Programme>().All(p=>p.ChannelId=="wx.culture")&&window.EpgList.Items.Count==2&&window.GuideTitle.Text.Contains("WX Kültür")&&window.GuideNowTitle.Text.Contains("Kültür Atlası");

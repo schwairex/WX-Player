@@ -1,0 +1,71 @@
+using System.Windows;
+using System.Windows.Input;
+
+namespace WXPlayer.App;
+
+public partial class MainWindow
+{
+    private MiniPlayerWindow? _miniPlayer;
+
+    private void ApplyViewingOptions()
+    {
+        MiniPlayerButton.Visibility = _settings.MiniPlayerEnabled ? Visibility.Visible : Visibility.Collapsed;
+        if (!_settings.MiniPlayerEnabled) CloseMiniPlayer();
+        if (_current is { } item) { BeginHealthCheck(item); HealthPlaybackAccepted(); }
+        else { _channelHealth.Stop(); UpdateHealthBadge(); }
+    }
+
+    private void MiniPlayer_Click(object sender, RoutedEventArgs e) => ToggleMiniPlayer();
+
+    private void ToggleMiniPlayer()
+    {
+        if (_miniPlayer is not null) { CloseMiniPlayer(); return; }
+        if (!_ready || !_settings.MiniPlayerEnabled || _current is null || _target is null)
+        {
+            Status("Mini oynatıcıyı açmak için önce bir içerik oynatın.");
+            return;
+        }
+        if (_fullscreen) ToggleFullscreen();
+        var mini = new MiniPlayerWindow(_current.Name, CloseMiniPlayer,
+            () => PlayPause_Click(this, new RoutedEventArgs()),
+            () => Mute_Click(this, new RoutedEventArgs()));
+        mini.Closed += (_, _) => { if (ReferenceEquals(_miniPlayer, mini)) CloseMiniPlayer(); };
+        mini.Video.WheelMoved += delta => VolumeSlider.Value = Math.Clamp(VolumeSlider.Value + (delta > 0 ? 5 : -5), 0, 100);
+        mini.Video.KeyPressed += key => { if (key == Key.P) CloseMiniPlayer(); else HandleShortcut(key); };
+        _miniPlayer = mini;
+        Video.MediaPlayer = null;
+        Video.Visibility = Visibility.Collapsed;
+        MiniPlaceholder.Visibility = Visibility.Visible;
+        try
+        {
+            mini.Show();
+            mini.Video.MediaPlayer = _engine.Player;
+            _engine.Player.AspectRatio = null;
+            _engine.Player.CropGeometry = null;
+            _engine.Player.Scale = 0;
+            mini.SetPlaying(_engine.Player.IsPlaying);
+        }
+        catch { CloseMiniPlayer(); throw; }
+    }
+
+    private void CloseMiniPlayer()
+    {
+        if (_miniPlayer is not { } mini) return;
+        _miniPlayer = null;
+        mini.Video.MediaPlayer = null;
+        if (mini.IsVisible) mini.Close();
+        MiniPlaceholder.Visibility = Visibility.Collapsed;
+        Video.Visibility = _current is null ? Visibility.Collapsed : Visibility.Visible;
+        if (_engine is not null)
+        {
+            Video.MediaPlayer = _engine.Player;
+            _appliedCrop = null;
+            UpdateVideoSizing();
+        }
+    }
+
+    internal bool SmokeMiniPlayerVisible => _miniPlayer?.IsVisible == true;
+    internal IntPtr SmokeMiniVideoHandle => _miniPlayer?.Video.Handle ?? IntPtr.Zero;
+    internal Window? SmokeMiniWindow => _miniPlayer;
+    internal void SmokeToggleMiniPlayer() => ToggleMiniPlayer();
+}
