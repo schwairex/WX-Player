@@ -161,7 +161,15 @@ public partial class MainWindow : Window
         ListTitle.Text=_section=="home"?"Kütüphaneniz":PageTitle.Text;ApplyGuideLayout();ApplyPageLayout();
     }
     private async void Channel_Selected(object sender,SelectionChangedEventArgs e){if(_suppress||!_ready)return;if(ChannelList.SelectedItem is ContentItem item)await SafeAsync(()=>PlayItemAsync(item));}
-    private async void Channel_DoubleClick(object sender,MouseButtonEventArgs e){if(ChannelList.SelectedItem is ContentItem item&&(item.Kind==ContentKind.Series||item.Id==_current?.Id&&!_engine.Player.IsPlaying))await SafeAsync(()=>PlayItemAsync(item));}
+    private async void Channel_DoubleClick(object sender,MouseButtonEventArgs e)
+    {
+        if(ChannelList.SelectedItem is not ContentItem item)return;
+        if(item.Kind==ContentKind.Series){await SafeAsync(()=>PlayItemAsync(item));return;}
+        if(item.Id!=_current?.Id)return;
+        if(_engine.Player.State==LibVLCSharp.Shared.VLCState.Paused){PlayPause_Click(this,new RoutedEventArgs());return;}
+        if(_engine.Player.State is LibVLCSharp.Shared.VLCState.Stopped or LibVLCSharp.Shared.VLCState.Ended or LibVLCSharp.Shared.VLCState.Error)
+            await SafeAsync(()=>PlayItemAsync(item));
+    }
     private async Task PlayItemAsync(ContentItem item,bool restart=false)
     {
         CloseNextEpisode();
@@ -280,9 +288,16 @@ public partial class MainWindow : Window
         if(_current is null||EpgList.SelectedItem is not Programme p)return;var source=_sources.First(s=>s.Id==_current.SourceId);
         await SafeAsync(async()=>{var item=_current;var target=ProviderClient.CatchupTarget(source,item,p);_play?.Cancel();int version=++_playVersion;BeginDiscordSelection();BeginHealthCheck(item with{Kind=ContentKind.Movie});_target=target;NowTitle.Text=item.Name+" · "+p.Title;await _engine.PlayAsync(target,_settings,_life.Token);AcceptDiscordPlayback(item with{Kind=ContentKind.Movie,Name=p.Title},version);Status("Tekrar izleme · "+p.Title);});
     }
-    private async void PlayPause_Click(object sender,RoutedEventArgs e)
+    private void PlayPause_Click(object sender,RoutedEventArgs e)
     {
-        if(!_ready)return;if(_engine.Player.IsPlaying||_engine.Player.State==LibVLCSharp.Shared.VLCState.Paused){await SafeAsync(()=>SavePlaybackProgressAsync());_engine.Player.Pause();}else if(_target is not null)await SafeAsync(ReplayWithDiscordAsync);else if(ChannelList.SelectedItem is ContentItem i)await SafeAsync(()=>PlayItemAsync(i));
+        if(!_ready)return;
+        var player=_engine.Player;
+        if(player.State==LibVLCSharp.Shared.VLCState.Paused){player.SetPause(false);return;}
+        if(player.IsPlaying){player.SetPause(true);_ = SafeAsync(()=>SavePlaybackProgressAsync());return;}
+        // Opening and buffering are transient. Replaying here used to restart episodes from zero.
+        if(player.State is LibVLCSharp.Shared.VLCState.Opening or LibVLCSharp.Shared.VLCState.Buffering)return;
+        if(_target is not null)_ = SafeAsync(ReplayWithDiscordAsync);
+        else if(ChannelList.SelectedItem is ContentItem i)_ = SafeAsync(()=>PlayItemAsync(i));
     }
     private async void Record_Click(object sender,RoutedEventArgs e)
     {
@@ -434,7 +449,9 @@ public partial class MainWindow : Window
         if(!_ready||_closing)return;var player=_engine.Player;_ = _engine.MaintainLiveAsync();LiveEdgeButton.Visibility=_engine.HasLiveBuffer?Visibility.Visible:Visibility.Collapsed;LiveEdgeButton.Content=_engine.IsReplay?"↗ CANLIYA DÖN":"● CANLI";SeekSlider.IsEnabled=_engine.HasLiveBuffer?_engine.BufferedSeconds>=2:player.IsSeekable;SeekSlider.ToolTip=_engine.HasLiveBuffer?$"Son {_engine.BufferedSeconds:0} saniye · Yerel tampon":"Yayın konumu";
         if(!SeekSlider.IsInteracting&&player.Position>=0)SeekSlider.Value=_engine.HasLiveBuffer?Math.Clamp(1-_engine.BehindLive/Math.Max(1,_engine.BufferedSeconds),0,1):player.Position;
         if(player.IsPlaying&&!SeekSlider.IsInteracting)PlaybackBadge.Text=_engine.HasLiveBuffer?(_engine.IsReplay?$"−{_engine.BehindLive:0} sn":$"{_engine.BufferedSeconds:0} sn hazır"):player.IsSeekable?TimeSpan.FromMilliseconds(Math.Max(0,player.Time)).ToString(@"hh\:mm\:ss")+" / "+TimeSpan.FromMilliseconds(Math.Max(0,player.Length)).ToString(@"hh\:mm\:ss"):"● CANLI";
-        CheckChannelHealth();_miniPlayer?.SetPlaying(player.IsPlaying);UpdateNextEpisode();PlaceNextEpisode();UpdateDiscordPlayback();
+        CheckChannelHealth();
+        if(_miniPlayer is { } mini){mini.SetPlaying(player.IsPlaying);mini.SetMuted(player.Mute);mini.SetProgress(player.Time,player.Length,_current?.Kind==ContentKind.Live);}
+        UpdateNextEpisode();PlaceNextEpisode();UpdateDiscordPlayback();
         if(_guideNow is not null)GuideNowProgress.Value=_guideNow.Progress;
         if(++_tick%5==0)_ = SafeAsync(()=>SavePlaybackProgressAsync());if(_tick%30==0){EpgList.Items.Refresh();if(_current?.Kind==ContentKind.Live&&EpgList.ItemsSource is List<Programme> programmes)ShowGuideNow(programmes);}if(_tick%300==0&&_current?.Kind==ContentKind.Live)_ = LoadGuideAsync();if(_tick%15==0)App.SaveSettings(_settings);
     }
@@ -462,6 +479,8 @@ public partial class MainWindow : Window
         try{await DisposeDiscordAsync();if(_engine?.RecordingIsClip==true){try{await _engine.StopRecordingAsync(_engine.Player.Time);}catch(Exception ex){System.Diagnostics.Debug.WriteLine(ex);Status("Klip dışa aktarılamadı. Kaynak bağlantısını kontrol edin.");}}await SavePlaybackProgressAsync();App.SaveSettings(_settings);_statistics?.Close();_updateWindow?.Close();if(_epgService is not null)await _epgService.StopAsync();if(_engine is not null){Video.MediaPlayer=null;await _engine.DisposeAsync();}ArtworkService.Discovery.Dispose();_providers.Dispose();_updates?.Dispose();}finally{_closed=true;Close();}
     }
     internal Task SmokePlayAsync(ContentItem item)=>PlayItemAsync(item);
+    internal void SmokeTogglePlayback()=>PlayPause_Click(this,new RoutedEventArgs());
+    internal int SmokePlaybackVersion=>_playVersion;
     internal async Task SmokeRefreshAsync(string id){await ReloadSourcesAsync(id);await RefreshViewAsync();}
     internal void SmokeNavigate(string section){_section=section;SetNav();}
     internal void SmokeFullscreen()=>ToggleFullscreen();

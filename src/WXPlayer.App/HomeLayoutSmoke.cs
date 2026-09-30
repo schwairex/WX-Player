@@ -38,8 +38,13 @@ internal static class HomeLayoutSmoke
         {
             window.Width = 1440; window.Height = 960; window.HomeHost.Content = home;
             var rendering = home.RenderAsync("Örnek kütüphane", shelves, "", movies[0]); window.UpdateLayout();
-            Check("home153LoadingFeatureBounded", Feature(home).ActualHeight <= 300, results);
+            Check("home153LoadingFeatureBounded", Feature(home).ActualHeight <= 352, results);
             await rendering; window.UpdateLayout();
+            var firstFeature = home.Featured?.Id;
+            Descendants<Button>(Feature(home)).First(b => Equals(b.ToolTip, "Sonraki öne çıkan içerik")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Check("home173FeaturedCarouselAdvances", home.Featured?.Id != firstFeature, results);
+            Descendants<Button>(Feature(home)).First(b => Equals(b.ToolTip, "Önceki öne çıkan içerik")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Check("home173FeaturedCarouselRestores", home.Featured?.Id == firstFeature, results);
             var before = Cards(home).Select(b => b.RenderSize).ToArray();
             await Until(() => Descendants<ChannelLogo>(home).Count(l => l.HasImage) >= 20);
             await Task.Delay(150); window.UpdateLayout();
@@ -228,7 +233,7 @@ internal static class HomeLayoutSmoke
     private static IEnumerable<Button> Cards(DependencyObject root) => Descendants<Button>(root).Where(b => b.Tag is ContentItem);
     private static void CheckGeometry(HomeView home, Dictionary<string, object> results, string suffix)
     {
-        Check("home152FeatureBounded" + suffix, Feature(home).ActualHeight is > 0 and <= 300 && Feature(home).ActualWidth <= home.ActualWidth, results);
+        Check("home152FeatureBounded" + suffix, Feature(home).ActualHeight is > 0 and <= 352 && Feature(home).ActualWidth <= home.ActualWidth, results);
         foreach (var section in new[] { "recent", "favorites", "movie", "series" })
         {
             var panel = Descendants<StackPanel>(home).Single(p => Equals(p.Tag, section)); var cards = Cards(panel).ToArray();

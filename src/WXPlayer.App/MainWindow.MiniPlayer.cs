@@ -26,20 +26,23 @@ public partial class MainWindow
             return;
         }
         if (_fullscreen) ToggleFullscreen();
-        var mini = new MiniPlayerWindow(_current.Name, CloseMiniPlayer,
+        var mini = new MiniPlayerWindow(_current.Name, () => CloseMiniPlayer(),
             () => PlayPause_Click(this, new RoutedEventArgs()),
             () => Mute_Click(this, new RoutedEventArgs()));
-        mini.Closed += (_, _) => { if (ReferenceEquals(_miniPlayer, mini)) CloseMiniPlayer(); };
+        mini.Closing += (_, _) =>
+        {
+            // Transfer the live render HWND before WPF destroys the mini host (also on Alt+F4).
+            if (ReferenceEquals(_miniPlayer, mini)) CloseMiniPlayer(false);
+        };
         mini.Video.WheelMoved += delta => VolumeSlider.Value = Math.Clamp(VolumeSlider.Value + (delta > 0 ? 5 : -5), 0, 100);
         mini.Video.KeyPressed += key => { if (key == Key.P) CloseMiniPlayer(); else HandleShortcut(key); };
         _miniPlayer = mini;
-        Video.MediaPlayer = null;
-        Video.Visibility = Visibility.Collapsed;
-        MiniPlaceholder.Visibility = Visibility.Visible;
         try
         {
             mini.Show();
-            mini.Video.MediaPlayer = _engine.Player;
+            Video.TransferTo(mini.Video);
+            Video.Visibility = Visibility.Collapsed;
+            MiniPlaceholder.Visibility = Visibility.Visible;
             _engine.Player.AspectRatio = null;
             _engine.Player.CropGeometry = null;
             _engine.Player.Scale = 0;
@@ -48,24 +51,27 @@ public partial class MainWindow
         catch { CloseMiniPlayer(); throw; }
     }
 
-    private void CloseMiniPlayer()
+    private void CloseMiniPlayer(bool closeWindow = true)
     {
         if (_miniPlayer is not { } mini) return;
         _miniPlayer = null;
-        mini.Video.MediaPlayer = null;
-        if (mini.IsVisible) mini.Close();
-        MiniPlaceholder.Visibility = Visibility.Collapsed;
         Video.Visibility = _current is null ? Visibility.Collapsed : Visibility.Visible;
+        if (_current is not null)
+        {
+            UpdateLayout();
+            if (mini.Video.RenderingHandle != IntPtr.Zero) mini.Video.TransferTo(Video);
+        }
+        if (closeWindow && mini.IsVisible) mini.Close();
+        MiniPlaceholder.Visibility = Visibility.Collapsed;
         if (_engine is not null)
         {
-            Video.MediaPlayer = _engine.Player;
             _appliedCrop = null;
             UpdateVideoSizing();
         }
     }
 
     internal bool SmokeMiniPlayerVisible => _miniPlayer?.IsVisible == true;
-    internal IntPtr SmokeMiniVideoHandle => _miniPlayer?.Video.Handle ?? IntPtr.Zero;
+    internal IntPtr SmokeMiniVideoHandle => _miniPlayer?.Video.RenderingHandle ?? IntPtr.Zero;
     internal Window? SmokeMiniWindow => _miniPlayer;
     internal void SmokeToggleMiniPlayer() => ToggleMiniPlayer();
 }

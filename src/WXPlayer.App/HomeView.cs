@@ -2,6 +2,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Input;
+using System.Windows.Media.Effects;
+using System.Windows.Threading;
 using WXPlayer.Core;
 
 namespace WXPlayer.App;
@@ -10,7 +12,7 @@ internal sealed record HomeShelf(string Title, string Section, WXPlayer.Core.Pag
 
 internal sealed partial class HomeView : ScrollViewer
 {
-    private const double FeatureHeight = 300;
+    private const double FeatureHeight = 352;
     private readonly StackPanel _body = new(), _shelves = new();
     private readonly Grid _feature = new() { Height = FeatureHeight, ClipToBounds = true };
     private readonly Grid _toolbar = new(), _searchBox = new();
@@ -19,6 +21,10 @@ internal sealed partial class HomeView : ScrollViewer
     private readonly Action<string> _browse;
     private readonly Action _add;
     private readonly Func<ContentItem,Task>? _removeRecent;
+    private readonly DispatcherTimer _heroTimer = new() { Interval = TimeSpan.FromSeconds(9) };
+    private IReadOnlyList<ContentItem> _heroItems = [];
+    private string _heroSource = "";
+    private int _heroIndex;
     internal readonly TextBox Search = new() { MinHeight = 40, Padding = new Thickness(12, 9, 12, 9) };
     internal IReadOnlyList<ContentItem> Items { get; private set; } = [];
     internal ContentItem? Featured { get; private set; }
@@ -61,6 +67,9 @@ internal sealed partial class HomeView : ScrollViewer
         _return.MaxWidth = 600; _return.Visibility = Visibility.Collapsed; _body.Children.Add(_return);
         _feature.Margin = new Thickness(0, 0, 0, 30); _body.Children.Add(_feature);
         _shelves.Margin = new Thickness(0, 0, 0, 30); _body.Children.Add(_shelves);
+        _heroTimer.Tick += (_, _) => { if (IsVisible && !_feature.IsMouseOver && _heroItems.Count > 1 && Search.Text.Length == 0) MoveHero(1); };
+        Loaded += (_, _) => _heroTimer.Start();
+        Unloaded += (_, _) => _heroTimer.Stop();
     }
 
     private void LayoutToolbar()
@@ -94,7 +103,7 @@ internal sealed partial class HomeView : ScrollViewer
         CancelArtwork(); Reset(); Empty = false;
         ShowState("Kütüphane görüntülenemedi", "İçerikler şu anda yüklenemiyor. Yeniden deneyebilirsiniz.", "Yeniden dene", retry);
     }
-    private void Reset() { _feature.Children.Clear(); _shelves.Children.Clear(); Items = []; Featured = null; }
+    private void Reset() { _feature.Children.Clear(); _shelves.Children.Clear(); Items = []; Featured = null; _heroItems = []; }
     private void ShowState(string title, string description, string? action, Action? callback)
     {
         var copy = new StackPanel { Margin = new Thickness(28), VerticalAlignment = VerticalAlignment.Center };
@@ -108,29 +117,81 @@ internal sealed partial class HomeView : ScrollViewer
     }
     private void BuildHero(ContentItem item, string source)
     {
+        _heroSource = source;
+        _heroItems = Items.Where(i => i.Kind is ContentKind.Movie or ContentKind.Series).Take(7).ToArray();
+        if (item.Kind is ContentKind.Movie or ContentKind.Series && _heroItems.All(i => i.Id != item.Id))
+            _heroItems = new[] { item }.Concat(_heroItems).Take(7).ToArray();
+        if (_heroItems.Count == 0) _heroItems = [item];
+        int previous = _heroItems.ToList().FindIndex(i => i.Id == Featured?.Id);
+        _heroIndex = previous >= 0 ? previous : 0;
+        RenderHero();
+    }
+    private void MoveHero(int direction)
+    {
+        if (_heroItems.Count < 2) return;
+        _heroIndex = (_heroIndex + direction + _heroItems.Count) % _heroItems.Count;
+        RenderHero();
+    }
+    private void RenderHero()
+    {
+        if (_heroItems.Count == 0) return;
+        var item = Featured = _heroItems[_heroIndex];
+        _feature.Children.Clear();
         var hero = new Grid { Height = FeatureHeight - 2, ClipToBounds = true, Background = Color("SurfaceBrush") };
         Round(hero, 12);
-        var art = new ChannelLogo { Url = item.Logo, Initials = "", DecodeWidth = 480, ImageStretch = Stretch.UniformToFill, ImagePadding = new Thickness(0), Opacity = .18, HorizontalAlignment = HorizontalAlignment.Right, Width = 510, Height = FeatureHeight - 2 };
-        hero.Children.Add(art);
-        var poster = Artwork(item, 172, 258); poster.HorizontalAlignment = HorizontalAlignment.Right; poster.VerticalAlignment = VerticalAlignment.Center; poster.Margin = new Thickness(0, 0, 28, 0); hero.Children.Add(poster);
-        var copy = new StackPanel { Margin = new Thickness(30, 22, 24, 22), VerticalAlignment = VerticalAlignment.Center, MaxWidth = 580, HorizontalAlignment = HorizontalAlignment.Left };
+        _feature.Children.Add(hero);
+        var backdrop = new ChannelLogo { Url = item.Logo, Initials = "", DecodeWidth = 720, ImageStretch = Stretch.UniformToFill, ImagePadding = new Thickness(0), Opacity = .45, HorizontalAlignment = HorizontalAlignment.Right, Width = 710, Height = FeatureHeight + 30, Effect = new BlurEffect { Radius = 25 } };
+        hero.Children.Add(backdrop);
+        var baseColor = ((SolidColorBrush)Color("BackgroundBaseBrush")).Color;
+        hero.Children.Add(new Border { Background = new LinearGradientBrush(new GradientStopCollection {
+            new(System.Windows.Media.Color.FromArgb(252,baseColor.R,baseColor.G,baseColor.B),0),
+            new(System.Windows.Media.Color.FromArgb(235,baseColor.R,baseColor.G,baseColor.B),.45),
+            new(System.Windows.Media.Color.FromArgb(100,baseColor.R,baseColor.G,baseColor.B),1) }, new Point(0,0),new Point(1,0)) });
+        var poster = Artwork(item, 194, 290);
+        poster.HorizontalAlignment = HorizontalAlignment.Right; poster.VerticalAlignment = VerticalAlignment.Center;
+        poster.Margin = new Thickness(0, 0, 52, 0); poster.Effect = new DropShadowEffect { BlurRadius = 22, ShadowDepth = 8, Opacity = .42, Color = Colors.Black };
+        hero.Children.Add(poster);
+        var copy = new StackPanel { Margin = new Thickness(36, 22, 24, 48), VerticalAlignment = VerticalAlignment.Center, MaxWidth = 610, HorizontalAlignment = HorizontalAlignment.Left };
         hero.Children.Add(copy);
-        var eyebrow = Text("ÖNE ÇIKAN  /  " + item.KindLabel, 10, "AccentPrimaryBrush"); eyebrow.FontWeight = FontWeights.SemiBold; copy.Children.Add(eyebrow);
-        var title = Text(item.Name, 29); title.FontWeight = FontWeights.SemiBold; title.LineHeight = 36;
-        title.MaxHeight = 72; title.TextTrimming = TextTrimming.CharacterEllipsis; title.ToolTip = item.Name; title.Margin = new Thickness(0, 14, 0, 12); copy.Children.Add(title);
-        var metadata = Text(item.Category + "  ·  " + source, 12, "TextSecondaryBrush"); metadata.TextWrapping = TextWrapping.NoWrap; metadata.TextTrimming = TextTrimming.CharacterEllipsis; metadata.Margin = new Thickness(0, 0, 0, 22); copy.Children.Add(metadata);
+        var eyebrow = Text("WX PLAYER  /  ÖNE ÇIKAN " + item.KindLabel.ToUpperInvariant(), 10, "AccentPrimaryBrush");
+        eyebrow.FontWeight = FontWeights.SemiBold; copy.Children.Add(eyebrow);
+        var title = Text(item.Name, 34); title.FontWeight = FontWeights.SemiBold; title.LineHeight = 39; title.MaxHeight = 82;
+        title.TextTrimming = TextTrimming.CharacterEllipsis; title.ToolTip = item.Name; title.Margin = new Thickness(0, 16, 0, 10); copy.Children.Add(title);
+        var metadata = Text(item.Category + "   •   " + _heroSource, 12, "TextSecondaryBrush");
+        metadata.TextWrapping = TextWrapping.NoWrap; metadata.TextTrimming = TextTrimming.CharacterEllipsis;
+        metadata.Margin = new Thickness(0, 0, 0, 20); copy.Children.Add(metadata);
         var actions = new WrapPanel();
-        string playLabel = item.Kind == ContentKind.Series ? "Bölümleri keşfet" : item.Kind == ContentKind.Live ? "Canlı izle" : "Filmi izle";
+        string playLabel = item.Kind == ContentKind.Series ? "Bölümleri keşfet" : item.Kind == ContentKind.Live ? "Canlı izle" : "Şimdi izle";
         var play = Action(playLabel, () => _play(item), true); play.Margin = new Thickness(0, 0, 8, 6); actions.Children.Add(play);
-        var favorite = Action(item.IsFavorite ? "Favorilerimde" : "Favorilere ekle", () => _favorite(item)); favorite.Margin = new Thickness(0, 0, 0, 6); actions.Children.Add(favorite); copy.Children.Add(actions);
+        var favorite = Action(item.IsFavorite ? "Favorilerimde" : "+  Favorilere ekle", () => _favorite(item));
+        favorite.Margin = new Thickness(0, 0, 0, 6); actions.Children.Add(favorite); copy.Children.Add(actions);
+        var navigation = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(36, 0, 0, 20) };
+        hero.Children.Add(navigation);
+        for (int i = 0; i < _heroItems.Count; i++)
+        {
+            int index = i;
+            var dot = new Button { Width = i == _heroIndex ? 25 : 9, Height = 8, MinHeight = 8, Padding = new Thickness(0), Margin = new Thickness(0,0,7,0),
+                Background = Color(i == _heroIndex ? "AccentPrimaryBrush" : "TextMutedBrush"), BorderThickness = new Thickness(0), ToolTip = $"Öne çıkan {i+1}: {_heroItems[i].Name}" };
+            System.Windows.Automation.AutomationProperties.SetName(dot,dot.ToolTip.ToString());
+            dot.Click += (_,_) => { _heroIndex = index; RenderHero(); };
+            navigation.Children.Add(dot);
+        }
+        if (_heroItems.Count > 1)
+        {
+            var arrows = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0,0,26,18) };
+            arrows.Children.Add(Arrow("chevron-left", "Önceki öne çıkan içerik", () => MoveHero(-1)));
+            arrows.Children.Add(Arrow("chevron-right", "Sonraki öne çıkan içerik", () => MoveHero(1)));
+            hero.Children.Add(arrows);
+        }
         hero.SizeChanged += (_, _) =>
         {
             bool narrow = hero.ActualWidth < 800;
-            copy.MaxWidth = Math.Max(200, Math.Min(580, hero.ActualWidth - 254));
-            art.Width = Math.Min(510, hero.ActualWidth * .58);
-            title.FontSize = narrow ? 25 : 30; title.LineHeight = narrow ? 30 : 36; title.MaxHeight = narrow ? 90 : 72;
+            copy.MaxWidth = Math.Max(200, Math.Min(610, hero.ActualWidth - (narrow ? 230 : 300)));
+            backdrop.Width = Math.Min(710, hero.ActualWidth * .7);
+            poster.Width = narrow ? 160 : 194; poster.Height = narrow ? 240 : 290;
+            poster.Margin = new Thickness(0,0,narrow?28:52,0);
+            title.FontSize = narrow ? 27 : 34; title.LineHeight = narrow ? 32 : 39;
         };
-        _feature.Children.Add(hero);
     }
     private void HomeWheel(object sender, MouseWheelEventArgs e)
     {

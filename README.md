@@ -107,12 +107,14 @@ Tam oynatma smoke testi için `--media` ile oynatılabilir yerel bir video dosya
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\build.ps1 -OutputPath .\artifacts
 ```
 
-`src/WXPlayer.App` WPF arayüzünü ve oynatıcıyı, `src/WXPlayer.Core` kaynakları ve kütüphaneyi, `tests/WXPlayer.Tests` regresyon testlerini, `tools` dağıtım araçlarını içerir. [Tasarım sistemi](docs/DESIGN_SYSTEM.md) · [1.7.2 test raporu](docs/TEST-REPORT-1.7.2.md).
+`src/WXPlayer.App` WPF arayüzünü ve oynatıcıyı, `src/WXPlayer.Core` kaynakları ve kütüphaneyi, `tests/WXPlayer.Tests` regresyon testlerini, `tools` dağıtım araçlarını içerir. [Tasarım sistemi](docs/DESIGN_SYSTEM.md) · [1.7.4 test raporu](docs/TEST-REPORT-1.7.4.md).
 
 ## Sürüm geçmişi
 
 | Sürüm | Başlıca değişiklik |
 | --- | --- |
+| **[1.7.4](docs/RELEASE-NOTES-1.7.4.md)** | Tam ekran video yüzeyinin boyutu düzeltildi; mini oynatıcı düzeni yenilendi; yerel render başlığı gizlendi. |
+| **[1.7.3](docs/RELEASE-NOTES-1.7.3.md)** | Mini oynatıcı görüntü yüzeyi ve arayüzü, hızlı duraklat/devam et, bölümün başa dönmesini önleme, afişli sinematik ana sayfa karuseli. |
 | **[1.7.2](docs/RELEASE-NOTES-1.7.2.md)** | Bölüm ve tam ekran arayüzleri, mini oynatıcı, isteğe bağlı kanal sağlığı ve film/dizi klip kaydı. |
 | **[1.7.1](docs/RELEASE-NOTES-1.7.1.md)** | Afişli film/dizi katalogları, yeni WX simgesi, okunabilir canlı TV rehberi, sade README. |
 | **[1.7.0](docs/RELEASE-NOTES-1.7.0.md)** | Koyu masaüstü arayüzü, açılır ikon menüsü ve daha güvenilir Release varlığı seçimi. |

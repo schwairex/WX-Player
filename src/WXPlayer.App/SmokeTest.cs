@@ -115,20 +115,24 @@ internal static class SmokeTest
                 await Task.Delay(1800);using(var media=engine.Player.Media)results["decodedFrames"]=media?.Statistics.DecodedVideo??0;
                 results["playing"]=engine.Player.IsPlaying;results["seekable"]=engine.Player.IsSeekable;
                 uint videoWidth=0,videoHeight=0;engine.Player.Size(0,ref videoWidth,ref videoHeight);results["sourceVideoSize"]=$"{videoWidth}x{videoHeight}";
-                results["rendererIsEmbedded"]=engine.Player.Hwnd==window.Video.Handle&&window.Video.Handle!=IntPtr.Zero;
+                results["rendererIsEmbedded"]=engine.Player.Hwnd==window.Video.RenderingHandle&&window.Video.RenderingHandle!=IntPtr.Zero;
                 results["noDetachedOverlayInNormalView"]=window.SmokeNoVideoOverlay;
                 var typeface=new Typeface(window.FontFamily,FontStyles.Normal,FontWeights.Normal,FontStretches.Normal);
                 results["embeddedInterFont"]=typeface.TryGetGlyphTypeface(out var glyph)&&glyph.FontUri.ToString().Contains("Inter-Regular",StringComparison.OrdinalIgnoreCase);
                 SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-playing-ui.png"));
                 window.Activate();await Task.Delay(250);results["playingWindowCaptured"]=WindowCapture.Save(window,Path.Combine(App.DataDirectory,"WX-Player-playing-native.png"));
-                var original=FullscreenPlacement.WindowBounds(window);IntPtr originalHost=window.Video.Handle;
+                var original=FullscreenPlacement.WindowBounds(window);IntPtr originalHost=window.Video.RenderingHandle;
                 PostMessage(window.Video.Handle,0x0100,new IntPtr(0x46),IntPtr.Zero);await Task.Delay(700);window.UpdateLayout();
                 var full=FullscreenPlacement.WindowBounds(window);var monitor=window.SmokeMonitorBounds;
                 results["fullscreenCoversMonitor"]=full.Left==monitor.Left&&full.Top==monitor.Top&&full.Width==monitor.Width&&full.Height==monitor.Height;
                 results["fullscreenVideoFillsClient"]=Math.Abs(window.Video.ActualWidth-window.Root.ActualWidth)<1&&Math.Abs(window.Video.ActualHeight-window.Root.ActualHeight)<1;
-                results["fullscreenKeepsNativeHandle"]=originalHost==window.Video.Handle;
+                results["fullscreenKeepsNativeHandle"]=originalHost==window.Video.RenderingHandle;
                 results["fullscreenHasFillCrop"]=!string.IsNullOrWhiteSpace(engine.Player.CropGeometry);
                 results["fullscreenCropGeometry"]=engine.Player.CropGeometry??"";
+                GetClientRect(window.Video.Handle,out var nativeHost);GetWindowRect(window.Video.RenderingHandle,out var nativeRender);
+                results["fullscreenNativeHostSize"]=$"{nativeHost.Width}x{nativeHost.Height}";
+                results["fullscreenNativeRenderSize"]=$"{nativeRender.Width}x{nativeRender.Height}";
+                results["fullscreenNativeSurfaceFillsHost"]=nativeHost.Width==nativeRender.Width&&nativeHost.Height==nativeRender.Height;
                 await Task.Delay(3000);results["fullscreenControlsAutoHide"]=!window.SmokeControlsVisible;
                 SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-fullscreen-layout.png"));
                 results["fullscreenWindowCaptured"]=WindowCapture.Save(window,Path.Combine(App.DataDirectory,"WX-Player-fullscreen-native.png"));
@@ -150,7 +154,13 @@ internal static class SmokeTest
                 var restored=FullscreenPlacement.WindowBounds(window);results["windowPlacementRestored"]=original.Left==restored.Left&&original.Top==restored.Top&&original.Width==restored.Width&&original.Height==restored.Height;
                 results["normalUiRestoredAfterFullscreen"]=window.Sidebar.IsVisible&&window.ControlsBorder.Parent==window.ViewingPanel&&window.SmokeNoVideoOverlay;
                 results["normalCropCleared"]=string.IsNullOrEmpty(engine.Player.CropGeometry);
-                foreach(var key in new[]{"rendererIsEmbedded","noDetachedOverlayInNormalView","embeddedInterFont","fullscreenCoversMonitor","fullscreenVideoFillsClient","fullscreenKeepsNativeHandle","fullscreenHasFillCrop","fullscreenControlsAutoHide","fullscreenControlsReveal","fitPreservesAspectRatio","windowPlacementRestored","normalUiRestoredAfterFullscreen","normalCropCleared"})
+                var priorGuideHeight=window.GuideRow.Height;
+                window.GuideRow.Height=new GridLength(Math.Max(190,window.GuideRow.ActualHeight+80));window.UpdateLayout();await Task.Delay(150);
+                GetClientRect(window.Video.Handle,out var guideHost);GetWindowRect(window.Video.RenderingHandle,out var guideRender);
+                results["guideResizeKeepsNativeSurfaceSized"]=guideHost.Width==guideRender.Width&&guideHost.Height==guideRender.Height;
+                results["mainRenderWindowTitleHidden"]=GetWindowTextLength(window.Video.RenderingHandle)==0;
+                window.GuideRow.Height=priorGuideHeight;window.UpdateLayout();
+                foreach(var key in new[]{"rendererIsEmbedded","noDetachedOverlayInNormalView","embeddedInterFont","fullscreenCoversMonitor","fullscreenVideoFillsClient","fullscreenNativeSurfaceFillsHost","fullscreenKeepsNativeHandle","fullscreenHasFillCrop","fullscreenControlsAutoHide","fullscreenControlsReveal","fitPreservesAspectRatio","windowPlacementRestored","normalUiRestoredAfterFullscreen","normalCropCleared","guideResizeKeepsNativeSurfaceSized","mainRenderWindowTitleHidden"})
                     if(!Equals(results[key],true))throw new Exception("UI regression failed: "+key);
                 window.WindowState=WindowState.Maximized;await Task.Delay(500);var maximized=FullscreenPlacement.WindowBounds(window);
                 window.SmokeFullscreen();await Task.Delay(200);window.SmokeFullscreen();
@@ -170,14 +180,31 @@ internal static class SmokeTest
                 await window.SmokePlayAsync(news);await WaitUntil(()=>window.SmokeHealthState==ChannelHealthState.Healthy,TimeSpan.FromSeconds(8));results["channelHealthDetectsPlaying"]=true;
                 window.SmokeToggleMiniPlayer();await Task.Delay(300);
                 results["miniPlayerOwnsSamePlayback"]=window.SmokeMiniPlayerVisible&&engine.Player.Hwnd==window.SmokeMiniVideoHandle&&engine.Player.IsPlaying&&!window.Video.IsVisible;
-                if(window.SmokeMiniWindow is{} miniWindow)SaveWindow(miniWindow,Path.Combine(App.DataDirectory,"WX-Player-1.7.2-mini-player.png"));
+                results["miniKeepsOutputHandle"]=engine.Player.Hwnd==originalHost;
+                results["miniRenderAttachedAndVisible"]=window.SmokeMiniWindow is MiniPlayerWindow miniHost&&GetParent(engine.Player.Hwnd)==miniHost.Video.Handle&&IsWindowVisible(engine.Player.Hwnd);
+                if(window.SmokeMiniWindow is MiniPlayerWindow sizedMini)
+                {
+                    sizedMini.Width+=80;sizedMini.Height+=45;sizedMini.UpdateLayout();await Task.Delay(200);
+                    GetClientRect(sizedMini.Video.Handle,out var miniHostRect);GetWindowRect(sizedMini.Video.RenderingHandle,out var miniRenderRect);
+                    results["miniNativeSurfaceFillsHost"]=miniHostRect.Width==miniRenderRect.Width&&miniHostRect.Height==miniRenderRect.Height;
+                    results["renderWindowTitleHidden"]=GetWindowTextLength(sizedMini.Video.RenderingHandle)==0;
+                }
+                int miniFramesBefore;using(var media=engine.Player.Media)miniFramesBefore=media?.Statistics.DecodedVideo??0;
+                await Task.Delay(700);
+                using(var media=engine.Player.Media)results["miniDecodedFramesAdvance"]=(media?.Statistics.DecodedVideo??0)>miniFramesBefore;
+                if(window.SmokeMiniWindow is{} miniWindow)SaveWindow(miniWindow,Path.Combine(App.DataDirectory,"WX-Player-1.7.3-mini-player.png"));
+                if(!Equals(results["miniKeepsOutputHandle"],true)||!Equals(results["miniRenderAttachedAndVisible"],true)||!Equals(results["miniNativeSurfaceFillsHost"],true)||!Equals(results["renderWindowTitleHidden"],true)||!Equals(results["miniDecodedFramesAdvance"],true))throw new Exception("Mini player did not keep a visible, correctly sized VLC output surface.");
                 window.SmokeToggleMiniPlayer();await Task.Delay(200);
-                results["miniPlayerRestoresNativeVideo"]=!window.SmokeMiniPlayerVisible&&engine.Player.Hwnd==window.Video.Handle&&engine.Player.IsPlaying;
+                results["miniPlayerRestoresNativeVideo"]=!window.SmokeMiniPlayerVisible&&engine.Player.Hwnd==window.Video.RenderingHandle&&engine.Player.IsPlaying;
                 if(!Equals(results["miniPlayerOwnsSamePlayback"],true)||!Equals(results["miniPlayerRestoresNativeVideo"],true))throw new Exception("Mini player transfer interrupted playback.");
+                window.SmokeToggleMiniPlayer();window.SmokeMiniWindow?.Close();await Task.Delay(150);
+                results["miniWindowCloseRestoresVideo"]=!window.SmokeMiniPlayerVisible&&engine.Player.Hwnd==window.Video.RenderingHandle&&engine.Player.IsPlaying;
+                if(!Equals(results["miniWindowCloseRestoresVideo"],true))throw new Exception("Closing the mini window did not return the video surface.");
                 results["epgAutomaticallyLoaded"]=window.EpgList.Items.Cast<Programme>().Single().Title.StartsWith("Güne Bakış");
                 results["epgNowSummary"]=window.GuideNowTitle.Text.StartsWith("Güne Bakış")&&window.GuideNowProgress.Value>0;
                 var first=window.SmokePlayAsync(news);await Task.Delay(10);var second=window.SmokePlayAsync(culture);await Task.WhenAll(first,second);
-                results["epgFollowsLatestChannel"]=window.EpgList.Items.Cast<Programme>().All(p=>p.ChannelId=="wx.culture")&&window.EpgList.Items.Count==2&&window.GuideTitle.Text.Contains("WX Kültür")&&window.GuideNowTitle.Text.Contains("Kültür Atlası");
+                // The following programme may start after midnight and belong to tomorrow's guide.
+                results["epgFollowsLatestChannel"]=window.EpgList.Items.Cast<Programme>().All(p=>p.ChannelId=="wx.culture")&&window.EpgList.Items.Count>=1&&window.GuideTitle.Text.Contains("WX Kültür")&&window.GuideNowTitle.Text.Contains("Kültür Atlası");
                 if(!Equals(results["epgAutomaticallyLoaded"],true)||!Equals(results["epgFollowsLatestChannel"],true)||!Equals(results["epgNowSummary"],true))throw new Exception("EPG UI integration failed.");
                 await WaitUntil(()=>engine.Player.IsPlaying,TimeSpan.FromSeconds(15));await Task.Delay(900);
                 window.SmokeDiscordEnabled(true);
@@ -224,6 +251,14 @@ internal static class SmokeTest
                 results["homeFavoritesAndHistory"]=window.SmokeHome.Items.Any(i=>i.Id=="home-1"&&i.IsFavorite)&&window.SmokeHome.Items.Any(i=>i.Id=="home-2");
                 await WaitUntil(()=>Descendants<ChannelLogo>(window.SmokeHome).Any(l=>l.DecodeWidth>=480&&l.HasImage),TimeSpan.FromSeconds(6));results["homeProviderPostersLoaded"]=true;
                 var homeItem=window.SmokeHome.Items.First(i=>i.Kind==ContentKind.Movie);await window.SmokeOpenHomeAsync(homeItem);await WaitUntil(()=>engine.Player.IsPlaying,TimeSpan.FromSeconds(12));await Task.Delay(400);
+                int movieVersion=window.SmokePlaybackVersion;
+                var pauseWatch=Stopwatch.StartNew();window.SmokeTogglePlayback();
+                await WaitUntil(()=>engine.Player.State==LibVLCSharp.Shared.VLCState.Paused,TimeSpan.FromSeconds(3));pauseWatch.Stop();
+                results["movie173PauseResponsive"]=pauseWatch.ElapsedMilliseconds<500;
+                long pausedAt=engine.Player.Time;window.SmokeTogglePlayback();
+                await WaitUntil(()=>engine.Player.IsPlaying,TimeSpan.FromSeconds(3));
+                results["movie173ResumeKeepsPosition"]=window.SmokePlaybackVersion==movieVersion&&engine.Player.Time>=Math.Max(0,pausedAt-1000);
+                if(!Equals(results["movie173PauseResponsive"],true)||!Equals(results["movie173ResumeKeepsPosition"],true))throw new Exception("Movie playback toggle was slow or restarted the item.");
                 results["homeCardStartsPlayback"]=window.NowTitle.Text==homeItem.Name&&window.ContentGrid.IsVisible&&!window.HomeHost.IsVisible;
                 await WaitUntil(()=>window.SmokeDiscordActivity?.Details==homeItem.Name&&window.SmokeDiscordActivity.End is >0,TimeSpan.FromSeconds(5));
                 results["discordMovieFromRealPlayback"]=true;
@@ -233,8 +268,8 @@ internal static class SmokeTest
                 engine.Player.Time=20000;await Task.Delay(500);
                 await WaitUntil(()=>window.SmokeDiscordActivity?.End is{} end&&Math.Abs(end-DateTimeOffset.UtcNow.ToUnixTimeSeconds()-(engine.Player.Length-engine.Player.Time)/1000d)<3,TimeSpan.FromSeconds(5));
                 results["discordResumeSeekCountdown"]=true;
-                var homeHandle=window.Video.Handle;await window.SmokeBrowseAsync("home");await Task.Delay(200);results["homeNavigationKeepsPlayback"]=engine.Player.IsPlaying&&engine.Player.Hwnd==homeHandle&&window.HomeHost.IsVisible;
-                await window.SmokeBrowseAsync("movie");results["homeReturnKeepsPlayer"]=engine.Player.IsPlaying&&window.Video.Handle==homeHandle&&window.CatalogHost.IsVisible;
+                var homeHandle=window.Video.RenderingHandle;await window.SmokeBrowseAsync("home");await Task.Delay(200);results["homeNavigationKeepsPlayback"]=engine.Player.IsPlaying&&engine.Player.Hwnd==homeHandle&&window.HomeHost.IsVisible;
+                await window.SmokeBrowseAsync("movie");results["homeReturnKeepsPlayer"]=engine.Player.IsPlaying&&window.Video.RenderingHandle==homeHandle&&window.CatalogHost.IsVisible;
                 foreach(string key in new[]{"homeShelvesBoundedAndIsolated","homeFavoritesAndHistory","homeProviderPostersLoaded","homeCardStartsPlayback","homeNavigationKeepsPlayback","homeReturnKeepsPlayer"})if(!Equals(results[key],true))throw new Exception("Home integration: "+key);
                 await Task.Delay(500);engine.Player.Time=12000;await Task.Delay(800);await window.SmokeSaveProgressAsync();
                 var checkpoint=await store.ProgressAsync(homeItem.Id);results["moviePositionStored"]=checkpoint is{PositionMs:>=11500,Completed:false};
@@ -249,6 +284,11 @@ internal static class SmokeTest
                     var timer=new DispatcherTimer{Interval=TimeSpan.FromMilliseconds(150)};timer.Tick+=(_,_)=>{var dialog=window.OwnedWindows.OfType<EpisodeWindow>().FirstOrDefault();if(dialog is null)return;timer.Stop();dialog.Episodes.SelectedIndex=index;results["episodeSelectionIndex"]=dialog.Episodes.SelectedIndex;results["episodeSelectionName"]=((ContentItem?)dialog.Episodes.SelectedItem)?.Name??"none";dialog.Footer.Children.OfType<System.Windows.Controls.Button>().Last().RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));};timer.Start();try{await window.SmokeOpenHomeAsync(show);}finally{timer.Stop();}
                 }
                 await ChooseEpisode(1);results["episodePlayedName"]=window.NowTitle.Text;await WaitUntil(()=>engine.Player.IsPlaying,TimeSpan.FromSeconds(15));await Task.Delay(700);engine.Player.Time=16000;await Task.Delay(800);await window.SmokeSaveProgressAsync();
+                int episodeVersion=window.SmokePlaybackVersion;long episodeAt=engine.Player.Time;
+                window.SmokeTogglePlayback();await WaitUntil(()=>engine.Player.State==LibVLCSharp.Shared.VLCState.Paused,TimeSpan.FromSeconds(3));
+                window.SmokeTogglePlayback();await WaitUntil(()=>engine.Player.IsPlaying,TimeSpan.FromSeconds(3));
+                results["episode173ResumeDoesNotRestart"]=window.SmokePlaybackVersion==episodeVersion&&engine.Player.Time>=episodeAt-1000;
+                if(!Equals(results["episode173ResumeDoesNotRestart"],true))throw new Exception("Episode restarted on pause/resume.");
                 await window.SmokeBrowseAsync("home");var watched=window.SmokeHome.Items.Single();results["seriesLastEpisodeAndTimeVisible"]=watched.Progress is{PositionMs:>=15500}&&watched.ProgressLabel.Contains("B02");
                 window.UpdateLayout();SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-watch-progress.png"));
                 var updatedChoices=await window.SmokeEpisodesAsync(seriesSource,watched);var progressPicker=new EpisodeWindow(window,watched,updatedChoices);progressPicker.Show();await Task.Delay(150);results["episodePickerSelectsLastEpisode"]=((ContentItem?)progressPicker.Episodes.SelectedItem)?.Episode==2;SaveWindow(progressPicker,Path.Combine(App.DataDirectory,"WX-Player-episode-progress.png"));progressPicker.Close();
@@ -301,6 +341,11 @@ internal static class SmokeTest
     }
     private static async Task WaitUntil(Func<bool> condition,TimeSpan timeout){var sw=Stopwatch.StartNew();while(!condition()){if(sw.Elapsed>timeout)throw new TimeoutException("Playback did not start.");await Task.Delay(100);}}
     [DllImport("user32.dll")]private static extern bool PostMessage(IntPtr hwnd,int message,IntPtr wParam,IntPtr lParam);
+    [DllImport("user32.dll")]private static extern IntPtr GetParent(IntPtr hwnd);
+    [DllImport("user32.dll")]private static extern bool IsWindowVisible(IntPtr hwnd);
+    [DllImport("user32.dll")]private static extern bool GetClientRect(IntPtr hwnd,out FullscreenPlacement.Rect rect);
+    [DllImport("user32.dll")]private static extern bool GetWindowRect(IntPtr hwnd,out FullscreenPlacement.Rect rect);
+    [DllImport("user32.dll",CharSet=CharSet.Unicode)]private static extern int GetWindowTextLength(IntPtr hwnd);
     private static async IAsyncEnumerable<ContentItem> StressItems(SourceConfig source)
     {
         for(int i=0;i<100500;i++){yield return new ContentItem{Id=ContentItem.Key(source.Id,i.ToString()),SourceId=source.Id,Name=$"Örnek Kanal {i:D6}",Category="Performans",Url=$"https://example.test/{i}.ts"};if(i%1000==0)await Task.Yield();}
