@@ -157,95 +157,11 @@ internal sealed partial class CatalogView
         panel.Children.Add(new TextBlock { Text = label, VerticalAlignment = VerticalAlignment.Center }); return panel;
     }
 
-    private Grid BuildCardPresentation(ContentItem item)
-    {
-        var wrapper = new Grid { Width = PosterWidth, Margin = new Thickness(0, 0, 16, 0),
-            VerticalAlignment = VerticalAlignment.Top, DataContext = item };
-        var content = new StackPanel();
-        var poster = Poster(item, PosterWidth, PosterHeight); content.Children.Add(poster);
-        var shadow = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 10, ShadowDepth = 2, Direction = 270, Opacity = .4, Color = Colors.Black };
-        poster.Effect = shadow;
-        var shift = new TranslateTransform(); poster.RenderTransform = shift;
-        var name = Text(item.Name, 14.72); name.FontWeight = FontWeights.SemiBold;
-        name.Margin = new Thickness(0, 11.2, 0, 0); name.TextTrimming = TextTrimming.CharacterEllipsis;
-        name.TextWrapping = TextWrapping.NoWrap; name.ToolTip = item.Name; content.Children.Add(name);
-        string year = System.Text.RegularExpressions.Regex.Match(item.Name, @"(?<!\d)(?:19|20)\d{2}(?!\d)").Value;
-        var meta = Text(year.Length > 0 ? year : item.Category, 12.48, "--mut");
-        meta.Margin = new Thickness(0, 2.4, 0, 0); meta.TextTrimming = TextTrimming.CharacterEllipsis;
-        meta.TextWrapping = TextWrapping.NoWrap; content.Children.Add(meta);
-        var open = new Button { Style = (Style)Resources["CatalogCardButton"], Content = content, ToolTip = item.Name };
-        System.Windows.Automation.AutomationProperties.SetName(open,
-            (item.Kind == ContentKind.Series ? "Bölümleri aç · " : "Filmi izle · ") + item.Name);
-        open.Click += (_, _) => _open(item); wrapper.Children.Add(open);
-        var overlay = new Grid { Height = PosterHeight, VerticalAlignment = VerticalAlignment.Top,
-            Opacity = 0, IsHitTestVisible = false, Background = new LinearGradientBrush(new GradientStopCollection {
-                new(Colors.Transparent, .4), new(System.Windows.Media.Color.FromArgb(166, 0, 0, 0), 1) }, new Point(0,0), new Point(0,1)) };
-        overlay.Clip = new RectangleGeometry(new Rect(0, 0, PosterWidth, PosterHeight), 16, 16);
-        overlay.RenderTransform = shift;
-        overlay.Children.Add(new Border { Width = 51.2, Height = 51.2, CornerRadius = new CornerRadius(999),
-            Background = Color("--ink"), Child = new SvgIcon("fs-v2-play") { Width = 19.2, Height = 19.2,
-                Foreground = Color("CatalogDarkInk"), Margin = new Thickness(1.6, 0, 0, 0) } });
-        wrapper.Children.Add(overlay);
-        if (item.Progress is not null)
-        {
-            var progress = Progress(item); progress.VerticalAlignment = VerticalAlignment.Bottom;
-            poster.Children.Add(progress);
-        }
-        var favoriteIcon = new SvgIcon { Width = 16, Height = 16, StrokeThickness = 1.7 };
-        favoriteIcon.SetBinding(SvgIcon.IconProperty, new Binding(nameof(ContentItem.IsFavorite)) {
-            Converter = (IValueConverter)Resources["CatalogFavoriteIcon"] });
-        favoriteIcon.SetBinding(SvgIcon.ForegroundProperty, new Binding(nameof(Button.Foreground)) { RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor, typeof(Button), 1) });
-        var favorite = new Button { Style = (Style)Resources["CatalogFavorite"], Content = favoriteIcon,
-            HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top,
-            Margin = new Thickness(0, 8, 8, 0), ToolTip = "Favoriyi değiştir", RenderTransform = shift };
-        System.Windows.Automation.AutomationProperties.SetName(favorite, "Favoriyi değiştir · " + item.Name);
-        favorite.Click += (_, e) => { e.Handled = true; _favorite(item); }; wrapper.Children.Add(favorite);
-        void Reveal(bool show)
-        {
-            var duration = TimeSpan.FromSeconds(SystemParameters.ClientAreaAnimation ? .25 : 0);
-            shift.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(show ? -4.8 : 0, duration));
-            shadow.BeginAnimation(System.Windows.Media.Effects.DropShadowEffect.BlurRadiusProperty, new DoubleAnimation(show ? 36 : 10, duration));
-            shadow.BeginAnimation(System.Windows.Media.Effects.DropShadowEffect.ShadowDepthProperty, new DoubleAnimation(show ? 16 : 2, duration));
-            shadow.BeginAnimation(System.Windows.Media.Effects.DropShadowEffect.OpacityProperty, new DoubleAnimation(show ? 2d / 3 : .4, duration));
-            overlay.BeginAnimation(OpacityProperty, new DoubleAnimation(show ? 1 : 0,
-                TimeSpan.FromSeconds(SystemParameters.ClientAreaAnimation ? .2 : 0)));
-        }
-        wrapper.MouseEnter += (_, _) => Reveal(true);
-        wrapper.MouseLeave += (_, _) => Reveal(wrapper.IsKeyboardFocusWithin);
-        wrapper.IsKeyboardFocusWithinChanged += (_, _) => Reveal(wrapper.IsMouseOver || wrapper.IsKeyboardFocusWithin);
-        return wrapper;
-    }
-
+    private Grid BuildCardPresentation(ContentItem item) => CatalogPosterCard.Build(this, item, _open, _favorite);
     private ProgressBar Progress(ContentItem item) => new() { Height = 4, Minimum = 0, Maximum = 1,
         Value = item.Progress?.Fraction ?? 0, Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(51, 255, 255, 255)),
         Foreground = Color("--acc"), BorderThickness = new Thickness(0), IsHitTestVisible = false };
-
-    private Grid Poster(ContentItem item, double width, double height)
-    {
-        var poster = new Grid { Width = width, Height = height, Clip = new RectangleGeometry(new Rect(0, 0, width, height), 16, 16) };
-        var logo = new ChannelLogo { DataContext = item, Initials = "", DecodeWidth = 400,
-            ImageStretch = Stretch.UniformToFill, ImagePadding = new Thickness(0) };
-        logo.SetBinding(ChannelLogo.UrlProperty, new Binding(nameof(ContentItem.Logo)) { Source = item });
-        poster.Children.Add(logo);
-        var placeholder = new Grid { Background = Color("--p2"), IsHitTestVisible = false };
-        placeholder.Children.Add(new Rectangle { Stroke = new SolidColorBrush(System.Windows.Media.Color.FromArgb(26,255,255,255)),
-            StrokeThickness = 1, StrokeDashArray = new DoubleCollection { 3, 3 }, RadiusX = 16, RadiusY = 16 });
-        var labels = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(14.4) };
-        labels.Children.Add(new SvgIcon("catalog-film") { Width = 28.8, Height = 28.8, StrokeThickness = 1.7,
-            Foreground = new SolidColorBrush(System.Windows.Media.Color.FromRgb(75,85,90)), HorizontalAlignment = HorizontalAlignment.Center });
-        var title = Text(item.Name, 14.4, "--mut"); title.FontWeight = FontWeights.SemiBold;
-        title.TextAlignment = TextAlignment.Center; title.Margin = new Thickness(0, 9.6, 0, 0);
-        labels.Children.Add(title); placeholder.Children.Add(labels); poster.Children.Add(placeholder);
-        // Observe only the existing image loader's visual output; no separate network request.
-        var image = logo.Children.OfType<Image>().Single();
-        var descriptor = DependencyPropertyDescriptor.FromProperty(Image.SourceProperty, typeof(Image));
-        void Refresh(object? sender, EventArgs e) => placeholder.Visibility = logo.HasImage ? Visibility.Collapsed : Visibility.Visible;
-        bool observing = false;
-        poster.Loaded += (_, _) => { if (!observing) { descriptor.AddValueChanged(image, Refresh); observing = true; } Refresh(null, EventArgs.Empty); };
-        poster.Unloaded += (_, _) => { if (observing) { descriptor.RemoveValueChanged(image, Refresh); observing = false; } };
-        return poster;
-    }
-
+    private Grid Poster(ContentItem item, double width, double height) => CatalogPosterCard.Poster(this, item, width, height);
     private static System.Windows.Media.Color Hsl(double hue, double saturation, double lightness)
     {
         double chroma = (1 - Math.Abs(2 * lightness - 1)) * saturation, sector = hue / 60;
@@ -255,3 +171,4 @@ internal sealed partial class CatalogView
         return System.Windows.Media.Color.FromRgb((byte)Math.Round((r+m)*255), (byte)Math.Round((g+m)*255), (byte)Math.Round((b+m)*255));
     }
 }
+

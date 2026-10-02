@@ -15,7 +15,7 @@
 
 **[İndir](https://github.com/schwairex/WX-Player/releases/latest)** · **[Kurulum](#kurulum)** · **[Özellikler](#özellikler)** · **[Sürüm geçmişi](#sürüm-geçmişi)** · **[Sorun bildir](https://github.com/schwairex/WX-Player/issues)**
 
-![WX Player ana sayfası](docs/WX-Player-preview.png)
+![WX Player ana sayfası](docs/WXPlayer-1.7.8-ana-sayfa.png)
 
 <sub>Görüntü örnek test kütüphanesinden alınmıştır. WX Player içerik veya IPTV aboneliği sağlamaz.</sub>
 
@@ -109,7 +109,7 @@ Tam oynatma smoke testi için `--media` ile oynatılabilir yerel bir video dosya
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\build.ps1 -OutputPath .\artifacts
 ```
 
-`src/WXPlayer.App` WPF arayüzünü ve oynatıcıyı, `src/WXPlayer.Core` kaynakları ve kütüphaneyi, `tests/WXPlayer.Tests` regresyon testlerini, `tools` dağıtım araçlarını içerir. [Tasarım sistemi](docs/DESIGN_SYSTEM.md) · [1.7.7 test raporu](docs/TEST-REPORT-1.7.7.md).
+`src/WXPlayer.App` WPF arayüzünü ve oynatıcıyı, `src/WXPlayer.Core` kaynakları ve kütüphaneyi, `tests/WXPlayer.Tests` regresyon testlerini, `tools` dağıtım araçlarını içerir. [Tasarım sistemi](docs/DESIGN_SYSTEM.md) · [1.7.8 test raporu](docs/TEST-REPORT-1.7.8.md).
 
 Tam ekranda `N` sonraki bölüm/içerik, `R` kayıt ve `C` ses/altyazı menüsünü açar. Kategori/sayfalama seçenekleri için kütüphane arama alanına sağ tıklayın.
 
@@ -117,6 +117,7 @@ Tam ekranda `N` sonraki bölüm/içerik, `R` kayıt ve `C` ses/altyazı menüsü
 
 | Sürüm | Başlıca değişiklik |
 | --- | --- |
+| **[1.7.8](docs/RELEASE-NOTES-1.7.8.md)** | HTML referansı ile Ana sayfa: tek arama, eğik hero afişi, türlere ayrılmış devam/favori satırları, ortak afiş kartları, 16:10 kanal kartları ve sayfa sonu durum notu. |
 | **[1.7.7](docs/RELEASE-NOTES-1.7.7.md)** | Referans HTML'ye göre Filmler/Diziler görünümü: sabit başlık, Manrope, ölçeklenen afiş rafları, gerçek izleme konumlu hero ve afişsiz kartlar. |
 | **[1.7.6](docs/RELEASE-NOTES-1.7.6.md)** | v2 tam ekran tasarımı, ekrana göre rem ölçeklendirmesi, bölüm/favori kütüphanesi, gerçek hız ve ses/altyazı menüleri. |
 | **[1.7.5](docs/RELEASE-NOTES-1.7.5.md)** | Uzun duraklatma sonrası bölümün kaldığı yerden devam etmesi; referans tam ekran düzeni, açılır kütüphane ve tek kontrol çubuğu. |
@@ -140,3 +141,4 @@ Tam ekranda `N` sonraki bölüm/içerik, `R` kayıt ve `C` ses/altyazı menüsü
 ## Katkı ve lisans
 
 Hata veya geliştirme önerilerini [Issues](https://github.com/schwairex/WX-Player/issues) üzerinden paylaşabilirsiniz. Uygulama kodu [MIT lisansı](LICENSE) altındadır; üçüncü taraf bileşenler ve örnek medya kendi lisanslarına tabidir. WX Player yalnız istemcidir; IPTV aboneliği veya yayın sağlamaz.
+

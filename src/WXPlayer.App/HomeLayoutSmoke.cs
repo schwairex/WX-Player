@@ -30,7 +30,7 @@ internal static class HomeLayoutSmoke
         var live = new ContentItem { Id = "layout-live", SourceId = "layout", Kind = ContentKind.Live, Name = "WX TV Haber HD", Category = "Ulusal", Logo = logo.Url };
         ContentItem[] mixed = [live, movies[0], shows[0], movies[2], movies[3], movies[4], movies[5], shows[1], live with { Id = "layout-live2", Name = "WX Kültür" }];
         HomeShelf Shelf(string title, string section, ContentItem[] items) => new(title, section, new WXPlayer.Core.Page(items, items.Length));
-        var shelves = new[] { Shelf("Son izlenenler", "recent", mixed), Shelf("Favorilerin", "favorites", mixed), Shelf("Filmler", "movie", movies), Shelf("Diziler", "series", shows), Shelf("Şimdi canlı", "live", [live]) };
+        var shelves = new[] { Shelf("Son izlenenler", "recent", mixed), Shelf("Favorilerin", "favorites", mixed.Concat(Enumerable.Range(0, 5).Select(i => movies[0] with { Id = "layout-extra-" + i })).ToArray()), Shelf("Filmler", "movie", movies), Shelf("Diziler", "series", shows), Shelf("Şimdi canlı", "live", [live]) };
         string? played = null, browsed = null; bool retried = false;
         var home = new HomeView(i => played = i.Id, _ => { }, s => browsed = s, () => { }, () => { });
         var original = window.HomeHost.Content; double width = window.Width, height = window.Height;
@@ -60,18 +60,19 @@ internal static class HomeLayoutSmoke
             Check("home152KeyboardNavigationRevealsLastCard", Descendants<ScrollViewer>(favorite).Single().HorizontalOffset > 0, results);
             var chosen = Cards(favorite).First(); window.Activate(); chosen.Focus();
             await Until(()=>chosen.IsKeyboardFocused); window.UpdateLayout();
-            var chrome = (Border)chosen.Template.FindName("Chrome", chosen);
-            Check("home152CardFocusVisible", chosen.IsKeyboardFocused && chosen.BorderThickness.Left >= 1 && chrome.BorderBrush.ToString() == "#FFC1EC8B", results);
+            var focusTemplate = (ControlTemplate)chosen.FocusVisualStyle.Setters.OfType<Setter>().Single(s => s.Property == Control.TemplateProperty).Value;
+            var chrome = (Border)focusTemplate.LoadContent();
+            Check("home152CardFocusVisible", chosen.IsKeyboardFocused && chrome.BorderThickness.Left == 2 && chrome.BorderBrush.ToString() == "#FFC5F27A", results);
             chosen.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             Check("home152CardAction", played == ((ContentItem)chosen.Tag).Id, results);
-            var all = Descendants<Button>(favorite).First(b => Equals(b.Content, "Tümünü gör")); all.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            var all = Descendants<Button>(favorite).First(b => Equals(b.Content, "Tümünü gör →")); all.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             Check("home152ShelfBrowseAction", browsed == "favorites", results);
             home.ScrollToVerticalOffset(690); await Task.Delay(80); Save(window, "WX-Player-1.5.3-posters.png");
             window.Width = 900; window.Height = 760;
             await home.RenderAsync("Çok uzun kaynak adı ile taşma kontrolü · Örnek kütüphane", shelves, "", movies[2]);
             await Task.Delay(250); window.UpdateLayout(); home.ScrollToTop();
             CheckGeometry(home, results, "Compact"); results["home152CompactWidth"]=home.ActualWidth; Save(window, "WX-Player-1.5.3-compact.png");
-            Check("home152CompactSearchOwnRow", Grid.GetRow((UIElement)home.Search.Parent) == 1, results);
+            Check("home178CompactSingleSearch", home.Search.IsVisible && home.Search.ActualWidth >= 100 && Descendants<TextBox>(home).Count(t => t.IsVisible) == 1, results);
             Check("home152HeroActionsWithinBounds", Descendants<Button>(Feature(home)).All(b => b.TranslatePoint(new Point(0, b.ActualHeight), Feature(home)).Y <= Feature(home).ActualHeight), results);
             Save(window, "WX-Player-1.5.3-compact.png");
             window.Width = 1920; window.Height = 1080; await Task.Delay(100); window.UpdateLayout();
@@ -182,7 +183,7 @@ internal static class HomeLayoutSmoke
             window.HomeHost.Content=home;await home.RenderAsync("Test kütüphanesi",Shelves(),"",films[0]);window.UpdateLayout();
             StackPanel Section(string key)=>Descendants<StackPanel>(home).Single(p=>Equals(p.Tag,key));
             Button[] RemoveButtons()=>Descendants<Button>(Section("recent")).Where(b=>System.Windows.Automation.AutomationProperties.GetName(b).StartsWith("Son izlenenlerden kaldır · ")).ToArray();
-            Check("home161Discovery48MoviesAndSeries",Cards(Section("movie")).Count()==48&&Cards(Section("series")).Count()==48,results);
+            Check("home178Discovery12MoviesAndSeries",Cards(Section("movie")).Count()==12&&Cards(Section("series")).Count()==12&&home.Items.Count>24,results);
             foreach(var key in new[]{"movie","series"})
             {
                 var section=Section(key);var scroll=Descendants<ScrollViewer>(section).Single();
@@ -193,6 +194,10 @@ internal static class HomeLayoutSmoke
             var remove=RemoveButtons()[0];card.Focus();window.UpdateLayout();
             Check("home161RemoveVisibleOnKeyboardFocus",remove.Opacity==1&&remove.IsHitTestVisible,results);
             Check("home161RemoveDoesNotResizeCard",card.RenderSize==size&&size==Cards(Section("favorites")).First().RenderSize,results);
+            var favoriteAction=Descendants<Button>(Section("recent")).First(b=>System.Windows.Automation.AutomationProperties.GetName(b)=="Favoriyi değiştir · "+films[0].Name);
+            var removeRect=new Rect(remove.TranslatePoint(new Point(),Section("recent")),remove.RenderSize);
+            var favoriteRect=new Rect(favoriteAction.TranslatePoint(new Point(),Section("recent")),favoriteAction.RenderSize);
+            Check("home178RecentActionsDoNotOverlap",!removeRect.IntersectsWith(favoriteRect),results);
             remove.Focus();home.ScrollToVerticalOffset(300);await Task.Delay(60);
             Check("home161RemoveAcceptsKeyboardFocus",remove.IsKeyboardFocused,results);
             Save(window,"WX-Player-1.6.1-recent-remove.png");
@@ -202,7 +207,7 @@ internal static class HomeLayoutSmoke
             Check("home161RemovalRestoresKeyboardFocus",RemoveButtons()[0].IsKeyboardFocused,results);
             RemoveButtons()[0].RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             await Until(()=>!Descendants<StackPanel>(home).Any(p=>Equals(p.Tag,"recent")));
-            Check("home161LastRecentRemovalKeepsOtherShelves",Cards(Section("movie")).Count()==48&&Cards(Section("favorites")).Count()==1,results);
+            Check("home161LastRecentRemovalKeepsOtherShelves",Cards(Section("movie")).Count()==12&&Cards(Section("favorites")).Count()==1,results);
         }
         finally { window.HomeHost.Content=original; }
     }
@@ -233,7 +238,7 @@ internal static class HomeLayoutSmoke
     private static IEnumerable<Button> Cards(DependencyObject root) => Descendants<Button>(root).Where(b => b.Tag is ContentItem);
     private static void CheckGeometry(HomeView home, Dictionary<string, object> results, string suffix)
     {
-        Check("home152FeatureBounded" + suffix, Feature(home).ActualHeight is > 0 and <= 352 && Feature(home).ActualWidth <= home.ActualWidth, results);
+        Check("home152FeatureBounded" + suffix, Feature(home).ActualHeight is > 0 and <= 352 && Feature(home).TransformToAncestor(home).TransformBounds(new Rect(0, 0, Feature(home).ActualWidth, Feature(home).ActualHeight)).Width <= home.ActualWidth + .5, results);
         foreach (var section in new[] { "recent", "favorites", "movie", "series" })
         {
             var panel = Descendants<StackPanel>(home).Single(p => Equals(p.Tag, section)); var cards = Cards(panel).ToArray();
@@ -268,6 +273,10 @@ internal static class HomeLayoutSmoke
         var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap)); using var data = new MemoryStream(); encoder.Save(data); return data.ToArray();
     }
 }
+
+
+
+
 
 
 

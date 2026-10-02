@@ -83,7 +83,7 @@ internal static class Catalog177Smoke
             window.Width = 2560; window.Height = 1200; await Task.Delay(180); window.UpdateLayout();
             Check("catalog177LargeFontClamp", catalog.RootFontSize == 20);
             await window.SmokeBrowseAsync("home"); window.UpdateLayout();
-            Check("catalog177ShellRestoresForHome", window.TopBar.IsAncestorOf(window.SourcePicker) && window.TopBar.IsAncestorOf(window.AddSourceButton) && window.TopBar.IsVisible);
+            Check("catalog177ShellRestoresForHome", window.SmokeHome.IsAncestorOf(window.SourcePicker) && window.SmokeHome.IsAncestorOf(window.AddSourceButton) && !window.TopBar.IsVisible);
             await window.SmokeBrowseAsync("movie"); await window.SmokeBrowseAsync("live"); window.UpdateLayout();
             Check("catalog177ShellRestoresForLive", window.TopBar.IsAncestorOf(window.SourcePicker) && !catalog.IsVisible && window.ContentGrid.IsVisible);
             Check("catalog177LibraryPreserved", (await store.QueryAsync(source.Id, ContentKind.Movie, null, "", false, false, 0)).Total == 96);
@@ -104,3 +104,4 @@ internal static class Catalog177Smoke
         var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap)); using var file = File.Create(Path.Combine(App.DataDirectory, filename)); encoder.Save(file);
     }
 }
+

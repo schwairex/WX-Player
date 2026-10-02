@@ -15,6 +15,7 @@ public partial class MainWindow
     private void SetCatalogAppearance()
     {
         if (_catalog is null) return;
+        DetachHomeShellIfNeeded();
         bool visible = CatalogVisible;
         if (visible && !_catalogShellAttached)
         {
@@ -60,5 +61,7 @@ public partial class MainWindow
             CatalogHost.Margin = new Thickness(0, 24, 0, 0);
             BottomBar.Margin = new Thickness(0, 14, 0, 0);
         }
+        SetHomeAppearance();
     }
 }
+

@@ -53,8 +53,9 @@ internal sealed partial class HomeView
             double vertical = VerticalOffset;
             var focused=Keyboard.FocusedElement as Button;
             bool removeFocused=focused?.Tag is RecentRemoval&&IsAncestorOf(focused);
-            string? focusedId = focused is not null&&IsAncestorOf(focused)?focused.Tag switch {ContentItem item=>item.Id,RecentRemoval removal=>removal.Item.Id,_=>null}:null;
-            var offsets = _shelves.Children.OfType<StackPanel>().Where(p => p.Tag is string).ToDictionary(p => (string)p.Tag, p => p.Children.OfType<ScrollViewer>().FirstOrDefault()?.HorizontalOffset ?? 0);
+            bool favoriteFocused=focused?.Tag is HomeFavoriteAction&&IsAncestorOf(focused);
+            string? focusedId = focused is not null&&IsAncestorOf(focused)?focused.Tag switch {ContentItem item=>item.Id,RecentRemoval removal=>removal.Item.Id,HomeFavoriteAction favorite=>favorite.Item.Id,_=>null}:null;
+            var offsets = _shelves.Children.OfType<StackPanel>().Where(p => p.Tag is string).ToDictionary(p => (string)p.Tag, p => ShelfScroll(p)?.HorizontalOffset ?? 0);
             Reset();
             var visible = candidates.Select(s => s with { Page = new WXPlayer.Core.Page(s.Page.Items.Where(i => ready.Contains(i.Id)).Take(s.Section is "movie" or "series"?48:12).ToArray(), s.Page.Total) }).ToArray();
             Items = visible.SelectMany(s => s.Page.Items).DistinctBy(i => i.Id).ToArray(); Empty = Items.Count == 0;
@@ -68,21 +69,26 @@ internal sealed partial class HomeView
                 return;
             }
             BuildHero(Featured, source ?? "Kütüphaneniz");
-            foreach (var shelf in visible.Where(s => s.Page.Items.Count > 0)) BuildShelf(shelf);
+            BuildHomeRows(visible);
             foreach (var panel in _shelves.Children.OfType<StackPanel>())
-                if (panel.Tag is string key && offsets.TryGetValue(key, out double offset)) panel.Children.OfType<ScrollViewer>().First().ScrollToHorizontalOffset(offset);
+                if (panel.Tag is string key && offsets.TryGetValue(key, out double offset)) ShelfScroll(panel)?.ScrollToHorizontalOffset(offset);
             if (focusedId is not null)
             {
+                UpdateLayout();
                 var buttons=ShelfButtons().ToArray();
-                var target=buttons.FirstOrDefault(b=>removeFocused?b.Tag is RecentRemoval r&&r.Item.Id==focusedId:b.Tag is ContentItem i&&i.Id==focusedId);
+                var target=buttons.FirstOrDefault(b=>removeFocused?b.Tag is RecentRemoval r&&r.Item.Id==focusedId:favoriteFocused?b.Tag is HomeFavoriteAction f&&f.Item.Id==focusedId:b.Tag is ContentItem i&&i.Id==focusedId);
+                target??=favoriteFocused?buttons.FirstOrDefault(b=>b.Tag is HomeFavoriteAction):null;
                 target??=removeFocused?buttons.FirstOrDefault(b=>b.Tag is RecentRemoval)??buttons.FirstOrDefault(b=>b.Tag is ContentItem):null;
                 // Rebuilt ScrollViewer templates must be measured before their buttons
                 // can accept keyboard focus.
                 UpdateLayout();
-                if(target is not null)target.Focus();else if(removeFocused)Search.Focus();
+                if(target is not null)target.Focus();else if(removeFocused||favoriteFocused)Search.Focus();
             }
             ScrollToVerticalOffset(vertical);
         }
     }
 }
+
+
+
 
