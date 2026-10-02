@@ -25,6 +25,22 @@ internal static class WindowCapture
         }
         finally{SelectObject(memory,previous);DeleteObject(bitmap);DeleteDC(memory);ReleaseDC(hwnd,dc);}
     }
+    public static bool SaveVisibleFullscreen(Window window,string path,Window? chrome=null)
+    {
+        var rect=FullscreenPlacement.WindowBounds(window);
+        IntPtr foreground=GetForegroundWindow();
+        if(foreground!=new WindowInteropHelper(window).Handle && (chrome?.Owner!=window || foreground!=new WindowInteropHelper(chrome).Handle))return false;
+        IntPtr dc=GetDC(IntPtr.Zero),memory=CreateCompatibleDC(dc),bitmap=CreateCompatibleBitmap(dc,rect.Width,rect.Height),previous=SelectObject(memory,bitmap);
+        try
+        {
+            if(!BitBlt(memory,0,0,rect.Width,rect.Height,dc,rect.Left,rect.Top,0x40CC0020))return false;
+            var info=new BitmapInfo{Size=40,Width=rect.Width,Height=-rect.Height,Planes=1,BitCount=32};var bytes=new byte[checked(rect.Width*rect.Height*4)];
+            if(GetDIBits(memory,bitmap,0,(uint)rect.Height,bytes,ref info,0)==0)return false;
+            var image=BitmapSource.Create(rect.Width,rect.Height,96,96,PixelFormats.Bgr32,null,bytes,rect.Width*4);var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(image));using var output=File.Create(path);encoder.Save(output);return true;
+        }
+        finally{SelectObject(memory,previous);DeleteObject(bitmap);DeleteDC(memory);ReleaseDC(IntPtr.Zero,dc);}
+    }
+    [DllImport("user32.dll")]private static extern IntPtr GetDC(IntPtr hwnd);
     [DllImport("user32.dll")]private static extern IntPtr GetWindowDC(IntPtr hwnd);
     [DllImport("user32.dll")]private static extern IntPtr GetForegroundWindow();
     [DllImport("user32.dll")]private static extern int ReleaseDC(IntPtr hwnd,IntPtr dc);

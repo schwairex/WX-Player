@@ -4,6 +4,14 @@ Kullanıcının tercih ettiği kalıcı teslim klasörü:
 
 `E:\Codex\2026-09-05\bu-klas-r-i-indekileri-analiz\outputs`
 
+2026-10-01 tarihli kullanıcı talimatına göre sonraki tüm yerel çıktılar `E:\Codex\2026-09-05\bu-klas-r-i-indekileri-analiz` kökü altında uygun klasöre hazırlanır:
+
+- `outputs`: teslim edilecek EXE, portable ZIP, kaynak ZIP, sürüm notları, README, doğrulama raporları, SHA-256 dosyaları ve arayüz önizlemeleri.
+- `work/release-X.Y.Z`: sürüme özel paketleme ve derleme ara çıktıları.
+- `work/qa-X.Y.Z-*`: ayrı test verileri, geçici çalıştırma klasörleri ve ham doğrulama çıktıları.
+
+Yeni bir çıktı türü hazırlanırken mevcut klasör düzeni incelenerek uygun konum belirlenir. Bu talimat önceki C: teslimlerini taşımayı veya E: üzerindeki mevcut kaynak ağacının üzerine yazmayı tek başına gerektirmez; kaynak ağacının güncelliği ayrıca doğrulanır.
+
 Sonraki yerel sürümler de bu klasöre teslim edilir. Yalnız src/.../bin altındaki geliştirme EXE'si teslim sayılmaz.
 
 Her sürüm için:

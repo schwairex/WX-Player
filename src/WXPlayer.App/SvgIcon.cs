@@ -17,6 +17,8 @@ public sealed class SvgIcon : FrameworkElement
     private static readonly Dictionary<string,List<(Geometry Shape,bool Fill)>> Cache=new();
     public string Icon {get=>(string)GetValue(IconProperty);set=>SetValue(IconProperty,value);}
     public Brush Foreground {get=>(Brush)GetValue(ForegroundProperty);set=>SetValue(ForegroundProperty,value);}
+    public static readonly DependencyProperty StrokeThicknessProperty=DependencyProperty.Register(nameof(StrokeThickness),typeof(double),typeof(SvgIcon),new FrameworkPropertyMetadata(1.65,FrameworkPropertyMetadataOptions.AffectsRender));
+    public double StrokeThickness {get=>(double)GetValue(StrokeThicknessProperty);set=>SetValue(StrokeThicknessProperty,value);}
     public SvgIcon(){Width=20;Height=20;IsHitTestVisible=false;}
     public SvgIcon(string name):this(){Icon=name;}
     protected override void OnRender(DrawingContext dc)
@@ -24,7 +26,7 @@ public sealed class SvgIcon : FrameworkElement
         base.OnRender(dc);if(string.IsNullOrWhiteSpace(Icon))return;
         if(!Cache.TryGetValue(Icon,out var paths))
         {
-            if(!System.Text.RegularExpressions.Regex.IsMatch(Icon,"^[a-z-]+$"))return;
+            if(!System.Text.RegularExpressions.Regex.IsMatch(Icon,"^[a-z0-9-]+$"))return;
             var resource=Application.GetResourceStream(new Uri($"pack://application:,,,/WXPlayer;component/Assets/Icons/{Icon}.svg"));
             if(resource is null)return;
             using var stream=resource.Stream;using var reader=XmlReader.Create(stream,new XmlReaderSettings{DtdProcessing=DtdProcessing.Prohibit,XmlResolver=null});
@@ -35,7 +37,7 @@ public sealed class SvgIcon : FrameworkElement
         }
         double scale=Math.Min(ActualWidth,ActualHeight)/24;
         dc.PushTransform(new TranslateTransform((ActualWidth-24*scale)/2,(ActualHeight-24*scale)/2));dc.PushTransform(new ScaleTransform(scale,scale));
-        var pen=new Pen(Foreground,1.65){StartLineCap=PenLineCap.Round,EndLineCap=PenLineCap.Round,LineJoin=PenLineJoin.Round};
+        var pen=new Pen(Foreground,StrokeThickness){StartLineCap=PenLineCap.Round,EndLineCap=PenLineCap.Round,LineJoin=PenLineJoin.Round};
         foreach(var (shape,fill) in paths)dc.DrawGeometry(fill?Foreground:null,pen,shape);
         dc.Pop();dc.Pop();
     }

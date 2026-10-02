@@ -128,7 +128,7 @@ internal static class HomeLayoutSmoke
             Render(false, filmItems);
             await Until(() => Descendants<ChannelLogo>(catalog).Count(l => l.HasImage) >= 10);
             window.UpdateLayout();
-            Check("catalog171PosterTiles", Descendants<Grid>(catalog).Count(g => g.Width == 164 &&
+            Check("catalog171PosterTiles", Descendants<Grid>(catalog).Count(g => g.Width == 176 &&
                 g.Children.OfType<ChannelLogo>().Any(l => l.HasImage)) >= 10, results);
             Check("catalog171MovieYear", Descendants<TextBlock>(catalog).Any(t => t.Text == "2024"), results);
             Save(window, "WX-Player-1.7.1-movies-fixture.png");
@@ -139,7 +139,7 @@ internal static class HomeLayoutSmoke
             Render(true, showItems);
             await Until(() => Descendants<ChannelLogo>(catalog).Count(l => l.HasImage) >= 10);
             window.UpdateLayout();
-            Check("catalog171SeriesPosterTiles", Descendants<Grid>(catalog).Count(g => g.Width == 164 &&
+            Check("catalog171SeriesPosterTiles", Descendants<Grid>(catalog).Count(g => g.Width == 176 &&
                 g.Children.OfType<ChannelLogo>().Any(l => l.HasImage)) >= 10, results);
             Save(window, "WX-Player-1.7.1-series-fixture.png");
         }
@@ -253,7 +253,7 @@ internal static class HomeLayoutSmoke
         var bitmap = new RenderTargetBitmap((int)root.ActualWidth, (int)root.ActualHeight, 96, 96, PixelFormats.Pbgra32); bitmap.Render(root);
         var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap)); using var file = File.Create(Path.Combine(App.DataDirectory, name)); encoder.Save(file);
     }
-    private static byte[] Poster(int width, int height, string name, string color)
+    internal static byte[] Poster(int width, int height, string name, string color)
     {
         var visual = new DrawingVisual();
         using (var draw = visual.RenderOpen())

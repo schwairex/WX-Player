@@ -1,5 +1,11 @@
 <Application x:Class="WXPlayer.App.App" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ui="clr-namespace:WXPlayer.App" xmlns:sys="clr-namespace:System;assembly=System.Runtime">
  <Application.Resources><FontFamily x:Key="AppFont">pack://application:,,,/WXPlayer;component/Assets/Fonts/#Inter</FontFamily><ui:FavoriteIconConverter x:Key="FavoriteIcon"/>
+  <!-- The supplied fullscreen HTML's CSS variables, isolated from the app shell. -->
+  <FontFamily x:Key="FullscreenFont">pack://application:,,,/WXPlayer;component/Assets/Fonts/#Manrope</FontFamily>
+  <SolidColorBrush x:Key="--ink" Color="#F4F7F1"/><SolidColorBrush x:Key="--mut" Color="#B4BDB9"/>
+  <SolidColorBrush x:Key="--acc" Color="#C5F27A"/><SolidColorBrush x:Key="--live" Color="#FF5C6C"/>
+  <SolidColorBrush x:Key="--glass" Color="#C70C0F11"/><SolidColorBrush x:Key="--line" Color="#24FFFFFF"/>
+  <SolidColorBrush x:Key="--bg" Color="#080A0B"/>
   <!-- 1.7.0: one neutral, artwork-led palette shared by XAML and code-built views. -->
   <Color x:Key="BackgroundBaseColor">#090C10</Color><SolidColorBrush x:Key="BackgroundBaseBrush" Color="{StaticResource BackgroundBaseColor}"/>
   <Color x:Key="BackgroundSecondaryColor">#0D1116</Color><SolidColorBrush x:Key="BackgroundSecondaryBrush" Color="{StaticResource BackgroundSecondaryColor}"/>

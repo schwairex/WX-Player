@@ -46,6 +46,17 @@ internal static class Experience160Smoke
             Check("seriesReplacesGuide",window.SmokeSeriesPanel.IsVisible&&!window.GuidePanel.IsVisible);
             Check("currentSeasonSelected",window.SmokeSeriesPanel.Seasons.SelectedIndex==0&&window.SmokeSeriesPanel.Episodes.Items.Count==2);
             var selected=window.SmokeSeriesPanel.Episodes.SelectedItem as ContentItem;Check("playingEpisodeSelected",selected?.Episode==1);
+            engine.Player.Time=18000;await Wait(()=>engine.Player.Time>=17000);
+            window.SmokeTogglePlayback();await Wait(()=>engine.Player.State==LibVLCSharp.Shared.VLCState.Paused);
+            await window.SmokeSaveProgressAsync();engine.Player.Stop();
+            window.SmokeRecoverInterruptedEpisode();await Task.Delay(950);
+            Check("pausedEpisodeDoesNotAutoResume",!engine.Player.IsPlaying);
+            window.SmokeTogglePlayback();await Wait(()=>engine.Player.IsPlaying&&engine.Player.Time>=16000);
+            Check("interruptedEpisodeResumesAtCheckpoint",engine.Player.Time>=16000&&window.NowTitle.Text.Contains("S01E01"));
+            engine.Player.Time=25000;await Wait(()=>engine.Player.Time>=24000);await window.SmokeSaveProgressAsync();
+            engine.Player.Stop();window.SmokeRecoverInterruptedEpisode();
+            await Wait(()=>engine.Player.IsPlaying&&engine.Player.Time>=23000);
+            Check("activeEpisodeRecoversAfterPrematureStop",engine.Player.Time>=23000&&window.NowTitle.Text.Contains("S01E01"));
             Capture(window,"WX-Player-1.6.0-episodes.png");
             double width=window.Width,height=window.Height;window.Width=900;window.Height=650;await Task.Delay(200);window.UpdateLayout();
             Check("compactEpisodePanelFits",window.SmokeSeriesPanel.ActualHeight>=175&&window.SmokeSeriesPanel.TranslatePoint(new Point(0,window.SmokeSeriesPanel.ActualHeight),window.Root).Y<=window.Root.ActualHeight);
@@ -55,7 +66,7 @@ internal static class Experience160Smoke
             window.SmokeFullscreen();window.Activate();engine.Player.Time=1000;await Task.Delay(350);window.SmokeNextEpisodeTick();Check("noEarlyNextEpisode",!window.SmokeNextEpisodeVisible);
             engine.Player.Time=engine.Player.Length-28000;await Task.Delay(400);window.SmokeNextEpisodeTick();await Wait(()=>window.SmokeNextEpisodeVisible);
             Check("nextEpisodeWithin30Seconds",window.SmokeNextEpisodeVisible);
-            var prompt=window.OwnedWindows.Cast<Window>().Single(w=>w.Title=="Sonraki bölüm");Capture(prompt,"WX-Player-1.6.0-next-episode.png");
+            var prompt=Window.GetWindow(window.FullscreenChannels!)!;Capture(prompt,"WX-Player-1.6.0-next-episode.png");
             engine.Player.Time=1000;await Task.Delay(400);window.SmokeNextEpisodeTick();Check("seekBackHidesNextEpisode",!window.SmokeNextEpisodeVisible);
             engine.Player.Time=engine.Player.Length-28000;await Task.Delay(400);window.SmokeNextEpisodeTick();await Wait(()=>window.SmokeNextEpisodeVisible);
             window.SmokeClickNextEpisode();await Wait(()=>window.NowTitle.Text.Contains("S01E02")&&engine.Player.IsPlaying);await Task.Delay(700);

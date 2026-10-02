@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Window x:Class="WXPlayer.App.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="WX Player" Icon="Assets/wx-logo.png" Width="1440" Height="920" MinWidth="900" MinHeight="650" Style="{StaticResource AppWindow}" UseLayoutRounding="True" WindowStartupLocation="CenterScreen" PreviewKeyDown="Window_KeyDown" SizeChanged="Window_SizeChanged" Closing="Window_Closing" xmlns:ui="clr-namespace:WXPlayer.App" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType">
+<Window x:Class="WXPlayer.App.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="WX Player" Icon="Assets/wx-logo.png" Width="1440" Height="920" MinWidth="900" MinHeight="650" Style="{StaticResource AppWindow}" UseLayoutRounding="True" WindowStartupLocation="CenterScreen" PreviewKeyDown="Window_KeyDown" SizeChanged="Window_SizeChanged" Closing="Window_Closing" xmlns:ui="clr-namespace:WXPlayer.App" xmlns:core="clr-namespace:WXPlayer.Core;assembly=WXPlayer.Core" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType">
   <Window.Resources>
+    <ResourceDictionary>
+    <ResourceDictionary.MergedDictionaries><ResourceDictionary Source="FullscreenV2.xaml"/></ResourceDictionary.MergedDictionaries>
     <!-- Explicit shell styles do not affect media pages, dialogs or player controls. -->
     <Style x:Key="ShellButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
       <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
@@ -34,6 +36,28 @@
         <Button Grid.Column="2" MinWidth="34" MinHeight="34" Tag="{Binding}" PreviewMouseLeftButtonDown="Favorite_PreviewMouseDown" Click="Favorite_Click" Padding="4" Background="Transparent" BorderThickness="0" ToolTip="Favori"><ui:SvgIcon Icon="{Binding IsFavorite, Converter={StaticResource FavoriteIcon}}" Width="17" Height="17" Foreground="{StaticResource AccentPrimaryBrush}"/></Button>
       </Grid>
     </DataTemplate>
+    <DataTemplate x:Key="FullscreenDrawerItemTemplate">
+      <Grid Height="43.2"><Grid.ColumnDefinitions><ColumnDefinition Width="43.2"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="28.8"/></Grid.ColumnDefinitions>
+        <Border Width="43.2" Height="43.2" Background="#27312D" CornerRadius="12" ClipToBounds="True"><ui:ChannelLogo Url="{Binding Logo}" Initials="{Binding Initials}" DecodeWidth="96"/></Border>
+        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12.8,0,0,0"><TextBlock Text="{Binding Name}" FontSize="15.2" FontWeight="Bold" Foreground="{StaticResource --ink}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}"/><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><Border x:Name="KindTag" Background="#33C5F27A" CornerRadius="4.8" Padding="6.08,1.28" Margin="0,0,6.4,0"><TextBlock x:Name="KindText" Text="{Binding KindLabel}" FontSize="10.4" FontWeight="ExtraBold" Foreground="{StaticResource --acc}"/></Border><TextBlock Grid.Column="1" Text="{Binding Category}" FontSize="12.48" Foreground="{StaticResource --mut}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/></Grid></StackPanel>
+        <Control x:Name="Equalizer" Grid.Column="2" Width="13" Margin="12.8,0,12.8,0" Visibility="Collapsed" Template="{StaticResource FullscreenEqualizerTemplate}"/><Button Grid.Column="3" Tag="{Binding}" PreviewMouseLeftButtonDown="Favorite_PreviewMouseDown" Click="Favorite_Click" Style="{StaticResource FullscreenIconButton}" Width="28.8" Height="28.8" ToolTip="Favori" AutomationProperties.Name="Favori"><ui:SvgIcon x:Name="Star" Icon="{Binding IsFavorite, Converter={StaticResource FavoriteIcon}}" Width="19.2" Height="19.2" Foreground="{StaticResource --mut}" Opacity="0.7" StrokeThickness="1.8"/></Button>
+      </Grid>
+      <DataTemplate.Triggers><DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True"><Setter TargetName="Equalizer" Property="Visibility" Value="Visible"/></DataTrigger>
+        <DataTrigger Binding="{Binding Kind}" Value="{x:Static core:ContentKind.Live}"><Setter TargetName="KindTag" Property="Background" Value="#38FF5C6C"/><Setter TargetName="KindText" Property="Foreground" Value="#FF8C98"/></DataTrigger>
+        <DataTrigger Binding="{Binding Kind}" Value="{x:Static core:ContentKind.Movie}"><Setter TargetName="KindTag" Property="Background" Value="#338CBEFF"/><Setter TargetName="KindText" Property="Foreground" Value="#9CC4FF"/></DataTrigger>
+        <DataTrigger Binding="{Binding IsFavorite}" Value="True"><Setter TargetName="Star" Property="Foreground" Value="{StaticResource --acc}"/><Setter TargetName="Star" Property="Opacity" Value="1"/></DataTrigger>
+      </DataTemplate.Triggers>
+    </DataTemplate>
+    <DataTemplate x:Key="FullscreenEpisodeTemplate">
+      <Grid Height="43.2"><Grid.ColumnDefinitions><ColumnDefinition Width="43.2"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+        <Border Background="#27312D" CornerRadius="12"><TextBlock Text="{Binding Episode}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="13.6" FontWeight="ExtraBold"/></Border>
+        <StackPanel Grid.Column="1" Margin="12.8,0,0,0" VerticalAlignment="Center"><TextBlock Text="{Binding Name}" FontSize="15.2" FontWeight="Bold" TextTrimming="CharacterEllipsis"/><TextBlock Text="{Binding EpisodeLabel}" FontSize="12.48" Foreground="{StaticResource --mut}" TextTrimming="CharacterEllipsis"/></StackPanel>
+        <Control x:Name="Equalizer" Grid.Column="2" Width="13" Margin="12.8,0,0,0" Visibility="Collapsed" Template="{StaticResource FullscreenEqualizerTemplate}"/><TextBlock Grid.Column="2" Text="✓" Foreground="{StaticResource --acc}" VerticalAlignment="Center" Visibility="Collapsed" x:Name="Done"/>
+        <Border Height="2" Background="#1AFFFFFF" VerticalAlignment="Bottom" Grid.ColumnSpan="3" Margin="0,0,0,-5.6"><ProgressBar Minimum="0" Maximum="1" Value="{Binding Progress.Fraction, Mode=OneWay}" Height="2" BorderThickness="0" Foreground="{StaticResource --acc}" Background="Transparent"/></Border>
+      </Grid>
+      <DataTemplate.Triggers><DataTrigger Binding="{Binding Progress.Completed}" Value="True"><Setter TargetName="Done" Property="Visibility" Value="Visible"/></DataTrigger><DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True"><Setter TargetName="Equalizer" Property="Visibility" Value="Visible"/><Setter TargetName="Done" Property="Visibility" Value="Collapsed"/></DataTrigger></DataTemplate.Triggers>
+    </DataTemplate>
+    </ResourceDictionary>
   </Window.Resources>
   <Grid x:Name="Root" Background="{StaticResource BackgroundBaseBrush}">
     <Grid.ColumnDefinitions>
@@ -114,7 +138,7 @@
           <Button x:Name="SettingsNav" Style="{StaticResource Nav}" Click="Settings_Click">
             <ui:IconLabel Icon="settings" Label="Ayarlar" />
           </Button>
-      <TextBlock x:Name="VersionLabel" Text="WX PLAYER  /  1.7.4" FontSize="9" Foreground="{StaticResource TextMutedBrush}" Margin="12,12,0,0" />
+      <TextBlock x:Name="VersionLabel" Text="WX PLAYER  /  1.7.7" FontSize="9" Foreground="{StaticResource TextMutedBrush}" Margin="12,12,0,0" />
         </StackPanel>
         <Grid />
       </DockPanel>
@@ -136,7 +160,7 @@
           <TextBlock x:Name="PageTitle" Text="Ana sayfa" Foreground="{StaticResource TextPrimaryBrush}" FontSize="{StaticResource PageTitleFontSize}" FontWeight="SemiBold" Margin="0,4,0,0" />
         </StackPanel></DockPanel>
         <ComboBox x:Name="SourcePicker" Grid.Column="1" VerticalAlignment="Center" SelectionChanged="Source_Changed" ToolTip="Aktif kaynak" AutomationProperties.Name="Aktif kaynak" />
-        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
+        <StackPanel x:Name="CatalogShellActions" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
           <Button Style="{StaticResource ShellButton}" Click="Summary_Click" ToolTip="Kütüphane özeti" Padding="10" Margin="0,0,8,0">
             <ui:SvgIcon Icon="library" />
           </Button>

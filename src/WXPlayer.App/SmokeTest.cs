@@ -16,6 +16,11 @@ internal static class SmokeTest
         var results=new Dictionary<string,object>();
         try
         {
+            if(App.Arguments.Contains("--catalog-layout-only"))
+            {
+                await Catalog177Smoke.RunAsync(window,store,results);results["success"]=true;
+                File.WriteAllText(Path.Combine(App.DataDirectory,"smoke-results.json"),JsonSerializer.Serialize(results,new JsonSerializerOptions{WriteIndented=true}));window.Close();return;
+            }
             if(App.Arguments.Contains("--discord-presence"))
             {
                 await DiscordPresenceSmoke.RunAsync(window,store,engine,results);results["success"]=true;
@@ -122,7 +127,13 @@ internal static class SmokeTest
                 SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-playing-ui.png"));
                 window.Activate();await Task.Delay(250);results["playingWindowCaptured"]=WindowCapture.Save(window,Path.Combine(App.DataDirectory,"WX-Player-playing-native.png"));
                 var original=FullscreenPlacement.WindowBounds(window);IntPtr originalHost=window.Video.RenderingHandle;
-                PostMessage(window.Video.Handle,0x0100,new IntPtr(0x46),IntPtr.Zero);await Task.Delay(700);window.UpdateLayout();
+                window.SmokeFullscreen();await Task.Delay(700);window.UpdateLayout();
+                var chrome=Window.GetWindow(window.FullscreenChannels!)!;
+                double rem=Math.Clamp(.0062*chrome.ActualWidth+8,14,22);
+                var drawerBounds=window.FullscreenBrowser!.TransformToAncestor(chrome).TransformBounds(new Rect(0,0,window.FullscreenBrowser.ActualWidth,window.FullscreenBrowser.ActualHeight));
+                results["fullscreenV2RemDrawerWidth"]=Math.Abs(drawerBounds.Width-26*rem)<1;
+                results["fullscreenV2RemDrawerPosition"]=Math.Abs(drawerBounds.Top-5.2*rem)<1&&Math.Abs(chrome.ActualWidth-drawerBounds.Right-1.5*rem)<1;
+                if(!Equals(results["fullscreenV2RemDrawerWidth"],true)||!Equals(results["fullscreenV2RemDrawerPosition"],true))throw new Exception("Fullscreen v2 rem scaling does not match the HTML viewport.");
                 var full=FullscreenPlacement.WindowBounds(window);var monitor=window.SmokeMonitorBounds;
                 results["fullscreenCoversMonitor"]=full.Left==monitor.Left&&full.Top==monitor.Top&&full.Width==monitor.Width&&full.Height==monitor.Height;
                 results["fullscreenVideoFillsClient"]=Math.Abs(window.Video.ActualWidth-window.Root.ActualWidth)<1&&Math.Abs(window.Video.ActualHeight-window.Root.ActualHeight)<1;
@@ -133,10 +144,17 @@ internal static class SmokeTest
                 results["fullscreenNativeHostSize"]=$"{nativeHost.Width}x{nativeHost.Height}";
                 results["fullscreenNativeRenderSize"]=$"{nativeRender.Width}x{nativeRender.Height}";
                 results["fullscreenNativeSurfaceFillsHost"]=nativeHost.Width==nativeRender.Width&&nativeHost.Height==nativeRender.Height;
-                await Task.Delay(3000);results["fullscreenControlsAutoHide"]=!window.SmokeControlsVisible;
+                results["fullscreenBeforeHideToggle"]=window.SmokeHideState;
+                if(window.SmokeFullscreenDrawerOpen){window.SmokeShortcut(System.Windows.Input.Key.L);results["fullscreenLShortcutClosesDrawer"]=!window.SmokeFullscreenDrawerOpen;}
+                // An operator can use the desktop during QA; isolate only this timed assertion from physical pointer input.
+                window.SmokeSuspendPointerReveal=true;
+                try { await Task.Delay(4200);results["fullscreenControlsAutoHide"]=!window.SmokeControlsVisible;results["fullscreenAutoHideState"]=window.SmokeHideState; }
+                finally { window.SmokeSuspendPointerReveal=false; }
                 SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-fullscreen-layout.png"));
                 results["fullscreenWindowCaptured"]=WindowCapture.Save(window,Path.Combine(App.DataDirectory,"WX-Player-fullscreen-native.png"));
-                PostMessage(window.Video.Handle,0x0200,IntPtr.Zero,new IntPtr((30<<16)|40));await Task.Delay(150);results["fullscreenControlsReveal"]=window.SmokeControlsVisible;results["fullscreenBrowser"]=window.FullscreenChannels?.Items.Count==window.ChannelList.Items.Count;
+                window.Activate();window.SmokeFullscreenPointerMotion();
+                await WaitUntil(()=>window.SmokeControlsVisible,TimeSpan.FromSeconds(4));
+                if(!window.SmokeFullscreenDrawerOpen){window.SmokeShortcut(System.Windows.Input.Key.L);results["fullscreenLShortcutOpensDrawer"]=window.SmokeFullscreenDrawerOpen;}await Task.Delay(400);results["fullscreenControlsReveal"]=window.SmokeControlsVisible;results["fullscreenBrowser"]=window.FullscreenChannels?.Items.Count==window.ChannelList.Items.Count;
                 var floating=Window.GetWindow(window.FullscreenChannels)!;floating.UpdateLayout();var browser=window.FullscreenBrowser!;
                 var star=Descendants<System.Windows.Controls.Button>(window.FullscreenChannels!).First(b=>b.Tag is ContentItem);
                 var starred=(ContentItem)star.Tag;string titleBeforeStar=window.NowTitle.Text;
@@ -145,10 +163,16 @@ internal static class SmokeTest
                 results["fullscreenFavoriteUpdatesWithoutSwitching"]=window.NowTitle.Text==titleBeforeStar&&Descendants<SvgIcon>(star).Any(i=>i.Icon=="star-filled")&&(await store.FindAsync(starred.Id))?.IsFavorite==true;
                 star.RaiseEvent(new System.Windows.Input.MouseButtonEventArgs(System.Windows.Input.Mouse.PrimaryDevice,0,System.Windows.Input.MouseButton.Left){RoutedEvent=UIElement.PreviewMouseLeftButtonDownEvent});await WaitUntil(()=>!starred.IsFavorite,TimeSpan.FromSeconds(4));
                 if(!Equals(results["fullscreenFavoriteUpdatesWithoutSwitching"],true))throw new Exception("Fullscreen favorite interaction failed");
-                results["fullscreenPanelWidthsMatch"]=Math.Abs(browser.ActualWidth-window.ControlsBorder.ActualWidth)<1&&Math.Abs(browser.TranslatePoint(new Point(),floating).X-window.ControlsBorder.TranslatePoint(new Point(),floating).X)<1;
-                results["fullscreenPanelsNotClipped"]=window.ControlsBorder.TranslatePoint(new Point(0,window.ControlsBorder.ActualHeight),floating).Y<=floating.ActualHeight;
-                if(!Equals(results["fullscreenPanelWidthsMatch"],true)||!Equals(results["fullscreenPanelsNotClipped"],true))throw new Exception("Fullscreen panel bounds mismatch");
+                await FullscreenV2Smoke.CheckAsync(window,engine,results);
+                var overlayBounds=FullscreenPlacement.WindowBounds(floating);
+                results["fullscreenOverlayCoversMonitor"]=overlayBounds.Left==monitor.Left&&overlayBounds.Top==monitor.Top&&overlayBounds.Width==monitor.Width&&overlayBounds.Height==monitor.Height;
+                var browserPoint=browser.TranslatePoint(new Point(),floating);
+                var visibleDrawer=browser.TransformToAncestor(floating).TransformBounds(new Rect(0,0,browser.ActualWidth,browser.ActualHeight));
+                results["fullscreenDrawerPlacement"]=Math.Abs(visibleDrawer.Width-26*rem)<2&&Math.Abs(visibleDrawer.Right-(floating.ActualWidth-1.5*rem))<3&&Math.Abs(browserPoint.Y-5.2*rem)<3&&visibleDrawer.Bottom<=floating.ActualHeight-11.5*rem+1;
+                if(!Equals(results["fullscreenOverlayCoversMonitor"],true)||!Equals(results["fullscreenDrawerPlacement"],true))throw new Exception("Fullscreen drawer does not match the reference layout.");
                 SaveWindow(floating,Path.Combine(App.DataDirectory,"WX-Player-fullscreen-controls.png"));
+                window.Activate();await Task.Delay(250);
+                results["fullscreenVisibleScreenshot"]=WindowCapture.SaveVisibleFullscreen(window,Path.Combine(App.DataDirectory,"WX-Player-1.7.6-fullscreen-visible.png"),floating);
                 window.SmokeFit();results["fitPreservesAspectRatio"]=string.IsNullOrEmpty(engine.Player.CropGeometry)&&string.IsNullOrEmpty(engine.Player.AspectRatio);window.SmokeFit();
                 window.SmokeFullscreen();await Task.Delay(500);window.UpdateLayout();
                 var restored=FullscreenPlacement.WindowBounds(window);results["windowPlacementRestored"]=original.Left==restored.Left&&original.Top==restored.Top&&original.Width==restored.Width&&original.Height==restored.Height;
@@ -246,6 +270,8 @@ internal static class SmokeTest
                 async IAsyncEnumerable<ContentItem> HomeItems(){for(int i=0;i<36;i++){yield return new ContentItem{Id="home-"+i,SourceId=homeSource.Id,Name="Test içeriği "+i.ToString("D2"),Category=i<24?"Filmler":"Diziler",Kind=i<24?ContentKind.Movie:ContentKind.Series,Logo=logos.Url,Url=target.Url};await Task.Yield();}}
                 await store.ImportAsync(homeSource,HomeItems(),null,default);await store.FavoriteAsync("home-1",true);await store.RememberAsync("home-2");
                 await window.SmokeRefreshAsync(homeSource.Id);await window.SmokeBrowseAsync("home");window.UpdateLayout();
+                // A newer async artwork render can supersede the awaited render (especially on a cold self-contained launch).
+                await WaitUntil(()=>!window.SmokeHome.IsLoadingArtwork&&window.SmokeHome.Items.Count==36&&window.SmokeHome.Items.All(i=>i.SourceId==homeSource.Id),TimeSpan.FromSeconds(6));
                 // 1.6.1 expanded discovery shelves to 48; this fixture has 24 movies + 12 series.
                 results["homeShelvesBoundedAndIsolated"]=window.SmokeHome.Items.Count==36&&window.SmokeHome.Items.Count(i=>i.Kind==ContentKind.Movie)==24&&window.SmokeHome.Items.Count(i=>i.Kind==ContentKind.Series)==12&&window.SmokeHome.Items.All(i=>i.SourceId==homeSource.Id);
                 results["homeFavoritesAndHistory"]=window.SmokeHome.Items.Any(i=>i.Id=="home-1"&&i.IsFavorite)&&window.SmokeHome.Items.Any(i=>i.Id=="home-2");
@@ -352,7 +378,7 @@ internal static class SmokeTest
     }
     private static void SaveWindow(Window window,string path)
     {
-        window.UpdateLayout();var content=(FrameworkElement)window.Content;var bitmap=new RenderTargetBitmap((int)content.ActualWidth,(int)content.ActualHeight,96,96,PixelFormats.Pbgra32);bitmap.Render(content);var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(bitmap));using var file=File.Create(path);encoder.Save(file);
+        window.UpdateLayout();var content=(FrameworkElement)window.Content;var bitmap=new RenderTargetBitmap((int)window.ActualWidth,(int)window.ActualHeight,96,96,PixelFormats.Pbgra32);bitmap.Render(content);var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(bitmap));using var file=File.Create(path);encoder.Save(file);
     }
 }
 

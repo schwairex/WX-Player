@@ -31,6 +31,7 @@ public partial class MainWindow
         bool catalog=CatalogVisible;
         HomeHost.Visibility=home?Visibility.Visible:Visibility.Collapsed;
         CatalogHost.Visibility=catalog?Visibility.Visible:Visibility.Collapsed;
+        SetCatalogAppearance();
         ContentGrid.Visibility=home||catalog?Visibility.Collapsed:Visibility.Visible;
         CatalogBackButton.Visibility=CatalogSection&&_catalogPlaying&&!_fullscreen?Visibility.Visible:Visibility.Collapsed;
         if(home&&!_homeVisible)_homeShuffleSeed=Random.Shared.Next();

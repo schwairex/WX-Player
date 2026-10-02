@@ -41,7 +41,9 @@ WX Player, eklediğiniz M3U, Xtream Codes ve uyumlu Stalker kaynaklarını yerel
 <details>
 <summary>Film ve dizi raflarının görünümünü aç</summary>
 
-![Film katalog rafları](docs/WX-Player-1.7.1-movies.png)
+![Film katalog rafları](docs/WXPlayer-1.7.7-filmler.png)
+
+![Dizi katalog rafları](docs/WXPlayer-1.7.7-diziler.png)
 
 <sub>Görünüm testi için üretilmiş afişler. Uygulama kendi kütüphanenizdeki içerikleri kullanır.</sub>
 </details>
@@ -66,7 +68,7 @@ Kaynağınız afiş ya da kanal logosu sağlamıyorsa uygulama uygun herkese aç
 
 - **Filmler ve Diziler:** Sol menüden ilgili sayfayı açın. Gerçek kütüphane kategorileri yatay afiş rafları olarak görünür. Arayın, rafları kaydırın veya bir içeriği favorileyin. Dizi kartını seçtikten sonra sezon ve bölümü belirleyin.
 - **Canlı TV:** Kanal seçildiğinde onun EPG'si oynatıcının altında açılır. “Şu an yayında” alanı mevcut programı ve ilerlemesini, liste sonraki programları gösterir. Rehber gelmiyorsa sağlayıcının EPG bağlantısını ve kanal eşleşmesini kontrol edin.
-- **Tam ekran:** Yenilenen oynatıcı kontrolleri fare hareketiyle görünür; kanal/kategori seçimi ve favoriler kullanılabilir. Canlı TV'nin yerel 60 saniye tamponu yalnız desteklenen akışlarda işler.
+- **Tam ekran:** Başlık, tek kontrol çubuğu ve sağdan açılan kütüphane gerçek kaynak verisiyle çalışır. `L` veya menü düğmesiyle paneli açıp kapatabilirsiniz; panel kapalıyken oynatma sırasında 3,5 saniye hareketsizlikten sonra kontroller gizlenir. Canlı TV'nin yerel 60 saniye tamponu yalnız desteklenen akışlarda işler.
 - **Mini oynatıcı ve sağlık:** Oynatıcıdaki mini pencere düğmesi veya `P` ile izlemeyi ayrı pencerede sürdürüp geri dönebilirsiniz. Ayarlar'da mini oynatıcıyı kapatabilir veya canlı kanallar için isteğe bağlı sağlık göstergesini açabilirsiniz. Gösterge oynatmanın başlayıp başlamadığını kontrol eder; tüm yayın boyunca kesintisiz çalışacağını garanti etmez.
 - **Kayıt:** Canlı TV kaydı seçilen kanal akışını dosyaya yazar. Film ve dizide kayıt düğmesine ilk basış başlangıcı, ikinci basış bitişi belirler; klip seçilen aralıktan dışa aktarılır. Akış kopyalama nedeniyle başlangıç ve bitiş en yakın anahtar kareye kayabilir.
 - **Veriler:** Favoriler, geçmiş ve kaynaklar yerel veri klasöründe tutulur. Discord Rich Presence varsayılan olarak kapalıdır; açıldığında özel yayın adresleri ve sağlayıcı kimlik bilgileri paylaşılmaz. [Discord kurulumu ve gizlilik](docs/DISCORD-PRESENCE.md).
@@ -76,11 +78,11 @@ Kaynağınız afiş ya da kanal logosu sağlamıyorsa uygulama uygun herkese aç
 | Tuş | İşlem | Tuş | İşlem |
 | --- | --- | --- | --- |
 | `Space` | Oynat / duraklat | `F`, `Esc` | Tam ekran / çıkış |
-| `←`, `→` | Desteklenen akışta 10 sn geri / ileri | `↑`, `↓` | Sesi 5 azalt / artır |
+| `←`, `→` | Desteklenen akışta 10 sn geri / ileri | `↑`, `↓` | Sesi 5 artır / azalt |
 | `M` | Sesi kapat / aç | `Z` | Görüntüyü sığdır / doldur |
 | `Page Up`, `Page Down` | Önceki / sonraki içerik | `I` | Yayın istatistikleri |
 | `Ctrl+K` | Arama | `Ctrl+B` | Sol menüyü aç / daralt |
-| `P` | Mini oynatıcıyı aç / ana pencereye dön | | |
+| `P` | Normal pencerede mini oynatıcı; tam ekranda önceki bölüm/içerik | `L` | Tam ekranda kütüphaneyi aç / kapat |
 
 Fare tekerleği içerik sayfasını kaydırır; video üzerindeyken sesi ayarlar. Rafları `Shift + tekerlek` ile yatay kaydırabilirsiniz.
 
@@ -107,12 +109,17 @@ Tam oynatma smoke testi için `--media` ile oynatılabilir yerel bir video dosya
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\build.ps1 -OutputPath .\artifacts
 ```
 
-`src/WXPlayer.App` WPF arayüzünü ve oynatıcıyı, `src/WXPlayer.Core` kaynakları ve kütüphaneyi, `tests/WXPlayer.Tests` regresyon testlerini, `tools` dağıtım araçlarını içerir. [Tasarım sistemi](docs/DESIGN_SYSTEM.md) · [1.7.4 test raporu](docs/TEST-REPORT-1.7.4.md).
+`src/WXPlayer.App` WPF arayüzünü ve oynatıcıyı, `src/WXPlayer.Core` kaynakları ve kütüphaneyi, `tests/WXPlayer.Tests` regresyon testlerini, `tools` dağıtım araçlarını içerir. [Tasarım sistemi](docs/DESIGN_SYSTEM.md) · [1.7.7 test raporu](docs/TEST-REPORT-1.7.7.md).
+
+Tam ekranda `N` sonraki bölüm/içerik, `R` kayıt ve `C` ses/altyazı menüsünü açar. Kategori/sayfalama seçenekleri için kütüphane arama alanına sağ tıklayın.
 
 ## Sürüm geçmişi
 
 | Sürüm | Başlıca değişiklik |
 | --- | --- |
+| **[1.7.7](docs/RELEASE-NOTES-1.7.7.md)** | Referans HTML'ye göre Filmler/Diziler görünümü: sabit başlık, Manrope, ölçeklenen afiş rafları, gerçek izleme konumlu hero ve afişsiz kartlar. |
+| **[1.7.6](docs/RELEASE-NOTES-1.7.6.md)** | v2 tam ekran tasarımı, ekrana göre rem ölçeklendirmesi, bölüm/favori kütüphanesi, gerçek hız ve ses/altyazı menüleri. |
+| **[1.7.5](docs/RELEASE-NOTES-1.7.5.md)** | Uzun duraklatma sonrası bölümün kaldığı yerden devam etmesi; referans tam ekran düzeni, açılır kütüphane ve tek kontrol çubuğu. |
 | **[1.7.4](docs/RELEASE-NOTES-1.7.4.md)** | Tam ekran video yüzeyinin boyutu düzeltildi; mini oynatıcı düzeni yenilendi; yerel render başlığı gizlendi. |
 | **[1.7.3](docs/RELEASE-NOTES-1.7.3.md)** | Mini oynatıcı görüntü yüzeyi ve arayüzü, hızlı duraklat/devam et, bölümün başa dönmesini önleme, afişli sinematik ana sayfa karuseli. |
 | **[1.7.2](docs/RELEASE-NOTES-1.7.2.md)** | Bölüm ve tam ekran arayüzleri, mini oynatıcı, isteğe bağlı kanal sağlığı ve film/dizi klip kaydı. |

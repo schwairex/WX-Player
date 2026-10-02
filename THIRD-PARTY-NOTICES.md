@@ -15,6 +15,8 @@ The HLS example points to Apple's publicly hosted HLS technical test stream; htt
 WX Player does not provide subscription channels, credentials, or subscriptions. Use your own authorized sources.
 
 * Inter 4.1 — Copyright Rasmus Andersson; SIL Open Font License 1.1. Unmodified static OTF fonts are bundled; license: licenses/Inter-OFL-1.1.txt. https://rsms.me/inter/ and https://github.com/rsms/inter/releases/tag/v4.1
+
+* Manrope — Copyright Mikhail Sharanda; SIL Open Font License 1.1. Unmodified static TTF fonts are bundled for the fullscreen interface; license: licenses/Manrope-OFL-1.1.txt. https://github.com/sharanda/manrope
 * WX Player SVG icons — original artwork included under the application's MIT license.
 
 ## Online artwork metadata (1.6.0)

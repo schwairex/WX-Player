@@ -45,34 +45,24 @@ public partial class MainWindow
         var next=EpisodeNavigation.Adjacent(_current,_episodeCache,direction);
         return next is null?Task.CompletedTask:PlayItemAsync(next,true);
     }
-    private void CloseNextEpisode(){_nextEpisodeWindow?.Close();_nextEpisodeWindow=null;_offeredEpisode=null;}
+    private void CloseNextEpisode(){_nextEpisodeWindow?.Close();_nextEpisodeWindow=null;_offeredEpisode=null;_fsNextItem=null;_fsNextCurrent=null;if(_fsNextChip is not null)_fsNextChip.Visibility=Visibility.Collapsed;}
     private void UpdateNextEpisode()
     {
         if(_engine is null)return;
         var current=_current;var next=EpisodeNavigation.Adjacent(current,_episodeCache,1);
         bool ended=_engine.Player.State==LibVLCSharp.Shared.VLCState.Ended;
         long duration=_engine.Player.Length>0?_engine.Player.Length:_lastDuration;
-        long position=ended?duration:_engine.Player.Time;
+        long position=ended?_lastPosition:_engine.Player.Time;
         bool show=EpisodeNavigation.OfferNext(current,next,_fullscreen,position,duration)&&_dismissedEpisode!=current?.Id&&!_closing;
         if(!show){CloseNextEpisode();return;}
-        if(_nextEpisodeWindow is not null&&_offeredEpisode==current!.Id){if(IsActive&&!_nextEpisodeWindow.IsVisible)_nextEpisodeWindow.Show();return;}
-        if(!IsActive&&_floatingControls?.IsActive!=true)return;
-        CloseNextEpisode();_offeredEpisode=current!.Id;
-        var panel=new StackPanel{Margin=new Thickness(20,16,20,18)};
-        var header=new DockPanel();panel.Children.Add(header);
-        var dismiss=PremiumWindow.Action("×",()=>{_dismissedEpisode=current.Id;CloseNextEpisode();});dismiss.Padding=new Thickness(6,0,6,0);dismiss.MinWidth=28;dismiss.MinHeight=28;dismiss.ToolTip="Bu bölüm için öneriyi kapat";System.Windows.Automation.AutomationProperties.SetName(dismiss,"Sonraki bölüm önerisini kapat");DockPanel.SetDock(dismiss,Dock.Right);header.Children.Add(dismiss);
-        var heading=PremiumWindow.Text("SIRADAKİ BÖLÜM",10,"AccentPrimaryBrush");heading.FontWeight=FontWeights.SemiBold;heading.VerticalAlignment=VerticalAlignment.Center;header.Children.Add(heading);
-        var episode=PremiumWindow.Text(next!.EpisodeLabel,17);episode.FontWeight=FontWeights.SemiBold;episode.Margin=new Thickness(0,10,0,0);panel.Children.Add(episode);
-        var label=PremiumWindow.Text(next.Name,11,"TextSecondaryBrush");label.TextWrapping=TextWrapping.NoWrap;label.TextTrimming=TextTrimming.CharacterEllipsis;label.ToolTip=next.Name;label.Margin=new Thickness(0,4,0,14);panel.Children.Add(label);
-        var play=PremiumWindow.Action("▶   Sonraki bölümü oynat",async()=>{if(_current?.Id!=current.Id)return;CloseNextEpisode();await SafeAsync(()=>PlayItemAsync(next,true));},true);play.Margin=new Thickness(0);play.MinHeight=42;panel.Children.Add(play);
-        _nextEpisodeWindow=new Window{Owner=this,Title="Sonraki bölüm",Style=null,WindowStyle=WindowStyle.None,ResizeMode=ResizeMode.NoResize,AllowsTransparency=true,Background=Brushes.Transparent,ShowInTaskbar=false,ShowActivated=false,Width=390,Height=166,FontFamily=(FontFamily)FindResource("AppFont"),Foreground=PremiumWindow.Brush("TextPrimaryBrush"),Content=new Border{Background=PremiumWindow.Brush("#F5131A24"),BorderBrush=PremiumWindow.Brush("BorderSubtleBrush"),BorderThickness=new Thickness(1),CornerRadius=new CornerRadius(14),Child=panel}};
-        _nextEpisodeWindow.PreviewKeyDown+=Window_KeyDown;_nextEpisodeWindow.Show();PlaceNextEpisode();
+        _offeredEpisode = current!.Id; _fsNextCurrent = current.Id; _fsNextItem = next;
+        if (_fsNextChip is not null) { _fsNextChip.Visibility = Visibility.Visible; _fsNextChip.ToolTip = next!.EpisodeLabel + " — " + next.Name; }
     }
-    private void PlaceNextEpisode(){if(_nextEpisodeWindow is not null)_fullscreenPlacement.PlaceEpisodePrompt(this,_nextEpisodeWindow,_floatingControls?.IsVisible==true?_floatingControls.Height+36:24);}
+    private void PlaceNextEpisode() { }
     internal SeriesEpisodePanel SmokeSeriesPanel=>_seriesPanel;
-    internal bool SmokeNextEpisodeVisible=>_nextEpisodeWindow?.IsVisible==true;
+    internal bool SmokeNextEpisodeVisible=>_fsNextChip?.IsVisible==true;
     internal void SmokeNextEpisodeTick()=>UpdateNextEpisode();
     internal Task SmokeNextEpisodeAsync()=>PlayAdjacentEpisodeAsync(1);
-    internal void SmokeClickNextEpisode()=>((_nextEpisodeWindow?.Content as Border)?.Child as StackPanel)?.Children.OfType<Button>().LastOrDefault()?.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+    internal void SmokeClickNextEpisode()=>_fsNextChip?.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
     internal void SmokeDismissNextEpisode(){_dismissedEpisode=_current?.Id;CloseNextEpisode();}
 }
