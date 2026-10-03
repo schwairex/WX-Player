@@ -70,8 +70,12 @@ public partial class MainWindow
         var header = new Grid(); header.ColumnDefinitions.Add(new() { Width = new GridLength(48) }); header.ColumnDefinitions.Add(new() { Width = new GridLength(16) }); header.ColumnDefinitions.Add(new() { Width = new GridLength(1, GridUnitType.Star) }); header.ColumnDefinitions.Add(new() { Width = GridLength.Auto });
         var back = FsIcon("fs-v2-back", "Geri (Esc)", ToggleFullscreen); back.Style = (Style)FindResource("FullscreenBackButton"); header.Children.Add(back);
         var titles = new StackPanel { VerticalAlignment = VerticalAlignment.Center }; _fsTitle = FsText("", 24, FontWeights.ExtraBold); _fsSubtitle = FsText("", 14.4, color: "--mut"); _fsSubtitle.Margin = new Thickness(0, 2.4, 0, 0); titles.Children.Add(_fsTitle); titles.Children.Add(_fsSubtitle); Grid.SetColumn(titles, 2); header.Children.Add(titles);
-        _fsBrand = FsText("", 12.48, FontWeights.Bold);
-        var brand = new Border { Background = new SolidColorBrush(Color.FromArgb(153, 12, 15, 17)), BorderBrush = Fs("--line"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(999), Padding = new Thickness(12.8, 7.2, 12.8, 7.2), Child = _fsBrand, VerticalAlignment = VerticalAlignment.Center, MaxWidth = 280, Margin = new Thickness(16, 0, 0, 0) }; Grid.SetColumn(brand, 3); header.Children.Add(brand); top.Child = header; root.Children.Add(top);
+        _fsBrand = FsText("", 12.48, FontWeights.SemiBold);
+        var sourceLabel = new Grid(); sourceLabel.ColumnDefinitions.Add(new() { Width = GridLength.Auto }); sourceLabel.ColumnDefinitions.Add(new());
+        sourceLabel.Children.Add(new SvgIcon("library") { Width = 16, Height = 16, Foreground = Fs("--mut"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 8, 0) });
+        Grid.SetColumn(_fsBrand, 1); sourceLabel.Children.Add(_fsBrand);
+        var brand = new Border { Style = (Style)FindResource("FullscreenSourceBadge"), Child = sourceLabel }; brand.SetBinding(ToolTipProperty, new Binding("Text") { Source = _fsBrand });
+        Grid.SetColumn(brand, 3); header.Children.Add(brand); top.Child = header; root.Children.Add(top);
 
         var bottom = new Border { VerticalAlignment = VerticalAlignment.Bottom, Padding = new Thickness(32, 96, 32, 22.4), Background = new LinearGradientBrush(new GradientStopCollection { new(FsTransparent, 0), new(Color.FromArgb(224, 0, 0, 0), .65) }, 90) };
         var body = new StackPanel(); bottom.Child = body; var times = new DockPanel { Margin = new Thickness(0, 0, 0, 1.6) };

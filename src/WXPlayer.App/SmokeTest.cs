@@ -16,6 +16,16 @@ internal static class SmokeTest
         var results=new Dictionary<string,object>();
         try
         {
+            if(App.Arguments.Contains("--settings1711-layout-only"))
+            {
+                await Settings1711Smoke.RunAsync(window,store,results);results["success"]=true;
+                File.WriteAllText(Path.Combine(App.DataDirectory,"smoke-results.json"),JsonSerializer.Serialize(results,new JsonSerializerOptions{WriteIndented=true}));window.Close();return;
+            }
+            if(App.Arguments.Contains("--shell1711-layout-only"))
+            {
+                await Shell1711Smoke.RunAsync(window,results);results["success"]=true;
+                File.WriteAllText(Path.Combine(App.DataDirectory,"smoke-results.json"),JsonSerializer.Serialize(results,new JsonSerializerOptions{WriteIndented=true}));window.Close();return;
+            }
             if(App.Arguments.Contains("--live1710-layout-only"))
             {
                 await Live1710Smoke.RunAsync(window,store,engine,results);results["success"]=true;
@@ -96,10 +106,10 @@ internal static class SmokeTest
             window.SmokeHome.Search.Text="no-match-9853";await WaitUntil(()=>window.SmokeHome.Empty&&window.SmokeHome.Featured is null,TimeSpan.FromSeconds(5));results["homeEmptySearch"]=window.SmokeHome.Items.Count==0;
             window.SmokeHome.Search.Clear();await WaitUntil(()=>window.SmokeHome.Items.Count==4,TimeSpan.FromSeconds(5));
             double contentX=window.MainArea.TranslatePoint(new Point(),window.Root).X;
-            window.SmokeSidebar();window.UpdateLayout();results["sidebarExpands"]=window.NavColumn.Width.Value==76&&window.Sidebar.ActualWidth==232&&App.ReadSettings().SidebarExpanded==true&&Math.Abs(window.MainArea.TranslatePoint(new Point(),window.Root).X-contentX)<1;SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-sidebar-expanded.png"));
-            window.SmokeSidebar();window.UpdateLayout();results["sidebarCollapses"]=window.NavColumn.Width.Value==76&&window.Sidebar.ActualWidth==76&&App.ReadSettings().SidebarExpanded==false;SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-sidebar-collapsed.png"));
+            window.SmokeSidebar();window.UpdateLayout();results["sidebarExpands"]=Math.Abs(window.NavColumn.Width.Value-70.4*Math.Clamp(.005*window.ActualWidth+8,14,20)/16)<.1&&window.Sidebar.ActualWidth==232&&App.ReadSettings().SidebarExpanded==true&&Math.Abs(window.MainArea.TranslatePoint(new Point(),window.Root).X-contentX)<1;SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-sidebar-expanded.png"));
+            window.SmokeSidebar();window.UpdateLayout();results["sidebarCollapsedMetrics"]=new{Nav=window.NavColumn.Width.Value,Actual=window.Sidebar.ActualWidth,Window=window.ActualWidth,Expanded=App.ReadSettings().SidebarExpanded};results["sidebarCollapses"]=Math.Abs(window.NavColumn.Width.Value-70.4*Math.Clamp(.005*window.ActualWidth+8,14,20)/16)<.1&&Math.Abs(window.Sidebar.ActualWidth-70.4)<1&&App.ReadSettings().SidebarExpanded==false;SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-sidebar-collapsed.png"));
             double width=window.Width;window.Width=940;window.UpdateLayout();SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-compact.png"));results["responsive"]=window.ActualWidth<=950;
-            window.SmokeSidebar();window.UpdateLayout();results["sidebarSmallDrawer"]=window.NavColumn.Width.Value==76&&window.Sidebar.ActualWidth==232&&window.BrandToggle.IsVisible;SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-home-small.png"));window.SmokeSidebar();window.Width=width;
+            window.SmokeSidebar();window.UpdateLayout();results["sidebarSmallDrawer"]=Math.Abs(window.NavColumn.Width.Value-64*Math.Clamp(.005*window.ActualWidth+8,14,20)/16)<.1&&window.Sidebar.ActualWidth==232&&window.BrandToggle.IsVisible;SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-home-small.png"));window.SmokeSidebar();window.Width=width;
             foreach(string key in new[]{"homeUsesSelectedSource","homeSearchVisible","homeEmptySearch","sidebarCollapses","sidebarExpands","sidebarSmallDrawer"})if(!Equals(results[key],true))throw new Exception("1.5 home regression: "+key);
             await window.SmokeBrowseAsync("movie");
             window.UpdateLayout();results["movieCatalogVisible"]=window.CatalogHost.IsVisible&&!window.ContentGrid.IsVisible&&window.SmokeCatalog.Shelves.First().Page.Items.All(i=>i.Kind==ContentKind.Movie)&&window.SmokeCatalog.Shelves.First().Page.Total>=2;
@@ -123,7 +133,7 @@ internal static class SmokeTest
             foreach(string key in new[]{"searchTextVisible","searchFiltersChannels","unifiedLibraryPanel","summaryInSidebar","smallWindowGuideVisible","compactSettingsVisible"})if(!Equals(results[key],true))throw new Exception("1.3 layout regression: "+key);
             var sourceWindow=new SourceWindow(window);sourceWindow.Show();await Task.Delay(150);SaveWindow(sourceWindow,Path.Combine(App.DataDirectory,"WX-Player-source.png"));sourceWindow.Close();
             var settingsWindow=window.CreateSettingsWindow();settingsWindow.Show();await Task.Delay(150);
-            SaveWindow(settingsWindow,Path.Combine(App.DataDirectory,"WX-Player-settings.png"));settingsWindow.SelectTab(1);settingsWindow.UpdateLayout();await Task.Delay(100);SaveWindow(settingsWindow,Path.Combine(App.DataDirectory,"WX-Player-library-settings.png"));settingsWindow.SelectTab(2);settingsWindow.UpdateLayout();SaveWindow(settingsWindow,Path.Combine(App.DataDirectory,"WX-Player-update-settings.png"));settingsWindow.SmokeShowShortcuts();await Task.Delay(150);SaveWindow(settingsWindow,Path.Combine(App.DataDirectory,"WX-Player-shortcuts.png"));settingsWindow.Close();results["settingsPages"]=true;
+            SaveWindow(settingsWindow,Path.Combine(App.DataDirectory,"WX-Player-settings.png"));settingsWindow.SelectTab(2);settingsWindow.UpdateLayout();await Task.Delay(100);SaveWindow(settingsWindow,Path.Combine(App.DataDirectory,"WX-Player-library-settings.png"));settingsWindow.SelectTab(4);settingsWindow.UpdateLayout();SaveWindow(settingsWindow,Path.Combine(App.DataDirectory,"WX-Player-update-settings.png"));settingsWindow.SmokeShowShortcuts();await Task.Delay(150);SaveWindow(settingsWindow,Path.Combine(App.DataDirectory,"WX-Player-shortcuts.png"));settingsWindow.Close();results["settingsPages"]=true;
             var updateWindow=new UpdateWindow(window,new PreparedUpdate(new Version(1,7,1),"test-only",new string('0',64)),()=>Task.CompletedTask);updateWindow.Show();await Task.Delay(100);SaveWindow(updateWindow,Path.Combine(App.DataDirectory,"WX-Player-update-prompt.png"));updateWindow.Close();results["updatePrompt"]=true;
             int mediaArg=Array.IndexOf(App.Arguments,"--media");
             if(mediaArg>=0&&mediaArg+1<App.Arguments.Length)

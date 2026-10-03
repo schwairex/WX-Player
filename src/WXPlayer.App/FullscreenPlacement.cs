@@ -18,8 +18,9 @@ internal sealed class FullscreenPlacement
         _saved=new Placement{Length=Marshal.SizeOf<Placement>()};GetWindowPlacement(hwnd,ref _saved);
         _style=window.WindowStyle;_resize=window.ResizeMode;_topmost=window.Topmost;
         var info=new MonitorInfo{Size=Marshal.SizeOf<MonitorInfo>()};if(!GetMonitorInfo(MonitorFromWindow(hwnd,2),ref info))throw new InvalidOperationException("Ekran boyutu okunamadı.");Bounds=info.Monitor;
-        window.WindowState=WindowState.Normal;window.WindowStyle=WindowStyle.None;window.ResizeMode=ResizeMode.NoResize;window.Topmost=true;
-        SetWindowPos(hwnd,new IntPtr(-1),Bounds.Left,Bounds.Top,Bounds.Width,Bounds.Height,0x0020|0x0040);
+        window.WindowState=WindowState.Normal;window.WindowStyle=WindowStyle.None;window.ResizeMode=ResizeMode.NoResize;window.Topmost=false;
+        // Cover the monitor without keeping unrelated applications beneath WXPlayer.
+        SetWindowPos(hwnd,new IntPtr(-2),Bounds.Left,Bounds.Top,Bounds.Width,Bounds.Height,0x0020|0x0040);
     }
     public void Exit(Window window)
     {

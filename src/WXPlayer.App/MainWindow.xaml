@@ -72,19 +72,19 @@
       <ColumnDefinition x:Name="NavColumn" Width="76" />
       <ColumnDefinition Width="*" />
     </Grid.ColumnDefinitions>
-    <Border x:Name="Sidebar" Background="{StaticResource BackgroundSecondaryBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,1,0" CornerRadius="0" Margin="0" Padding="10,24,10,16" TextElement.Foreground="{StaticResource TextPrimaryBrush}">
+    <Border x:Name="Sidebar" Background="{StaticResource LiveBg}" BorderBrush="{StaticResource LiveLine}" BorderThickness="0,0,1,0" CornerRadius="0" Margin="0" Padding="10,24,10,16" TextElement.Foreground="{StaticResource LiveInk}" TextElement.FontFamily="{StaticResource LiveFont}" TextElement.FontWeight="Medium" TextOptions.TextFormattingMode="Ideal">
       <DockPanel>
         <StackPanel DockPanel.Dock="Top">
           <StackPanel Orientation="Horizontal" Margin="5,0,0,24">
             <Button x:Name="BrandToggle" Click="SidebarToggle_Click" Style="{StaticResource ShellButton}" Width="42" Height="42" Padding="0" ToolTip="Menüyü daralt / genişlet">
-              <Grid><Image x:Name="BrandMark" Source="Assets/wx-logo.png" Width="32" Height="32" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" /><ui:SvgIcon x:Name="DrawerClose" Icon="chevron-left" Width="20" Height="20" Foreground="{StaticResource TextSecondaryBrush}" Visibility="Collapsed"/></Grid>
+              <Grid><Image x:Name="BrandMark" Source="Assets/wx-logo.png" Width="32" Height="32" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" /><ui:SvgIcon x:Name="DrawerClose" Icon="chevron-left" Width="20" Height="20" Foreground="{StaticResource LiveMuted}" Visibility="Collapsed"/></Grid>
             </Button>
             <StackPanel x:Name="BrandWordmark" Margin="11,0,0,0" VerticalAlignment="Center">
               <TextBlock Text="WX Player" FontSize="{StaticResource SectionTitleFontSize}" FontWeight="Bold" />
-              <TextBlock Text="İZLEME ALANINIZ" FontSize="9" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0" />
+              <TextBlock Text="İZLEME ALANINIZ" FontSize="9" Foreground="{StaticResource LiveMuted}" Margin="0,4,0,0" />
             </StackPanel>
           </StackPanel>
-          <TextBlock x:Name="NavLabel" Text="KÜTÜPHANE" Foreground="{StaticResource TextMutedBrush}" FontSize="{StaticResource MetadataFontSize}" FontWeight="SemiBold" Margin="12,0,0,8" />
+          <TextBlock x:Name="NavLabel" Text="KÜTÜPHANE" Foreground="{StaticResource LiveMuted}" FontSize="{StaticResource MetadataFontSize}" FontWeight="SemiBold" Margin="12,0,0,8" />
           <Button x:Name="HomeNav" Style="{StaticResource Nav}" Tag="home" Click="Navigate_Click">
             <ui:IconLabel Icon="home" Label="Ana sayfa" />
           </Button>
@@ -97,7 +97,7 @@
           <Button x:Name="SeriesNav" Style="{StaticResource Nav}" Tag="series" Click="Navigate_Click">
             <ui:IconLabel Icon="series" Label="Diziler" />
           </Button>
-          <Border Height="1" Background="{StaticResource BorderSubtleBrush}" Margin="12,16" />
+          <Border Height="1" Background="{StaticResource LiveLine}" Margin="12,16" />
           <Button x:Name="FavoriteNav" Style="{StaticResource Nav}" Tag="favorites" Click="Navigate_Click">
             <ui:IconLabel Icon="star" Label="Favorilerim" />
           </Button>
@@ -114,7 +114,7 @@
         <StackPanel DockPanel.Dock="Bottom">
           <Border x:Name="PromoCard" Background="{StaticResource SurfaceBrush}" BorderThickness="0" CornerRadius="{StaticResource RadiusLarge}" Padding="12" Margin="0,0,0,12">
             <StackPanel>
-              <TextBlock Text="KÜTÜPHANE ÖZETİ" Foreground="{StaticResource TextSecondaryBrush}" FontSize="9" FontWeight="SemiBold" Margin="0,0,0,12" />
+              <TextBlock Text="KÜTÜPHANE ÖZETİ" Foreground="{StaticResource LiveMuted}" FontSize="9" FontWeight="SemiBold" Margin="0,0,0,12" />
               <Grid x:Name="StatsBar">
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition />
@@ -126,19 +126,19 @@
                 </Grid.RowDefinitions>
                 <StackPanel Margin="0,0,0,14">
                   <TextBlock x:Name="LiveCount" Text="0" FontSize="{StaticResource SectionTitleFontSize}" FontWeight="SemiBold" />
-                  <TextBlock Text="Canlı kanal" Foreground="{StaticResource TextMutedBrush}" FontSize="10" Margin="0,4,0,0" />
+                  <TextBlock Text="Canlı kanal" Foreground="{StaticResource LiveMuted}" FontSize="10" Margin="0,4,0,0" />
                 </StackPanel>
                 <StackPanel Grid.Column="1">
                   <TextBlock x:Name="MovieCount" Text="0" FontSize="{StaticResource SectionTitleFontSize}" FontWeight="SemiBold" />
-                  <TextBlock Text="Film" Foreground="{StaticResource TextMutedBrush}" FontSize="10" Margin="0,4,0,0" />
+                  <TextBlock Text="Film" Foreground="{StaticResource LiveMuted}" FontSize="10" Margin="0,4,0,0" />
                 </StackPanel>
                 <StackPanel Grid.Row="1">
                   <TextBlock x:Name="SeriesCount" Text="0" FontSize="{StaticResource SectionTitleFontSize}" FontWeight="SemiBold" />
-                  <TextBlock Text="Dizi" Foreground="{StaticResource TextMutedBrush}" FontSize="10" Margin="0,4,0,0" />
+                  <TextBlock Text="Dizi" Foreground="{StaticResource LiveMuted}" FontSize="10" Margin="0,4,0,0" />
                 </StackPanel>
                 <StackPanel Grid.Row="1" Grid.Column="1">
                   <TextBlock x:Name="FavoriteCount" Text="0" FontSize="{StaticResource SectionTitleFontSize}" FontWeight="SemiBold" Foreground="{StaticResource AccentPrimaryBrush}" />
-                  <TextBlock Text="Favori" Foreground="{StaticResource TextMutedBrush}" FontSize="10" Margin="0,4,0,0" />
+                  <TextBlock Text="Favori" Foreground="{StaticResource LiveMuted}" FontSize="10" Margin="0,4,0,0" />
                 </StackPanel>
               </Grid>
             </StackPanel>
@@ -146,7 +146,7 @@
           <Button x:Name="SettingsNav" Style="{StaticResource Nav}" Click="Settings_Click">
             <ui:IconLabel Icon="settings" Label="Ayarlar" />
           </Button>
-      <TextBlock x:Name="VersionLabel" Text="WX PLAYER  /  1.7.10" FontSize="9" Foreground="{StaticResource TextMutedBrush}" Margin="12,12,0,0" />
+      <TextBlock x:Name="VersionLabel" Text="WX PLAYER  /  1.7.11" FontSize="9" Foreground="{StaticResource LiveMuted}" Margin="12,12,0,0" />
         </StackPanel>
         <Grid />
       </DockPanel>

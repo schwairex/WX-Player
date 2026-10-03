@@ -64,6 +64,7 @@ public partial class MainWindow
         }
         SetHomeAppearance();
         SetLiveAppearance();
+        SetSidebarAppearance();
     }
 }
 

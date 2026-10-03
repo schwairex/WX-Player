@@ -80,4 +80,8 @@
   <Style x:Key="FullscreenVolumeStyle" TargetType="ui:MediaSlider" BasedOn="{StaticResource FullscreenSeekStyle}">
     <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ui:MediaSlider"><Grid Background="Transparent"><Track x:Name="PART_Track" Minimum="{TemplateBinding Minimum}" Maximum="{TemplateBinding Maximum}" Value="{TemplateBinding Value}" Height="25.6"><Track.DecreaseRepeatButton><RepeatButton Focusable="False"><RepeatButton.Template><ControlTemplate><Border Height="4" Background="{StaticResource --acc}" CornerRadius="9" VerticalAlignment="Center"/></ControlTemplate></RepeatButton.Template></RepeatButton></Track.DecreaseRepeatButton><Track.Thumb><Thumb Width="12" Height="25.6"><Thumb.Template><ControlTemplate><Ellipse Width="12" Height="12" Fill="{StaticResource --acc}" VerticalAlignment="Center"/></ControlTemplate></Thumb.Template></Thumb></Track.Thumb><Track.IncreaseRepeatButton><RepeatButton Focusable="False"><RepeatButton.Template><ControlTemplate><Border Height="4" Background="#38FFFFFF" CornerRadius="9" VerticalAlignment="Center"/></ControlTemplate></RepeatButton.Template></RepeatButton></Track.IncreaseRepeatButton></Track></Grid></ControlTemplate></Setter.Value></Setter>
   </Style>
+  <Style x:Key="FullscreenSourceBadge" TargetType="Border">
+    <Setter Property="Background" Value="{StaticResource --glass}"/><Setter Property="BorderBrush" Value="{StaticResource --line}"/><Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="12.8"/><Setter Property="Padding" Value="12.8,9.6"/><Setter Property="VerticalAlignment" Value="Center"/><Setter Property="MaxWidth" Value="240"/><Setter Property="Margin" Value="16,0,0,0"/>
+  </Style>
 </ResourceDictionary>

@@ -64,7 +64,6 @@ public partial class MainWindow : Window
         VideoBorder.SizeChanged+=(_,_)=>{bool small=VideoBorder.ActualHeight<285;WelcomeFull.Visibility=small?Visibility.Collapsed:Visibility.Visible;WelcomeCompact.Visibility=small?Visibility.Visible:Visibility.Collapsed;};
         GuidePanel.SizeChanged+=(_,_)=>UpdateGuideNowVisibility();
         _hideControls.Tick+=(_,_)=>HideFullscreenControls175();
-        Activated+=(_,_)=>{if(_fullscreen)Topmost=true;};
         Deactivated+=(_,_)=>
         {
             var chrome=_floatingControls;

@@ -21,7 +21,6 @@ public partial class MainWindow
     private Grid? _liveOverlayRoot;
     private Popup? _liveGearPopup;
     private TextBlock? _liveProgrammeCaption;
-    private FrameworkElement? _liveOnAirBadge;
     private readonly List<Action> _liveRestore = new();
     private readonly HashSet<(DependencyObject, DependencyProperty)> _liveCaptured = new();
     private double LiveScale => Math.Clamp(.005 * ActualWidth + 8, 14, 20) / 16;
@@ -108,7 +107,7 @@ public partial class MainWindow
         }
         // Restore parents before visual DPs, in reverse insertion order.
         for (int i = _liveRestore.Count - 1; i >= 0; i--) _liveRestore[i]();
-        _liveRestore.Clear(); _liveCaptured.Clear(); _liveOverlayRoot = null; _liveGearPopup = null; _liveProgrammeCaption = null; _liveOnAirBadge = null;
+        _liveRestore.Clear(); _liveCaptured.Clear(); _liveOverlayRoot = null; _liveGearPopup = null; _liveProgrammeCaption = null;
     }
     private void LiveSet(DependencyObject target, DependencyProperty property, object value)
     {
@@ -161,8 +160,7 @@ public partial class MainWindow
         LiveSet(this, Control.FontFamilyProperty, FindResource("LiveFont")); LiveSet(this, Control.FontWeightProperty, FontWeights.Medium);
         LiveSet(this, TextOptions.TextFormattingModeProperty, TextFormattingMode.Ideal);
         LiveSet(this, TextOptions.TextRenderingModeProperty, TextRenderingMode.ClearType);
-        LiveSet(Root, Panel.BackgroundProperty, LiveBrush("LiveBg")); LiveSet(Sidebar, Border.BackgroundProperty, LiveBrush("LiveBg"));
-        LiveSet(Sidebar, Border.BorderBrushProperty, LiveBrush("LiveLine"));
+        LiveSet(Root, Panel.BackgroundProperty, LiveBrush("LiveBg"));
         LiveSet(MainArea, FrameworkElement.MarginProperty, new Thickness(0));
         LiveSet(ContentGrid, FrameworkElement.MarginProperty, new Thickness(0));
         LiveSet(ContentGrid, Grid.RowProperty, 0); LiveSet(ContentGrid, Grid.RowSpanProperty, 2);
@@ -211,19 +209,8 @@ public partial class MainWindow
         LiveSet(MainArea, FrameworkElement.MarginProperty, new Thickness(0)); LiveSet(ContentGrid, FrameworkElement.MarginProperty, new Thickness(0));
         LiveSet(BottomBar, FrameworkElement.MarginProperty, new Thickness(25.6, 0, 25.6, 8));
         LiveSet(Root, FrameworkElement.LayoutTransformProperty, new ScaleTransform(scale, scale));
-        LiveSet(NavColumn, ColumnDefinition.WidthProperty, new GridLength(narrow ? 64 : 70.4));
-        LiveSet(Sidebar, FrameworkElement.WidthProperty, SidebarExpanded ? 232d : narrow ? 64d : 70.4d);
-        LiveSet(Sidebar, Border.PaddingProperty, new Thickness(SidebarExpanded ? 16 : 12.8, 17.6, SidebarExpanded ? 16 : 12.8, 17.6));
         LiveSet(ListColumn, ColumnDefinition.WidthProperty, new GridLength(narrow ? 288 : 360)); LiveSet(GapColumn, ColumnDefinition.WidthProperty, new GridLength(25.6));
         LiveSet(ViewingPanel, FrameworkElement.MarginProperty, new Thickness(0, 0, 25.6, 19.2)); LiveSet(TopBar, FrameworkElement.MarginProperty, new Thickness(0, 0, 25.6, 0));
-        LiveSet(BrandToggle, FrameworkElement.WidthProperty, 41.6); LiveSet(BrandToggle, FrameworkElement.HeightProperty, 41.6);
-        foreach (var button in new[] { HomeNav, LiveNav, MovieNav, SeriesNav, FavoriteNav, EpgNav, RecentNav, RecordingsNav, SettingsNav })
-        {
-            LiveSet(button, FrameworkElement.StyleProperty, LiveStyle("LiveNav")); LiveSet(button, FrameworkElement.HeightProperty, 44.8); LiveSet(button, FrameworkElement.MinHeightProperty, 0d);
-            LiveSet(button, Control.PaddingProperty, SidebarExpanded ? new Thickness(8, 0, 8, 0) : new Thickness(0)); LiveSet(button, FrameworkElement.MarginProperty, new Thickness(0, 3.2, 0, 3.2));
-            LiveSet(button, Control.ForegroundProperty, LiveBrush(ReferenceEquals(button, LiveNav) ? "LiveAccent" : "LiveMuted"));
-            LiveSet(button, Control.BackgroundProperty, LiveBrush(ReferenceEquals(button, LiveNav) ? "LiveNavSelected" : "LiveBg"));
-        }
         if (_guideHeight is null) LiveSet(GuideRow, RowDefinition.HeightProperty, new GridLength(190));
         if (_liveOverlayRoot is not null) _liveOverlayRoot.LayoutTransform = new ScaleTransform(scale, scale);
         LiveSet(VolumeSlider, FrameworkElement.WidthProperty, narrow ? 64d : 88d);
@@ -260,14 +247,11 @@ public partial class MainWindow
         var top = new DockPanel { Margin = new Thickness(28.8, 22.4, 28.8, 48), LastChildFill = true };
         var topBand = new Border { VerticalAlignment = VerticalAlignment.Top, Background = new LinearGradientBrush(Color.FromArgb(166, 0, 0, 0), Color.FromArgb(0, 0, 0, 0), 90), Child = top };
         root.Children.Add(topBand);
-        var badge = new CatalogPillBorder { Background = LiveBrush("LiveGlass"), BorderBrush = LiveBrush("LiveLine"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(999), Padding = new Thickness(10.4, 4.8, 10.4, 4.8), VerticalAlignment = VerticalAlignment.Top, Child = new TextBlock { Text = "●  CANLI", Foreground = LiveBrush("LiveOnAir"), FontSize = 10.88, FontWeight = FontWeights.ExtraBold } };
-        _liveOnAirBadge = badge;
-        DockPanel.SetDock(badge, Dock.Right); top.Children.Add(badge);
         var title = new StackPanel { Margin = new Thickness(0, 0, 16, 0) }; top.Children.Add(title);
         LiveMove(NowTitle, title); LiveSet(NowTitle, TextBlock.FontSizeProperty, 20.8); LiveSet(NowTitle, TextBlock.FontWeightProperty, FontWeights.ExtraBold); LiveSet(NowTitle, TextBlock.ForegroundProperty, LiveBrush("LiveInk"));
         _liveProgrammeCaption = new TextBlock { FontSize = 13.6, Foreground = LiveBrush("LiveCaption"), Margin = new Thickness(0, 2.4, 0, 0), TextTrimming = TextTrimming.CharacterEllipsis };
         _liveProgrammeCaption.SetBinding(TextBlock.TextProperty, new Binding("Text") { Source = GuideNowTitle }); title.Children.Add(_liveProgrammeCaption);
-        LiveMove(HealthBadge, title);
+        LiveSet(HealthBadge, UIElement.VisibilityProperty, Visibility.Collapsed);
         var bottom = new Border { VerticalAlignment = VerticalAlignment.Bottom, Background = new LinearGradientBrush(Color.FromArgb(0, 0, 0, 0), Color.FromArgb(209, 0, 0, 0), 90), Padding = new Thickness(28.8, 64, 28.8, 19.2) }; root.Children.Add(bottom);
         var bottomStack = new StackPanel(); bottom.Child = bottomStack;
         var timeline = new Grid(); timeline.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto }); timeline.ColumnDefinitions.Add(new ColumnDefinition()); timeline.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto }); bottomStack.Children.Add(timeline);
@@ -315,7 +299,7 @@ public partial class MainWindow
     private void UpdateLiveVisuals()
     {
         if (!_liveShellAttached) return;
-        if (_liveOnAirBadge is not null) _liveOnAirBadge.Visibility = _current?.Kind == WXPlayer.Core.ContentKind.Live ? Visibility.Visible : Visibility.Collapsed;
+        HealthBadge.Visibility = Visibility.Collapsed;
         if (_liveProgrammeCaption is not null) _liveProgrammeCaption.Visibility = _guideNow is null ? Visibility.Collapsed : Visibility.Visible;
         // Mirrors existing replay state, without changing the GoLive command or value.
         if (_engine is not null && _engine.IsReplay)
