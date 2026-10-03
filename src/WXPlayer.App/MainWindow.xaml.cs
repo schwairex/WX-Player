@@ -48,7 +48,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         ArtworkService.Enabled=_settings.DiscoverArtwork&&!App.Arguments.Contains("--smoke");
-        InitializeComponent();InitializeHome();InitializeCatalog();InitializeSeries();VersionLabel.Text="WX PLAYER  /  "+UpdateController.Current.ToString(3);
+        InitializeComponent();InitializeLiveAppearance();InitializeHome();InitializeCatalog();InitializeSeries();VersionLabel.Text="WX PLAYER  /  "+UpdateController.Current.ToString(3);
         Loaded+=async(_,_)=>await InitializeAsync();
         SourceInitialized+=(_,_)=>{try{int dark=1;DwmSetWindowAttribute(new WindowInteropHelper(this).Handle,20,ref dark,sizeof(int));}catch{/* Older Windows falls back to the system title bar. */}};
         SeekSlider.InteractionCommitted+=async(_,_)=>{if(!_ready)return;if(_engine.HasLiveBuffer)await SafeAsync(()=>_engine.RewindLiveAsync((1-SeekSlider.Value)*_engine.BufferedSeconds,_life.Token));else if(_engine.Player.IsSeekable){await FinishClipBeforeSeekAsync();_engine.Player.Position=(float)SeekSlider.Value;_discordForceTiming=true;}};
@@ -475,7 +475,7 @@ public partial class MainWindow : Window
         CheckChannelHealth();
         if(_miniPlayer is { } mini){mini.SetPlaying(player.IsPlaying);mini.SetMuted(player.Mute);mini.SetProgress(player.Time,player.Length,_current?.Kind==ContentKind.Live);}
         if(_fullscreen)UpdateFullscreenChrome();
-        UpdateNextEpisode();PlaceNextEpisode();UpdateDiscordPlayback();
+        UpdateNextEpisode();PlaceNextEpisode();UpdateDiscordPlayback();UpdateLiveVisuals();
         if(_guideNow is not null)GuideNowProgress.Value=_guideNow.Progress;
         if(++_tick%5==0)_ = SafeAsync(()=>SavePlaybackProgressAsync());if(_tick%30==0){EpgList.Items.Refresh();if(_current?.Kind==ContentKind.Live&&EpgList.ItemsSource is List<Programme> programmes)ShowGuideNow(programmes);}if(_tick%300==0&&_current?.Kind==ContentKind.Live)_ = LoadGuideAsync();if(_tick%15==0)App.SaveSettings(_settings);
     }

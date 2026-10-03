@@ -48,6 +48,14 @@ WX Player, eklediğiniz M3U, Xtream Codes ve uyumlu Stalker kaynaklarını yerel
 <sub>Görünüm testi için üretilmiş afişler. Uygulama kendi kütüphanenizdeki içerikleri kullanır.</sub>
 </details>
 
+<details>
+<summary>Canlı TV görünümünü aç</summary>
+
+![Canlı TV v3 WPF](docs/WXPlayer-1.7.10-canli-tv.png)
+
+<sub>İzole QA kütüphanesi. WPF görsel katmanı yakalanmıştır; yerel video HWND'si bu görüntü yönteminde siyah görünür.</sub>
+</details>
+
 ## Kurulum
 
 **Gereksinim:** Windows 10 veya 11, x64. Yayınları ve çevrimiçi görselleri almak için internet bağlantısı gerekir. Dağıtım paketine .NET 10 çalışma zamanı ve LibVLC dahildir.
@@ -67,7 +75,7 @@ Kaynağınız afiş ya da kanal logosu sağlamıyorsa uygulama uygun herkese aç
 ## İzleme deneyimi
 
 - **Filmler ve Diziler:** Sol menüden ilgili sayfayı açın. Gerçek kütüphane kategorileri yatay afiş rafları olarak görünür. Arayın, rafları kaydırın veya bir içeriği favorileyin. Dizi kartını seçtikten sonra sezon ve bölümü belirleyin.
-- **Canlı TV:** Kanal seçildiğinde onun EPG'si oynatıcının altında açılır. “Şu an yayında” alanı mevcut programı ve ilerlemesini, liste sonraki programları gösterir. Rehber gelmiyorsa sağlayıcının EPG bağlantısını ve kanal eşleşmesini kontrol edin.
+- **Canlı TV:** Kanal seçildiğinde onun EPG'si oynatıcının altında açılır. Yatay EPG kartları geçmiş, şimdiki ve sonraki programları gösterir; mevcut program ilerlemesi kartın içinde yer alır. Oynatıcı dişli menüsünden kayıt, PiP, ses/altyazı ve istatistik seçeneklerine ulaşılır. Rehber gelmiyorsa sağlayıcının EPG bağlantısını ve kanal eşleşmesini kontrol edin.
 - **Tam ekran:** Başlık, tek kontrol çubuğu ve sağdan açılan kütüphane gerçek kaynak verisiyle çalışır. `L` veya menü düğmesiyle paneli açıp kapatabilirsiniz; panel kapalıyken oynatma sırasında 3,5 saniye hareketsizlikten sonra kontroller gizlenir. Canlı TV'nin yerel 60 saniye tamponu yalnız desteklenen akışlarda işler.
 - **Mini oynatıcı ve sağlık:** Oynatıcıdaki mini pencere düğmesi veya `P` ile izlemeyi ayrı pencerede sürdürüp geri dönebilirsiniz. Ayarlar'da mini oynatıcıyı kapatabilir veya canlı kanallar için isteğe bağlı sağlık göstergesini açabilirsiniz. Gösterge oynatmanın başlayıp başlamadığını kontrol eder; tüm yayın boyunca kesintisiz çalışacağını garanti etmez.
 - **Kayıt:** Canlı TV kaydı seçilen kanal akışını dosyaya yazar. Film ve dizide kayıt düğmesine ilk basış başlangıcı, ikinci basış bitişi belirler; klip seçilen aralıktan dışa aktarılır. Akış kopyalama nedeniyle başlangıç ve bitiş en yakın anahtar kareye kayabilir.
@@ -109,7 +117,7 @@ Tam oynatma smoke testi için `--media` ile oynatılabilir yerel bir video dosya
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\build.ps1 -OutputPath .\artifacts
 ```
 
-`src/WXPlayer.App` WPF arayüzünü ve oynatıcıyı, `src/WXPlayer.Core` kaynakları ve kütüphaneyi, `tests/WXPlayer.Tests` regresyon testlerini, `tools` dağıtım araçlarını içerir. [Tasarım sistemi](docs/DESIGN_SYSTEM.md) · [1.7.8 test raporu](docs/TEST-REPORT-1.7.8.md).
+`src/WXPlayer.App` WPF arayüzünü ve oynatıcıyı, `src/WXPlayer.Core` kaynakları ve kütüphaneyi, `tests/WXPlayer.Tests` regresyon testlerini, `tools` dağıtım araçlarını içerir. [Tasarım sistemi](docs/DESIGN_SYSTEM.md) · [1.7.10 test raporu](docs/TEST-REPORT-1.7.10.md).
 
 Tam ekranda `N` sonraki bölüm/içerik, `R` kayıt ve `C` ses/altyazı menüsünü açar. Kategori/sayfalama seçenekleri için kütüphane arama alanına sağ tıklayın.
 
@@ -117,6 +125,8 @@ Tam ekranda `N` sonraki bölüm/içerik, `R` kayıt ve `C` ses/altyazı menüsü
 
 | Sürüm | Başlıca değişiklik |
 | --- | --- |
+| **[1.7.10](docs/RELEASE-NOTES-1.7.10.md)** | Canlı TV v3 görünümü: tam yükseklikte kanal paneli, video üzerinde özgün kontroller ve yatay EPG kartları; mevcut işlevler korunur. |
+| **[1.7.9](docs/RELEASE-NOTES-1.7.9.md)** | Geçersiz logo/afiş adresi yüzünden yerel M3U içe aktarmanın tamamen geri alınması düzeltildi; gerçek büyük dosya ve üç yeni regresyonla doğrulandı. |
 | **[1.7.8](docs/RELEASE-NOTES-1.7.8.md)** | HTML referansı ile Ana sayfa: tek arama, eğik hero afişi, türlere ayrılmış devam/favori satırları, ortak afiş kartları, 16:10 kanal kartları ve sayfa sonu durum notu. |
 | **[1.7.7](docs/RELEASE-NOTES-1.7.7.md)** | Referans HTML'ye göre Filmler/Diziler görünümü: sabit başlık, Manrope, ölçeklenen afiş rafları, gerçek izleme konumlu hero ve afişsiz kartlar. |
 | **[1.7.6](docs/RELEASE-NOTES-1.7.6.md)** | v2 tam ekran tasarımı, ekrana göre rem ölçeklendirmesi, bölüm/favori kütüphanesi, gerçek hız ve ses/altyazı menüleri. |

@@ -71,8 +71,10 @@ public static partial class PlaylistParser
     private static string Resolve(string address, string origin)
     {
         if (Uri.TryCreate(address, UriKind.Absolute, out var absolute)) return absolute.AbsoluteUri;
-        if (Uri.TryCreate(origin, UriKind.Absolute, out var baseUri)) return new Uri(baseUri, address).AbsoluteUri;
-        return new Uri(Path.GetFullPath(Path.Combine(Path.GetDirectoryName(origin) ?? ".", address))).AbsoluteUri;
+        if (!Uri.TryCreate(origin, UriKind.Absolute, out var baseUri)) baseUri = new Uri(Path.GetFullPath(origin));
+        // A malformed optional logo must not roll back an otherwise playable playlist.
+        // Invalid stream addresses also remain subject to IsPlayable at the call site.
+        return Uri.TryCreate(baseUri, address, out var resolved) ? resolved.AbsoluteUri : "";
     }
 }
 

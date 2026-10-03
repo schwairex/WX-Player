@@ -16,6 +16,16 @@ internal static class SmokeTest
         var results=new Dictionary<string,object>();
         try
         {
+            if(App.Arguments.Contains("--live1710-layout-only"))
+            {
+                await Live1710Smoke.RunAsync(window,store,engine,results);results["success"]=true;
+                File.WriteAllText(Path.Combine(App.DataDirectory,"smoke-results.json"),JsonSerializer.Serialize(results,new JsonSerializerOptions{WriteIndented=true}));window.Close();return;
+            }
+            if(App.Arguments.Contains("--playlist-import"))
+            {
+                await PlaylistImportSmoke.RunAsync(window,store,results);results["success"]=true;
+                File.WriteAllText(Path.Combine(App.DataDirectory,"smoke-results.json"),JsonSerializer.Serialize(results,new JsonSerializerOptions{WriteIndented=true}));window.Close();return;
+            }
             if(App.Arguments.Contains("--home178-layout-only"))
             {
                 await Home178Smoke.RunAsync(window,store,results);results["success"]=true;
@@ -248,16 +258,17 @@ internal static class SmokeTest
                 IEnumerable<T> Descendants<T>(DependencyObject root) where T:DependencyObject{for(int i=0;i<VisualTreeHelper.GetChildrenCount(root);i++){var child=VisualTreeHelper.GetChild(root,i);if(child is T found)yield return found;foreach(var d in Descendants<T>(child))yield return d;}}
                 await WaitUntil(()=>Descendants<ChannelLogo>(window.ChannelList).Any(l=>l.HasImage),TimeSpan.FromSeconds(6));
                 results["channelLogosLoaded"]=Descendants<ChannelLogo>(window.ChannelList).Any(l=>l.HasImage);results["logoDownloadDeduplicated"]=logos.Connections==1;
-                window.VolumeSlider.Focus();results["volumeFocusHasNoGreenFill"]=window.VolumeSlider.Background is SolidColorBrush brush&&brush.Color.A==0;
+                window.VolumeSlider.Focus();results["volumeFocusHasNoGreenFill"]=Descendants<System.Windows.Controls.Grid>(window.VolumeSlider).Any(g=>g.Background is SolidColorBrush brush&&brush.Color.A==0);
                 results["epgGuideHeight"]=Math.Round(window.GuidePanel.ActualHeight);
-                results["epgNowPanelVisible"]=window.GuideNowPanel.IsVisible;
+                // Live v3 renders the same current programme in its horizontal card instead of the duplicate standalone panel.
+                results["epgNowPanelVisible"]=window.GuideNowPanel.IsVisible||window.EpgList.IsVisible&&Descendants<System.Windows.Controls.ListBoxItem>(window.EpgList).Any(c=>c.IsVisible&&c.DataContext is Programme {IsNow:true}&&Descendants<System.Windows.Controls.ProgressBar>(c).Any(p=>p.IsVisible&&p.Value>0));
                 if(!Equals(results["epgNowPanelVisible"],true))throw new Exception("Current EPG programme panel is hidden after fullscreen.");
                 SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-epg.png"));
                 var statistics=new StatisticsWindow(window,()=> ("Sintel · Yerel test videosu",target),engine,settings);statistics.Show();await Task.Delay(1200);SaveWindow(statistics,Path.Combine(App.DataDirectory,"WX-Player-statistics.png"));statistics.Close();
                 using(var statsMedia=engine.Player.Media){var tracks=statsMedia!.Tracks;results["statisticsVideoTrack"]=tracks.Any(t=>t.TrackType==LibVLCSharp.Shared.TrackType.Video&&t.Data.Video.Width==854);results["statisticsAudioTrack"]=tracks.Any(t=>t.TrackType==LibVLCSharp.Shared.TrackType.Audio&&t.Data.Audio.Rate>0);}
                 if(!Equals(results["statisticsVideoTrack"],true)||!Equals(results["statisticsAudioTrack"],true))throw new Exception("Statistics metadata missing.");
                 var trackWindow=new TracksWindow(window,engine);trackWindow.Show();await Task.Delay(250);SaveWindow(trackWindow,Path.Combine(App.DataDirectory,"WX-Player-tracks.png"));results["modernTracksPopulated"]=trackWindow.AudioPicker.Items.Count>0&&trackWindow.SubtitlePicker.Items.Count>0;trackWindow.Close();
-                bool FullHit(MediaSlider slider){for(int y=2;y<slider.ActualHeight;y+=6)if(slider.InputHitTest(new Point(slider.ActualWidth*.6,y)) is null)return false;return slider.ActualHeight>=36;}
+                bool FullHit(MediaSlider slider){for(int y=2;y<slider.ActualHeight;y+=6)if(slider.InputHitTest(new Point(slider.ActualWidth*.6,y)) is null)return false;return slider.ActualHeight>=24;} // v3 reference has a 1.5 rem (24 DIP) hit area
                 results["largeSliderHitTargets"]=FullHit(window.SeekSlider)&&FullHit(window.VolumeSlider);
                 int originalVolume=engine.Player.Volume;window.VolumeSlider.SmokeCommitAt(10+(window.VolumeSlider.ActualWidth-20)*.6);await Task.Delay(250);results["volumeSliderValue"]=window.VolumeSlider.Value;results["volumeEngineValue"]=engine.Player.Volume;results["volumeSliderApplies"]=Math.Abs(engine.Player.Volume-60)<=1;window.VolumeSlider.Value=originalVolume;
                 window.SeekSlider.SmokeCommitAt(10+(window.SeekSlider.ActualWidth-20)*.5);await Task.Delay(300);results["timelineCommitSeeks"]=Math.Abs(engine.Player.Position-.5)<.08;
