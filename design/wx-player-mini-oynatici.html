@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WX Player – Mini oynatıcı</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0A0C0E;--p1:#101417;--p2:#171C20;--p3:#1F262B;--ink:#F2F5EE;--mut:#8F9996;--acc:#C5F27A;--live:#FF6B78;--line:rgba(255,255,255,.07);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:radial-gradient(80% 70% at 30% 20%,#12171a,#0A0C0E);color:var(--ink);font:500 14px Manrope,system-ui,sans-serif;overflow:hidden}
+button,input{font:inherit;color:inherit}button{background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:8px}
+svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.demo{position:fixed;left:20px;top:20px;display:flex;flex-direction:column;gap:10px;padding:14px 16px;border-radius:16px;background:rgba(23,28,32,.7);border:1px dashed rgba(255,255,255,.14);font-size:12px;color:var(--mut)}
+.demo b{font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.seg{display:flex;padding:3px;border-radius:999px;background:var(--p1);width:max-content}.seg button{padding:6px 14px;border-radius:999px;font-weight:700;font-size:12px;color:var(--mut)}.seg button.on{background:var(--ink);color:#0c0f10}
+.demo label{display:flex;align-items:center;gap:8px;cursor:pointer}.demo input{accent-color:var(--acc)}
+.win{position:fixed;right:22px;bottom:22px;width:min(520px,calc(100vw - 24px));height:400px;min-width:380px;min-height:250px;max-width:96vw;max-height:94vh;resize:both;overflow:hidden;display:grid;grid-template-rows:auto 1fr auto;border-radius:14px;background:var(--p1);border:1px solid var(--line);box-shadow:0 30px 80px #000c}
+.hd{display:flex;align-items:center;gap:10px;padding:0 10px 0 16px;min-height:52px;cursor:grab;user-select:none}
+.hd:active{cursor:grabbing}
+.tt{flex:1;min-width:0;padding:8px 0}
+.ti{display:flex;align-items:center;gap:8px}.ti b{font-size:14px;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.q{font-size:10px;font-weight:800;padding:2px 6px;border-radius:5px;background:rgba(255,255,255,.1);color:#cfd6d2;flex:none}
+.ey{display:block;font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--mut);margin-top:3px}.ey[hidden]{display:none}
+.ib{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:var(--mut);transition:.15s;flex:none}.ib:hover{background:var(--p2);color:var(--ink)}
+.vf{background:#000;display:grid;place-items:center;min-height:0;overflow:hidden}
+.vp{position:relative;aspect-ratio:16/9;max-width:100%;max-height:100%;width:100%;overflow:hidden;cursor:default}
+.sc{position:absolute;inset:0}
+.sc.live{background:linear-gradient(180deg,#1b3a1e,#2c5a29 60%,#1d4320)}
+.sc.live::before{content:"";position:absolute;inset:16% 8% 14% 8%;border:2px solid rgba(255,255,255,.2)}.sc.live::after{content:"";position:absolute;left:50%;top:16%;bottom:14%;width:2px;background:rgba(255,255,255,.2)}
+.sc.vod{background:radial-gradient(70% 90% at 45% 35%,#46564d,#1b2622 55%,#090b0b)}
+.sc.vod::before{content:"";position:absolute;left:36%;top:14%;width:22%;aspect-ratio:1;border-radius:50%;background:#6b5848;box-shadow:70% 12% 0 -10px #7a6958}
+.sc.vod::after{content:"";position:absolute;left:25%;right:20%;bottom:0;height:46%;border-radius:40% 40% 0 0;background:#2a3330}
+.ft{position:relative;display:flex;align-items:center;gap:12px;padding:0 10px 0 14px;min-height:56px}
+.pg{position:absolute;left:0;right:0;top:0;height:3px;background:rgba(255,255,255,.12)}.pg i{display:block;height:100%;background:var(--acc);border-radius:0 3px 3px 0}.pg[hidden]{display:none}
+.play{width:38px;height:38px;border-radius:50%;background:var(--ink);color:#0c0f10;display:grid;place-items:center;transition:transform .15s;flex:none}.play:hover{transform:scale(1.07)}.play svg{width:17px;height:17px;fill:currentColor;stroke:none}
+.tm{font-size:12px;font-weight:600;color:#c4cbc7;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lv{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:800;letter-spacing:.08em;color:#ffb0b8;padding:5px 11px;border-radius:999px;background:rgba(255,107,120,.12)}.lv i{width:6px;height:6px;border-radius:50%;background:var(--live)}
+.sp{flex:1}
+.toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,10px);padding:10px 18px;border-radius:999px;background:rgba(22,27,31,.95);border:1px solid var(--line);font-weight:600;font-size:13px;opacity:0;transition:.25s;pointer-events:none}.toast.on{opacity:1;transform:translate(-50%,0)}
+.hint{position:fixed;left:50%;top:48%;transform:translate(-50%,-50%);text-align:center;color:#2a3338;font-weight:800;font-size:clamp(20px,4vw,44px);letter-spacing:-.02em;pointer-events:none}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="hint">Masaüstü önizlemesi</div>
+<div class="demo"><b>Önizleme (uygulamada yok)</b>
+  <div class="seg" id="mode"><button class="on" data-m="live">Canlı kanal</button><button data-m="vod">Film / dizi</button></div>
+  <label><input type="checkbox" id="narrow"> En dar pencere (380 px)</label>
+  <span>Başlık çubuğunu sürükleyin, köşeden yeniden boyutlandırın.</span></div>
+<div class="win" id="win" role="dialog" aria-label="Mini oynatıcı">
+  <header class="hd" id="hd">
+    <div class="tt"><div class="ti"><b id="tt"></b><span class="q" id="tq"></span></div><span class="ey" id="ey">ŞİMDİ OYNATILIYOR</span></div>
+    <button class="ib" id="rs" title="Ana pencereye dön" aria-label="Ana pencereye dön"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    <button class="ib" id="cl" title="Kapat ve ana pencereye dön" aria-label="Kapat ve ana pencereye dön"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </header>
+  <div class="vf" id="vf" title="Çift tıklayın: ana pencereye dön"><div class="vp"><div class="sc live" id="sc"></div></div></div>
+  <footer class="ft">
+    <div class="pg" id="pg" hidden><i id="pgi"></i></div>
+    <button class="play" id="pp" title="Oynat / duraklat · Space" aria-label="Oynat / duraklat"></button>
+    <span id="tm" class="tm"></span>
+    <div class="sp"></div>
+    <button class="ib" id="mu" title="Sesi kapat / aç" aria-label="Sesi kapat / aç"></button>
+  </footer>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const $=i=>document.getElementById(i);
+const S=p=>`<svg viewBox="0 0 24 24">${p}</svg>`;
+const PA=S('<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>'),PL=S('<path d="M7 4l13 8-13 8z"/>');
+const VO=S('<path d="M4 9v6h4l5 4V5L8 9zM17 8a5 5 0 0 1 0 8"/>'),VX=S('<path d="M4 9v6h4l5 4V5L8 9zM17 9l4 6M21 9l-4 6"/>');
+let live=true,playing=true,muted=false,t=1022,D=2550;
+const f=s=>{s=Math.max(0,s|0);return [s/3600|0,s/60%60|0,s%60].map(n=>String(n).padStart(2,'0')).join(':')};
+/* ham başlıklar; görüntü temizliği Canlı TV ile aynı mantık */
+const RAW={live:'TR • ASPOR FHD',vod:'Accused (2023)'};
+function clean(r){let s=r.replace(/^(TR|DE|UK)\s*[•:\-]\s*/,'').trim(),q='';const m=s.match(/\b(UHD|4K|FHD|HD|SD)\b/);if(m){q=m[1]=='UHD'?'4K':m[1];s=s.replace(m[0],'').trim()}return[s,q]}
+function draw(){const[n,q]=clean(RAW[live?'live':'vod']);$('tt').textContent=n;$('tt').title=RAW[live?'live':'vod'];$('tq').textContent=q;$('tq').hidden=!q;
+ $('ey').hidden=live;$('sc').className='sc '+(live?'live':'vod');$('pg').hidden=live;
+ $('pp').innerHTML=playing?PA:PL;$('mu').innerHTML=muted?VX:VO;
+ if(live)$('tm').innerHTML='<span class="lv"><i></i>CANLI</span>';else{$('tm').textContent=f(t)+'  /  '+f(D);$('pgi').style.width=(t/D*100)+'%'}}
+$('mode').onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;live=b.dataset.m=='live';[...$('mode').children].forEach(x=>x.classList.toggle('on',x==b));draw()};
+$('pp').onclick=()=>{playing=!playing;draw()};
+$('mu').onclick=()=>{muted=!muted;draw()};
+setInterval(()=>{if(playing&&!live&&t<D){t++;draw()}},1000);
+function toast(s){const e=$('toast');e.textContent=s;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),1400)}
+['rs','cl'].forEach(i=>$(i).onclick=()=>toast('Ana pencereye dönülüyor…'));
+$('vf').ondblclick=()=>toast('Ana pencereye dönülüyor…');
+$('narrow').onchange=e=>{$('win').style.width=e.target.checked?'380px':'';};
+/* sürükleme */
+let d=null;$('hd').addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;const r=$('win').getBoundingClientRect();d={x:e.clientX-r.left,y:e.clientY-r.top};$('hd').setPointerCapture(e.pointerId)});
+$('hd').addEventListener('pointermove',e=>{if(!d)return;const w=$('win');w.style.left=Math.max(0,e.clientX-d.x)+'px';w.style.top=Math.max(0,e.clientY-d.y)+'px';w.style.right='auto';w.style.bottom='auto'});
+$('hd').addEventListener('pointerup',()=>d=null);
+addEventListener('keydown',e=>{if(e.code=='Space'&&e.target.tagName!='INPUT'&&e.target.tagName!='BUTTON'){e.preventDefault();$('pp').click()}});
+draw();
+</script>
+</body>
+</html>

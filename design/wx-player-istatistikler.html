@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WX Player – Yayın istatistikleri</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0A0C0E;--p1:#101417;--p2:#171C20;--p3:#1F262B;--ink:#F2F5EE;--mut:#8F9996;--acc:#C5F27A;--live:#FF6B78;--warn:#F2C94C;--danger:#FF8C98;--line:rgba(255,255,255,.07);font-size:clamp(14px,.5vw + 8px,20px);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:radial-gradient(70% 60% at 50% 0%,#141a1d,#0A0C0E);color:var(--ink);font:500 1rem Manrope,system-ui,sans-serif;display:grid;place-items:center;padding:1rem;overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:.6rem}
+svg{width:1.25rem;height:1.25rem;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.win{width:min(46rem,100%);height:min(50rem,100%);display:grid;grid-template-rows:auto auto 1fr auto;border-radius:1.6rem;background:var(--p1);border:1px solid var(--line);box-shadow:0 40px 100px #000c;overflow:hidden}
+.wh{display:flex;align-items:center;gap:1rem;padding:1.3rem 1.6rem;border-bottom:1px solid var(--line)}
+.wi{width:2.7rem;height:2.7rem;border-radius:.9rem;background:rgba(197,242,122,.14);color:var(--acc);display:grid;place-items:center}
+.wh h1{font-size:1.2rem;font-weight:800;letter-spacing:-.01em}.wh p{font-size:.85rem;color:var(--mut);margin-top:.1rem;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap}
+.lv{display:inline-flex;align-items:center;gap:.4rem}.lv i{width:.45rem;height:.45rem;border-radius:50%;background:var(--acc);animation:p 1s infinite}@keyframes p{50%{opacity:.25}}
+.sp{flex:1}
+.ib{width:2.5rem;height:2.5rem;border-radius:50%;display:grid;place-items:center;color:var(--mut);transition:.15s}.ib:hover{background:var(--p2);color:var(--ink)}
+.top{padding:1.1rem 1.6rem 1rem;border-bottom:1px solid var(--line);background:rgba(10,12,14,.35)}
+.sum{display:flex;align-items:center;gap:.9rem}
+.sl{width:2.7rem;height:2.7rem;border-radius:.8rem;background:#27312d;color:#dfe8d9;display:grid;place-items:center;font-weight:800;font-size:.82rem;flex:none}
+.sm{flex:1;min-width:0}.sm b{display:block;font-size:1.05rem;font-weight:800;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sm small{display:block;font-size:.8rem;color:var(--mut);margin-top:.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chips{display:flex;gap:.4rem;flex:none}
+.chip{display:inline-flex;align-items:center;gap:.4rem;font-size:.74rem;font-weight:700;padding:.35rem .75rem;border-radius:999px;background:rgba(255,255,255,.08);color:#cfd6d2;white-space:nowrap}
+.chip i{width:.45rem;height:.45rem;border-radius:50%;background:var(--acc)}
+.chip.ok{background:rgba(197,242,122,.12);color:var(--acc)}.chip.wn{background:rgba(242,201,76,.14);color:var(--warn)}.chip.wn i{background:var(--warn)}.chip.lvc{color:#ffb0b8;background:rgba(255,107,120,.12)}.chip.lvc i{background:var(--live)}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem;margin-top:1rem}
+.tile{padding:.85rem 1rem;border-radius:1rem;background:var(--p2);border:1px solid var(--line)}
+.tile small{display:block;font-size:.68rem;font-weight:700;letter-spacing:.09em;color:var(--mut)}
+.tile b{display:block;font-size:1.35rem;font-weight:800;letter-spacing:-.01em;margin-top:.3rem;font-variant-numeric:tabular-nums}
+.pg{overflow:auto;padding:1.4rem 1.6rem 2rem;display:flex;flex-direction:column;gap:1.7rem;scrollbar-width:thin;scrollbar-color:#2a3238 transparent}
+.g h2{font-size:1rem;font-weight:800;letter-spacing:-.01em;display:flex;align-items:center;gap:.6rem}
+.g .gd{font-size:.82rem;color:var(--mut);margin:.25rem 0 .8rem;line-height:1.4}
+.g h2+.card{margin-top:.8rem}
+.card{border-radius:1.1rem;background:var(--p2);border:1px solid var(--line);padding:.3rem 1.1rem}
+.grid{display:grid;grid-auto-flow:column;column-gap:2rem}
+.kv{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;padding:.7rem 0;border-bottom:1px solid var(--line);font-size:.88rem}
+.kv span:first-child{color:var(--mut)}.kv b{font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+.kv .nr{color:#68716e;font-weight:500}.kv .bad{color:var(--danger)}.kv .wn{color:var(--warn)}
+.th{display:flex;align-items:center;gap:.6rem;padding:.9rem 0 .2rem}.th b{font-size:.95rem;font-weight:800}.th small{color:var(--mut);font-size:.8rem}
+.sel{font-size:.66rem;font-weight:800;letter-spacing:.04em;padding:.12rem .5rem;border-radius:999px;background:rgba(197,242,122,.14);color:var(--acc)}
+.tk{border-radius:1.1rem;background:var(--p2);border:1px solid var(--line);padding:.1rem 1.1rem .3rem;margin-bottom:.7rem}
+.tk .grid .kv:last-child{border-bottom:0}
+.wf{display:flex;align-items:center;gap:.7rem;padding:1rem 1.6rem;border-top:1px solid var(--line);background:rgba(10,12,14,.5)}
+.btn{display:inline-flex;align-items:center;gap:.5rem;height:2.5rem;padding:0 1.2rem;border-radius:999px;font-weight:700;font-size:.85rem;background:rgba(255,255,255,.08);transition:.15s}.btn:hover{background:rgba(255,255,255,.14)}
+.demo{font-size:.78rem;font-weight:600;color:var(--mut);padding:.4rem .8rem;border-radius:999px;border:1px dashed rgba(255,255,255,.14)}.demo[aria-pressed=true]{color:var(--warn);border-color:rgba(242,201,76,.5)}
+@media(max-width:720px){.tiles{grid-template-columns:1fr}.grid{grid-auto-flow:row}.chips{display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="win" role="dialog" aria-modal="true" aria-labelledby="ttl">
+  <header class="wh"><div class="wi"><svg viewBox="0 0 24 24"><path d="M5 20V12M10 20V6M15 20V10M20 20V4"/></svg></div><div><h1 id="ttl">Yayın istatistikleri</h1><p>Oynatılan içeriğin teknik bilgileri · <span class="lv"><i></i>Her saniye yenilenir</span></p></div><div class="sp"></div><button class="ib" aria-label="Kapat"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></header>
+  <section class="top">
+    <div class="sum"><div class="sl">EX</div><div class="sm"><b>Exxen Sports 2 FHD</b><small>http://8.rinastv.cfd/•••</small></div><div class="chips"><span class="chip ok" id="stc"><i></i><span id="stt">Oynuyor</span></span><span class="chip lvc" id="lvc"><i></i><span id="lvt">Canlı · 12 sn tampon</span></span></div></div>
+    <div class="tiles"><div class="tile"><small>ÇÖZÜNÜRLÜK</small><b>1920 × 1080</b></div><div class="tile"><small>KAYNAK FPS</small><b>30</b></div><div class="tile"><small>SES</small><b>48 kHz</b></div></div>
+  </section>
+  <div class="pg">
+    <section class="g"><h2>Akış ölçümleri</h2><p class="gd">Sayaçlar bu oynatma oturumuna aittir. Motorun bildirmediği alanlar tahmin edilmez.</p>
+      <div class="card"><div class="grid" style="grid-template-rows:repeat(4,auto)">
+        <div class="kv"><span>Giriş bit hızı</span><b id="br"></b></div>
+        <div class="kv"><span>Tampon doluluğu</span><b id="bf"></b></div>
+        <div class="kv"><span>Canlı tampon</span><b id="lb"></b></div>
+        <div class="kv"><span>Okunan veri</span><b id="rd"></b></div>
+        <div class="kv"><span>Çözülen / gösterilen kare</span><b id="fr"></b></div>
+        <div class="kv"><span>Kaybedilen kare</span><b id="ls"></b></div>
+        <div class="kv"><span>Akış bozulması / süreksizlik</span><b id="cr"></b></div>
+      </div></div></section>
+    <section class="g"><h2>Oynatma ve motor</h2>
+      <div class="card"><div class="grid" style="grid-template-rows:repeat(2,auto)">
+        <div class="kv"><span>Durum</span><b id="st"></b></div>
+        <div class="kv"><span>Motor / video çıkışı</span><b>LibVLC · Direct3D 11</b></div>
+        <div class="kv"><span>Donanım çözme tercihi</span><b>D3D11VA · GPU istenir</b></div>
+        <div class="kv"><span>Ağ önbelleği</span><b>1600 ms</b></div>
+      </div></div></section>
+    <section class="g"><h2>Parçalar</h2><p class="gd">Akışın içindeki video, ses ve altyazı parçaları.</p>
+      <div class="tk"><div class="th"><b>Video</b><small>Parça 0</small></div><div class="grid" style="grid-template-rows:repeat(3,auto)">
+        <div class="kv"><span>Codec</span><b>h264</b></div><div class="kv"><span>Çözünürlük</span><b>1920 × 1080</b></div><div class="kv"><span>Kaynak FPS</span><b>30</b></div>
+        <div class="kv"><span>Görüntü oranı</span><b>1.778</b></div><div class="kv"><span>Parça bit hızı</span><b class="nr">Bildirilmedi</b></div></div></div>
+      <div class="tk"><div class="th"><b>Ses</b><span class="sel">SEÇİLİ</span><small>Parça 1</small></div><div class="grid" style="grid-template-rows:repeat(3,auto)">
+        <div class="kv"><span>Codec</span><b>mpga</b></div><div class="kv"><span>Örnekleme hızı</span><b>48000 Hz</b></div><div class="kv"><span>Kanallar</span><b>Stereo</b></div>
+        <div class="kv"><span>Parça bit hızı</span><b class="nr">Bildirilmedi</b></div></div></div>
+      <div class="tk"><div class="th"><b>Altyazı</b><small>Parça 2 · Türkçe</small></div><div class="grid" style="grid-template-rows:repeat(1,auto)">
+        <div class="kv"><span>Codec</span><b>dvbs</b></div><div class="kv"><span>Parça bit hızı</span><b class="nr">Bildirilmedi</b></div></div></div>
+    </section>
+  </div>
+  <footer class="wf"><button class="demo" id="demo" aria-pressed="false" title="Yalnızca bu önizlemede: uyarı durumlarını göster">Önizleme: sorunlu akış</button><div class="sp"></div><button class="btn">Kapat</button></footer>
+</div>
+<script>
+const $=i=>document.getElementById(i);
+const n=(v,d=0)=>v.toLocaleString('tr-TR',{minimumFractionDigits:d,maximumFractionDigits:d});
+let t=0,read=184.3,dec=5412,disp=5410,lost=0,corr=0,disc=0,bad=false;
+function tick(){t++;
+ const br=bad?1.1+Math.random()*.6:5.1+Math.random()*.35;read+=br/8;dec+=bad?18:30;disp+=bad?14:30;
+ if(bad){lost+=Math.random()<.6?1:0;corr+=Math.random()<.2?1:0;disc+=Math.random()<.15?1:0}
+ $('br').textContent=n(br,2)+' Mb/sn';$('rd').textContent=n(read,1)+' MB';$('fr').textContent=n(dec)+' / '+n(disp);
+ $('bf').textContent=bad?'38 %':'100 %';$('lb').textContent=bad?'3 sn · 4 sn geride':'12 sn · Canlı';$('lvt').textContent=bad?'Canlı · 3 sn tampon':'Canlı · 12 sn tampon';
+ const l=$('ls');l.textContent=n(lost);l.className=lost>0?'bad':'';const c=$('cr');c.textContent=n(corr)+' / '+n(disc);c.className=corr+disc>0?'bad':'';
+ $('st').textContent=bad?'Arabelleğe alınıyor':'Oynuyor';$('stt').textContent=$('st').textContent;$('stc').className='chip '+(bad?'wn':'ok');$('st').className=bad?'wn':''}
+$('demo').onclick=()=>{bad=!bad;$('demo').setAttribute('aria-pressed',bad);if(!bad){lost=corr=disc=0}tick()};
+setInterval(tick,1000);tick();
+</script>
+</body>
+</html>

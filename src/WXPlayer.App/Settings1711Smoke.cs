@@ -81,14 +81,17 @@ internal static class Settings1711Smoke
             _ = settings.Dispatcher.BeginInvoke(() => clear.RaiseEvent(new RoutedEventArgs(Button.ClickEvent)));
             await Wait(() => settings.OwnedWindows.Cast<Window>().Any(w => w.Title == "Favorileri temizle · WX Player"));
             confirm = settings.OwnedWindows.Cast<Window>().Single(w => w.Title == "Favorileri temizle · WX Player");
-            Descendants<Button>(confirm).Single(b => Equals(b.Content, "Temizle")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); await Wait(() => settings.IsEnabled); await Task.Delay(200);
+            Descendants<Button>(confirm).Single(b => Equals(b.Content, "Temizle")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            // The modal close returns before its async owner callback starts; IsEnabled can still be true.
+            await WaitAsync(async () => settings.IsEnabled && (await store.FindAsync("settings1711-item")) is { IsFavorite: false } && (await store.SourcesAsync()).Any(s => s.Id == source.Id));
             Check("settingsConfirmedCleanupRunsOriginalCallback", (await store.FindAsync("settings1711-item")) is { IsFavorite: false } && (await store.SourcesAsync()).Any(s => s.Id == source.Id));
             var remove = Descendants<Button>(settings).Single(b => Equals(b.Content, "Kaldır"));
             _ = settings.Dispatcher.BeginInvoke(() => remove.RaiseEvent(new RoutedEventArgs(Button.ClickEvent)));
             await Wait(() => settings.OwnedWindows.Cast<Window>().Any(w => w.Title == "Kaynağı kaldır · WX Player"));
             confirm = settings.OwnedWindows.Cast<Window>().Single(w => w.Title == "Kaynağı kaldır · WX Player");
             Check("settingsOriginalSourceConfirmText", Descendants<TextBlock>(confirm).Any(t => t.Text == source.Name + " ve bu kaynağın içerikleri kaldırılacak."));
-            Descendants<Button>(confirm).Single(b => Equals(b.Content, "Temizle")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); await Wait(() => settings.IsEnabled); await Task.Delay(200);
+            Descendants<Button>(confirm).Single(b => Equals(b.Content, "Temizle")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            await WaitAsync(async () => settings.IsEnabled && !(await store.SourcesAsync()).Any(s => s.Id == source.Id) && Descendants<TextBlock>(settings).Any(t => t.Text == "Henüz kaynak eklenmedi."));
             Check("settingsSourceRemovalAndAsyncReloadPreserved", !(await store.SourcesAsync()).Any(s => s.Id == source.Id) && Descendants<TextBlock>(settings).Any(t => t.Text == "Henüz kaynak eklenmedi."));
             var cache = Descendants<TextBox>(settings).Single(t => AutomationProperties.GetName(t).StartsWith("Önbellek"));
             var folder = Descendants<TextBox>(settings).Single(t => AutomationProperties.GetName(t) == "Kayıtlar");
@@ -122,6 +125,7 @@ internal static class Settings1711Smoke
         }
     }
     private static async Task Wait(Func<bool> test) { var until = DateTime.UtcNow.AddSeconds(8); while (!test() && DateTime.UtcNow < until) await Task.Delay(50); if (!test()) throw new TimeoutException("Settings QA wait"); }
+    private static async Task WaitAsync(Func<Task<bool>> test) { var until = DateTime.UtcNow.AddSeconds(8); while (!await test() && DateTime.UtcNow < until) await Task.Delay(50); if (!await test()) throw new TimeoutException("Settings QA async wait"); }
     internal static IEnumerable<T> Descendants<T>(DependencyObject root) where T : DependencyObject
     {
         if (root is T self) yield return self;

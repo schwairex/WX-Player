@@ -16,6 +16,11 @@ internal static class SmokeTest
         var results=new Dictionary<string,object>();
         try
         {
+            if(App.Arguments.Contains("--utility1712-layout-only"))
+            {
+                await Utility1712Smoke.RunAsync(window,store,engine,settings,results);results["success"]=true;
+                File.WriteAllText(Path.Combine(App.DataDirectory,"smoke-results.json"),JsonSerializer.Serialize(results,new JsonSerializerOptions{WriteIndented=true}));window.Close();return;
+            }
             if(App.Arguments.Contains("--settings1711-layout-only"))
             {
                 await Settings1711Smoke.RunAsync(window,store,results);results["success"]=true;

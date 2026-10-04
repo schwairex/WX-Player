@@ -117,7 +117,7 @@ Tam oynatma smoke testi için `--media` ile oynatılabilir yerel bir video dosya
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\build.ps1 -OutputPath .\artifacts
 ```
 
-`src/WXPlayer.App` WPF arayüzünü ve oynatıcıyı, `src/WXPlayer.Core` kaynakları ve kütüphaneyi, `tests/WXPlayer.Tests` regresyon testlerini, `tools` dağıtım araçlarını içerir. [Tasarım sistemi](docs/DESIGN_SYSTEM.md) · [1.7.11 test raporu](docs/TEST-REPORT-1.7.11.md).
+`src/WXPlayer.App` WPF arayüzünü ve oynatıcıyı, `src/WXPlayer.Core` kaynakları ve kütüphaneyi, `tests/WXPlayer.Tests` regresyon testlerini, `tools` dağıtım araçlarını içerir. [Tasarım sistemi](docs/DESIGN_SYSTEM.md) · [1.7.12 test raporu](docs/TEST-REPORT-1.7.12.md).
 
 Tam ekranda `N` sonraki bölüm/içerik, `R` kayıt ve `C` ses/altyazı menüsünü açar. Kategori/sayfalama seçenekleri için kütüphane arama alanına sağ tıklayın.
 
@@ -125,6 +125,7 @@ Tam ekranda `N` sonraki bölüm/içerik, `R` kayıt ve `C` ses/altyazı menüsü
 
 | Sürüm | Başlıca değişiklik |
 | --- | --- |
+| **[1.7.12](docs/RELEASE-NOTES-1.7.12.md)** | HTML referanslı Yayın istatistikleri, Mini oynatıcı ve Ses/altyazılar görünümü; sabit teknik özet, sade mini kontroller, ortak seçici/kart stilleri. Mevcut oynatma, seçim ve veri akışları korunur. |
 | **[1.7.11](docs/RELEASE-NOTES-1.7.11.md)** | Tüm sayfalarda ortak Canlı TV sidebarı; HTML referanslı beş bölümlü Ayarlar görünümü; sade video başlığı ve tam ekran kaynak rozeti; diğer uygulamaların öne gelmesini engelleyen üstte tutma davranışı düzeltildi. |
 | **[1.7.10](docs/RELEASE-NOTES-1.7.10.md)** | Canlı TV v3 görünümü: tam yükseklikte kanal paneli, video üzerinde özgün kontroller ve yatay EPG kartları; mevcut işlevler korunur. |
 | **[1.7.9](docs/RELEASE-NOTES-1.7.9.md)** | Geçersiz logo/afiş adresi yüzünden yerel M3U içe aktarmanın tamamen geri alınması düzeltildi; gerçek büyük dosya ve üç yeni regresyonla doğrulandı. |
@@ -152,4 +153,5 @@ Tam ekranda `N` sonraki bölüm/içerik, `R` kayıt ve `C` ses/altyazı menüsü
 ## Katkı ve lisans
 
 Hata veya geliştirme önerilerini [Issues](https://github.com/schwairex/WX-Player/issues) üzerinden paylaşabilirsiniz. Uygulama kodu [MIT lisansı](LICENSE) altındadır; üçüncü taraf bileşenler ve örnek medya kendi lisanslarına tabidir. WX Player yalnız istemcidir; IPTV aboneliği veya yayın sağlamaz.
+
 

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WX Player – Ses ve altyazılar</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0A0C0E;--p1:#101417;--p2:#171C20;--p3:#1F262B;--ink:#F2F5EE;--mut:#8F9996;--acc:#C5F27A;--line:rgba(255,255,255,.07);font-size:clamp(14px,.5vw + 8px,20px);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:radial-gradient(70% 60% at 50% 0%,#141a1d,#0A0C0E);color:var(--ink);font:500 1rem Manrope,system-ui,sans-serif;display:grid;place-items:center;padding:1rem;overflow:hidden}
+button,input{font:inherit;color:inherit}button{background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:.6rem}
+svg{width:1.25rem;height:1.25rem;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.win{width:min(44rem,100%);display:grid;grid-template-rows:auto auto auto;border-radius:1.6rem;background:var(--p1);border:1px solid var(--line);box-shadow:0 40px 100px #000c}
+.wh{display:flex;align-items:center;gap:1rem;padding:1.3rem 1.6rem;border-bottom:1px solid var(--line)}
+.wi{width:2.7rem;height:2.7rem;border-radius:.9rem;background:rgba(197,242,122,.14);color:var(--acc);display:grid;place-items:center}
+.wh h1{font-size:1.2rem;font-weight:800;letter-spacing:-.01em}.wh p{font-size:.85rem;color:var(--mut);margin-top:.1rem}
+.sp{flex:1}
+.ib{width:2.5rem;height:2.5rem;border-radius:50%;display:grid;place-items:center;color:var(--mut);transition:.15s}.ib:hover{background:var(--p2);color:var(--ink)}
+.pg{padding:1.4rem 1.6rem 1rem;display:flex;flex-direction:column;gap:1.6rem}
+.g h2{display:flex;align-items:center;gap:.6rem;font-size:1rem;font-weight:800;letter-spacing:-.01em}
+.tag{font-size:.64rem;font-weight:800;letter-spacing:.07em;padding:.15rem .55rem;border-radius:999px;background:rgba(255,255,255,.08);color:#b9c2be}
+.g .gd{font-size:.82rem;color:var(--mut);margin:.3rem 0 .8rem}
+.card{border-radius:1.1rem;background:var(--p2);border:1px solid var(--line);padding:1rem 1.1rem}
+.card+.card{margin-top:.7rem}
+.sel{position:relative}
+.sb{display:flex;align-items:center;gap:.8rem;width:100%;min-height:3rem;padding:0 1rem;border-radius:.9rem;background:var(--p1);border:1px solid var(--line);text-align:left;font-size:.95rem;font-weight:600;transition:.15s}
+.sb:hover:not(:disabled){border-color:rgba(255,255,255,.18)}
+.sb[aria-expanded=true]{border-color:rgba(197,242,122,.55);box-shadow:0 0 0 3px rgba(197,242,122,.12)}
+.sb .v{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sb small{font-size:.78rem;color:var(--mut);font-weight:500}.sb>svg{width:1.05rem;height:1.05rem;color:var(--mut);transition:.2s}.sb[aria-expanded=true]>svg{transform:rotate(180deg)}
+.sb:disabled{opacity:.5;cursor:default}
+.op{position:absolute;left:0;right:0;top:calc(100% + .4rem);z-index:5;list-style:none;padding:.35rem;border-radius:1rem;background:#161B1F;border:1px solid var(--line);box-shadow:0 20px 50px #000a;display:none}.op.on{display:block}
+.op li{display:flex;align-items:center;gap:.8rem;padding:.65rem .75rem;border-radius:.7rem;font-size:.92rem;font-weight:600;cursor:pointer}
+.op li span{flex:1}.op li small{font-size:.78rem;color:var(--mut);font-weight:500}
+.op li:hover,.op li.hl{background:rgba(255,255,255,.07)}
+.op li[aria-selected=true]{color:var(--acc)}.op li[aria-selected=true]::after{content:"✓";font-size:.9rem}
+.ex{display:flex;align-items:center;gap:.9rem;margin-top:.9rem;padding-top:.9rem;border-top:1px solid var(--line);flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:.5rem;height:2.5rem;padding:0 1.2rem;border-radius:999px;font-weight:700;font-size:.85rem;background:rgba(255,255,255,.08);transition:.15s}.btn:hover{background:rgba(255,255,255,.14)}.btn svg{width:1.05rem;height:1.05rem}
+.fm{display:flex;gap:.35rem;margin-left:auto;flex-wrap:wrap}.fm span{font-size:.7rem;font-weight:700;letter-spacing:.04em;padding:.22rem .55rem;border-radius:.45rem;background:var(--p1);border:1px solid var(--line);color:var(--mut)}
+.nt{display:flex;align-items:center;gap:.7rem;padding:0 .2rem;font-size:.85rem;color:#b7c0bc;min-height:1.6rem}.nt svg{width:1.1rem;height:1.1rem;color:var(--mut)}
+.wf{display:flex;align-items:center;gap:.7rem;padding:1rem 1.6rem;border-top:1px solid var(--line);background:rgba(10,12,14,.5);margin-top:.4rem;border-radius:0 0 1.6rem 1.6rem}
+.demo{font-size:.78rem;font-weight:600;color:var(--mut);padding:.4rem .8rem;border-radius:999px;border:1px dashed rgba(255,255,255,.14)}.demo[aria-pressed=true]{color:#F2C94C;border-color:rgba(242,201,76,.5)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="win" role="dialog" aria-modal="true" aria-labelledby="ttl">
+  <header class="wh"><div class="wi"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M7 11h3M13 11h4M7 15h6"/></svg></div><div><h1 id="ttl">Ses ve altyazılar</h1><p>Yayının dilini ve altyazı tercihlerini düzenleyin.</p></div><div class="sp"></div><button class="ib" aria-label="Kapat"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></header>
+  <div class="pg">
+    <section class="g"><h2>Dinleme dili <span class="tag">SES PARÇASI</span></h2><p class="gd">Tercihiniz anında uygulanır.</p>
+      <div class="card"><div class="sel" id="aS"><button class="sb" id="aB" aria-haspopup="listbox" aria-expanded="false" aria-label="Ses parçası"></button><ul class="op" id="aO" role="listbox"></ul></div></div></section>
+    <section class="g"><h2>Altyazı tercihleri <span class="tag">YERLEŞİK VEYA HARİCİ</span></h2><p class="gd">İzleme dilinizi seçin.</p>
+      <div class="card"><div class="sel" id="sS"><button class="sb" id="sB" aria-haspopup="listbox" aria-expanded="false" aria-label="Altyazı"></button><ul class="op" id="sO" role="listbox"></ul></div>
+        <div class="ex"><button class="btn" id="add"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Altyazı dosyası ekle</button><div class="fm"><span>SRT</span><span>ASS</span><span>SSA</span><span>VTT</span><span>SUB</span></div></div></div></section>
+    <div class="nt" role="status" aria-live="polite"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 11v5M12 8h.01"/></svg><span id="st">Seçimler oynatılan yayına anında uygulanır.</span></div>
+  </div>
+  <footer class="wf"><button class="demo" id="demo" aria-pressed="false" title="Yalnızca bu önizlemede">Önizleme: içerik yok</button><div class="sp"></div><button class="btn">Tamam</button></footer>
+</div>
+<script>
+const $=i=>document.getElementById(i);
+const LANG={Turkish:'Türkçe',English:'İngilizce',German:'Almanca',French:'Fransızca',Spanish:'İspanyolca',Italian:'İtalyanca',Arabic:'Arapça',Russian:'Rusça',Persian:'Farsça',Japanese:'Japonca'};
+/* ham etiketler (LibVLC); görüntü adı yalnızca biçimlendirme, bulunamazsa ham metin */
+function fmt(raw){const m=raw.match(/^Track\s+(\d+)\s*-\s*\[(.+)\]$/i);return m?{n:LANG[m[2]]||m[2],s:'Parça '+m[1]}:{n:raw,s:''}}
+let A=['Track 1 - [Turkish]','Track 2 - [English]','Track 3 - [German]'],S=['Altyazı kapalı','Track 4 - [Turkish]','Track 5 - [English]'];
+let ai=0,si=0,empty=false;
+const say=s=>$('st').textContent=s;
+function build(k,list,idx,onPick,ph){
+ const B=$(k+'B'),O=$(k+'O'),dis=empty&&k=='a'||empty&&k=='s'||list.length<2&&k=='s';
+ const cur=list[idx];const f=cur?fmt(cur):{n:ph,s:''};
+ B.disabled=dis;B.innerHTML=`<span class="v">${f.n}</span>${f.s?`<small>${f.s}</small>`:''}<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>`;
+ O.innerHTML=list.map((r,i)=>{const x=fmt(r);return`<li role="option" data-i="${i}" aria-selected="${i==idx}"><span>${x.n}</span>${x.s?`<small>${x.s}</small>`:''}</li>`}).join('');
+ O.onclick=e=>{const li=e.target.closest('li');if(!li)return;close(k);onPick(+li.dataset.i)};
+}
+function render(){
+ if(empty){A=[];}
+ build('a',empty?[]:A,ai,i=>{ai=i;say('Ses tercihiniz uygulandı.');render()},'Henüz bir ses parçası bulunamadı');
+ build('s',empty?['Altyazı kapalı']:S,empty?0:si,i=>{si=i;say(i==0?'Altyazılar kapatıldı.':'Altyazı tercihiniz uygulandı.');render()},'Altyazı kapalı');
+}
+function close(k){$(k+'O').classList.remove('on');$(k+'B').setAttribute('aria-expanded','false')}
+function toggle(k){const o=$(k+'O').classList.contains('on');['a','s'].forEach(close);if(!o){$(k+'O').classList.add('on');$(k+'B').setAttribute('aria-expanded','true');const l=[...$(k+'O').children];l.forEach(x=>x.classList.remove('hl'));(l.find(x=>x.getAttribute('aria-selected')=='true')||l[0]).classList.add('hl')}}
+['a','s'].forEach(k=>{$(k+'B').onclick=e=>{e.stopPropagation();toggle(k)};
+ $(k+'B').onkeydown=e=>{const O=$(k+'O');if(!O.classList.contains('on')){if(['ArrowDown','ArrowUp'].includes(e.key)){e.preventDefault();toggle(k)}return}
+  const l=[...O.children];let h=l.findIndex(x=>x.classList.contains('hl'));
+  if(e.key=='ArrowDown'||e.key=='ArrowUp'){e.preventDefault();l[h]?.classList.remove('hl');h=(h+(e.key=='ArrowDown'?1:-1)+l.length)%l.length;l[h].classList.add('hl')}
+  else if(e.key=='Enter'){e.preventDefault();l[h]?.click()}else if(e.key=='Escape'){e.preventDefault();e.stopPropagation();close(k)}}});
+addEventListener('click',()=>['a','s'].forEach(close));
+let ext=0;
+$('add').onclick=()=>{if(empty){say('Altyazı eklenemedi. Bir içerik oynatıldığından emin olun.');return}
+ const name='film.tr.srt';if(!S.includes(name)){S.push(name)}si=S.indexOf(name);say('Altyazı eklendi · '+name);render()};
+$('demo').onclick=()=>{empty=!empty;$('demo').setAttribute('aria-pressed',empty);
+ if(empty)say('Önce bir içerik oynatın. Kullanılabilir parçalar burada listelenir.');else{A=['Track 1 - [Turkish]','Track 2 - [English]','Track 3 - [German]'];ai=0;say('Seçimler oynatılan yayına anında uygulanır.')}render()};
+render();
+</script>
+</body>
+</html>
