@@ -106,6 +106,10 @@ internal static class Live1710Smoke
         await window.SmokeBrowseAsync("movie");
         Check("liveCatalogShellRestored", window.CatalogHost.IsVisible && window.SmokeCatalog.IsAncestorOf(window.SourcePicker));
         await window.SmokeBrowseAsync("all");
+        Check("liveAllLibraryUsesModernPlayer", window.OwnedWindows.Cast<Window>().Any(w => w.Title == "WX Player live controls") && window.SmokeEmbeddedPlayerReady);
+        // 1.7.13 intentionally shares the appearance with every embedded library.
+        // Home is now the destination that restores the original control parents.
+        await window.SmokeBrowseAsync("home");
         Check("liveDefaultControlParentsRestored", window.ViewingPanel.Children.Contains(window.ControlsBorder) && controls[0] == window.PlayButton && controls[1] == window.RecordButton && controls[2] == window.MiniPlayerButton);
         Check("liveDefaultEpgRestored", !Descendants<VirtualizingStackPanel>(window.EpgList).Any(p => p.Orientation == Orientation.Horizontal));
     }

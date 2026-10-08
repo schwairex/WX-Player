@@ -53,7 +53,7 @@ public partial class MainWindow : Window
         SourceInitialized+=(_,_)=>{try{int dark=1;DwmSetWindowAttribute(new WindowInteropHelper(this).Handle,20,ref dark,sizeof(int));}catch{/* Older Windows falls back to the system title bar. */}};
         SeekSlider.InteractionCommitted+=async(_,_)=>{if(!_ready)return;if(_engine.HasLiveBuffer)await SafeAsync(()=>_engine.RewindLiveAsync((1-SeekSlider.Value)*_engine.BufferedSeconds,_life.Token));else if(_engine.Player.IsSeekable){await FinishClipBeforeSeekAsync();_engine.Player.Position=(float)SeekSlider.Value;_discordForceTiming=true;}};
         SeekSlider.ValueChanged+=(_,_)=>{if(SeekSlider.IsInteracting&&_engine is not null)PlaybackBadge.Text=_engine.HasLiveBuffer?$"−{(1-SeekSlider.Value)*_engine.BufferedSeconds:0} sn · Bırakarak git":TimeSpan.FromMilliseconds(Math.Max(0,_engine.Player.Length*SeekSlider.Value)).ToString(@"hh\:mm\:ss")+" · Bırakarak git";};
-        _search.Tick+=async(_,_)=>{_search.Stop();_offset=0;await SafeAsync(async()=>{await QueryAsync();await RefreshHomeAsync();await RefreshCatalogAsync();});};
+        _search.Tick+=async(_,_)=>{_search.Stop();_offset=0;await SafeAsync(async()=>{await QueryAsync();await RefreshHomeAsync();await RefreshCatalogAsync(true);});};
         _clock.Tick+=(_,_)=>Tick();
         Video.PointerMoved+=RevealFullscreenControlsFromPointer;
         Video.WheelMoved+=delta=>VolumeSlider.Value=Math.Clamp(VolumeSlider.Value+(delta>0?5:-5),0,100);
@@ -109,7 +109,8 @@ public partial class MainWindow : Window
     {BusyBar.Visibility=CancelButton.Visibility=busy?Visibility.Visible:Visibility.Collapsed;AddSourceButton.IsEnabled=!busy;SourcePicker.IsEnabled=!busy;}
     private async Task ReloadSourcesAsync(string? select=null)
     {
-        var id=select??SelectedSource?.Id;_sources=await _store.SourcesAsync();_suppress=true;SourcePicker.ItemsSource=_sources;SourcePicker.SelectedItem=_sources.FirstOrDefault(s=>s.Id==id)??_sources.FirstOrDefault();_suppress=false;
+        var id=select??SelectedSource?.Id??_settings.LastSourceId;_sources=await _store.SourcesAsync();_suppress=true;SourcePicker.ItemsSource=_sources;SourcePicker.SelectedItem=_sources.FirstOrDefault(s=>s.Id==id)??_sources.FirstOrDefault();_suppress=false;
+        RememberSelectedSource();
     }
     private async Task RefreshViewAsync()
     {
@@ -155,7 +156,13 @@ public partial class MainWindow : Window
     {
         var path=Path.Combine(AppContext.BaseDirectory,"samples","open-films.m3u");await ImportSourceAsync(new SourceConfig{Id="wx-open-films",Name="Örnek · Açık filmler",Address=path});
     }
-    private async void Source_Changed(object sender,SelectionChangedEventArgs e){if(_suppress||!_ready)return;_offset=0;await SafeAsync(RefreshViewAsync);}
+    private void RememberSelectedSource()
+    {
+        string? id=SelectedSource?.Id;
+        if(_settings.LastSourceId==id)return;
+        _settings.LastSourceId=id;App.SaveSettings(_settings);
+    }
+    private async void Source_Changed(object sender,SelectionChangedEventArgs e){if(_suppress||!_ready)return;_offset=0;await SafeAsync(async()=>{RememberSelectedSource();await RefreshViewAsync();});}
     private async void Category_Changed(object sender,SelectionChangedEventArgs e){if(_suppress||!_ready)return;_offset=0;await SafeAsync(QueryAsync);}
     private void Search_Changed(object sender,TextChangedEventArgs e){if(SearchHint is not null)SearchHint.Visibility=SearchBox.Text.Length==0?Visibility.Visible:Visibility.Collapsed;if(ClearSearch is not null)ClearSearch.Visibility=SearchBox.Text.Length>0?Visibility.Visible:Visibility.Collapsed;if(!_ready)return;_search.Stop();_search.Start();}
     private async void Navigate_Click(object sender,RoutedEventArgs e)

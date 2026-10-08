@@ -2,7 +2,7 @@
 
 ## Etkinleştirme
 
-Discord Developer Portal'da WX Player adına bir uygulama oluşturun. Application ID değerini `src/WXPlayer.App/Services/Discord/DiscordConfiguration.cs` dosyasındaki `ApplicationId` sabitine yazın. Bot tokeni veya client secret gerekmez; bunları projeye eklemeyin. Başka projenin ID'si kullanılmaz.
+Discord Developer Portal'da WX Player adına bir uygulama oluşturun. Application ID değerini `src/WXPlayer.App/DiscordConfiguration.cs` dosyasındaki `ApplicationId` sabitine yazın. Bot tokeni veya client secret gerekmez; bunları projeye eklemeyin. Başka projenin ID'si kullanılmaz.
 
 1.6.3 kaynak ağacında daha önce girilmiş Application ID korunmuştur; yeniden girmeniz gerekmez.
 

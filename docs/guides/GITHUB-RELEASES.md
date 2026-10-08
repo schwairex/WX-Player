@@ -19,7 +19,7 @@ Kaynak kodunu yüklemek veya commit oluşturmak tek başına güncelleme yayıml
 
 Manuel paketleme: Windows + .NET 10 SDK ortamında `./tools/build.ps1`. Yeni ve boş bir çıktı klasörü seçin. Derleme çıktıları: `WXPlayer.exe`, `WXPlayer-win-x64.zip`, `SHA256SUMS.txt`.
 
-Yerel paketler `outputs/releases/1.7.13/` altındadır. README/logo düzenlemesi yeni Release gerektirmez. [Yerel teslim düzeni](RELEASE-DELIVERY.md).
+Yerel paketler `outputs/` altındadır. README/logo düzenlemesi yeni Release gerektirmez. [Yerel teslim düzeni](RELEASE-DELIVERY.md).
 
 ## Kullanıcı deneyimi
 

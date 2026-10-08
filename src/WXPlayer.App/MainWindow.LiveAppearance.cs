@@ -14,6 +14,11 @@ namespace WXPlayer.App;
 
 public partial class MainWindow
 {
+    private bool EmbeddedPlayerVisible => _section != "home" && !CatalogVisible && !_fullscreen;
+    internal bool SmokeEmbeddedPlayerReady => EmbeddedPlayerVisible
+        ? _liveShellAttached && _liveControls?.Owner == this && Window.GetWindow(ControlsBorder) == _liveControls
+        : !_liveShellAttached && ControlsBorder.Parent == ViewingPanel;
+    private TextBlock? _embeddedLibraryCount;
     // Presentation only: reuse original controls and their events; restore before Home,
     // Catalog, fullscreen or shutdown take ownership. No playback/data state is written.
     private bool _liveShellAttached, _livePositioning;
@@ -92,7 +97,7 @@ public partial class MainWindow
     }
     private void DetachLiveShellIfNeeded()
     {
-        if (_liveShellAttached && (_section != "live" || _fullscreen)) DetachLiveAppearance();
+        if (_liveShellAttached && !EmbeddedPlayerVisible) DetachLiveAppearance();
     }
     private void DetachLiveAppearance()
     {
@@ -107,7 +112,7 @@ public partial class MainWindow
         }
         // Restore parents before visual DPs, in reverse insertion order.
         for (int i = _liveRestore.Count - 1; i >= 0; i--) _liveRestore[i]();
-        _liveRestore.Clear(); _liveCaptured.Clear(); _liveOverlayRoot = null; _liveGearPopup = null; _liveProgrammeCaption = null;
+        _liveRestore.Clear(); _liveCaptured.Clear(); _liveOverlayRoot = null; _liveGearPopup = null; _liveProgrammeCaption = null; _embeddedLibraryCount = null;
     }
     private void LiveSet(DependencyObject target, DependencyProperty property, object value)
     {
@@ -146,7 +151,7 @@ public partial class MainWindow
     }
     private void SetLiveAppearance()
     {
-        if (_section != "live" || _fullscreen || _closing) return;
+        if (!EmbeddedPlayerVisible || _closing) return;
         if (!_liveShellAttached)
         {
             if (!ViewingPanel.Children.Contains(ControlsBorder)) return; // fullscreen has not yet restored its controls
@@ -178,7 +183,7 @@ public partial class MainWindow
         var titleStack = (StackPanel)PageTitle.Parent;
         LiveSet(titleStack, StackPanel.OrientationProperty, Orientation.Horizontal); LiveSet(titleStack, FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
         var count = new TextBlock { FontSize = 14.4, Foreground = LiveBrush("LiveMuted"), Margin = new Thickness(9.6, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
-        count.SetBinding(TextBlock.TextProperty, new Binding("Text") { Source = LiveCount, StringFormat = "{0} kanal" }); LiveAdd(titleStack, count);
+        _embeddedLibraryCount = count; LiveAdd(titleStack, count);
         LiveSet(SourcePicker, FrameworkElement.StyleProperty, LiveStyle("LiveSource")); LiveSet(CatalogShellActions, FrameworkElement.MarginProperty, new Thickness(12.8, 0, 0, 0));
         foreach (var button in CatalogShellActions.Children.OfType<Button>())
         { LiveButtonAppearance(button, ReferenceEquals(button, AddSourceButton) ? "LiveAddSource" : "LiveHeaderButton"); LiveSet(button, FrameworkElement.MarginProperty, new Thickness(0, 0, 3.2, 0)); }
@@ -289,7 +294,15 @@ public partial class MainWindow
         {
             if (e.Key != Key.Tab || _liveGearPopup?.IsOpen == true) return;
             bool reverse = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift);
-            if (!reverse && ReferenceEquals(Keyboard.FocusedElement, FullscreenButton)) { Activate(); PreviousDayButton.Focus(); e.Handled = true; }
+            if (!reverse && ReferenceEquals(Keyboard.FocusedElement, FullscreenButton))
+            {
+                Activate();
+                bool focused = _seriesPanel?.IsVisible == true
+                    ? _seriesPanel.MoveFocus(new TraversalRequest(FocusNavigationDirection.First))
+                    : PreviousDayButton.IsVisible && PreviousDayButton.Focus();
+                if (!focused) focused = ChannelList.Focus();
+                e.Handled = focused;
+            }
             else if (reverse && ReferenceEquals(Keyboard.FocusedElement, PreviousChannelButton)) { Activate(); ChannelList.Focus(); e.Handled = true; }
         };
         _liveControls.PreviewKeyDown += tab;
@@ -299,6 +312,12 @@ public partial class MainWindow
     private void UpdateLiveVisuals()
     {
         if (!_liveShellAttached) return;
+        if (_embeddedLibraryCount is not null)
+        {
+            _embeddedLibraryCount.Text = _section == "live" ? LiveCount.Text + " kanal" : ResultsCount.Text;
+            _embeddedLibraryCount.Visibility = ActualWidth <= 1000 ? Visibility.Collapsed : Visibility.Visible;
+        }
+        LiveSet(SearchHint, TextBlock.TextProperty, _section is "live" or "epg" ? "Kanal ara" : "Bu kütüphanede ara");
         HealthBadge.Visibility = Visibility.Collapsed;
         if (_liveProgrammeCaption is not null) _liveProgrammeCaption.Visibility = _guideNow is null ? Visibility.Collapsed : Visibility.Visible;
         // Mirrors existing replay state, without changing the GoLive command or value.

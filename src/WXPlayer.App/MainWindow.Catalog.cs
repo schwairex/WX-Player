@@ -11,6 +11,8 @@ public partial class MainWindow
     private CancellationTokenSource? _catalogLoad;
     private int _catalogVersion;
     private bool _catalogPlaying;
+    private (string? Source, ContentKind Kind)? _catalogHeroContext;
+    private IReadOnlyList<ContentItem> _catalogHeroItems = [];
 
     private bool CatalogSection => _section is "movie" or "series";
     private bool CatalogVisible => CatalogSection && !_catalogPlaying && !_fullscreen;
@@ -27,9 +29,13 @@ public partial class MainWindow
         CatalogHost.Content = _catalog;
     }
 
-    private async Task RefreshCatalogAsync()
+    private Task RefreshCatalogAsync() => RefreshCatalogAsync(false);
+    private async Task RefreshCatalogAsync(bool searchOnly)
     {
         if (!_ready || !CatalogVisible) return;
+        // A data/navigation refresh invalidates the snapshot immediately. A search
+        // arriving during its awaits must not resurrect the pre-refresh hero.
+        if (!searchOnly) { _catalogHeroContext = null; _catalogHeroItems = []; }
         _catalogLoad?.Cancel(); _catalogLoad?.Dispose();
         var cts = _catalogLoad = CancellationTokenSource.CreateLinkedTokenSource(_life.Token);
         int version = ++_catalogVersion;
@@ -38,7 +44,9 @@ public partial class MainWindow
         string? source = SelectedSource?.Id;
         string sourceName = SelectedSource?.Name ?? "Tüm kaynaklar";
         string search = SearchBox.Text.Trim();
-        _catalog.Loading(series);
+        var heroContext = (source, kind);
+        bool preserveHero = searchOnly && _catalogHeroContext == heroContext && _catalog.Hero.Children.Count > 0;
+        _catalog.Loading(series, preserveHero);
         try
         {
             var categories = await _store.CategoriesAsync(source, kind);
@@ -52,21 +60,29 @@ public partial class MainWindow
             var pages = await Task.WhenAll(requests.Select((request, index) =>
                 _store.QueryAsync(source, kind, request.Category, search, false, false, 0,
                     index == 0 ? 40 : 24, cts.Token)));
+            var featured = preserveHero ? _catalogHeroItems : search.Length == 0 ? pages[0].Items :
+                (await _store.QueryAsync(source, kind, null, "", false, false, 0, 40, cts.Token)).Items;
             if (cts.IsCancellationRequested || version != _catalogVersion || !CatalogVisible ||
                 source != SelectedSource?.Id || (series ? "series" : "movie") != _section) return;
             var shelves = requests.Select((request, index) =>
                 new CatalogShelf(request.Title, request.Category, pages[index])).ToArray();
+            _catalogHeroContext = heroContext; _catalogHeroItems = featured;
             _catalog.Render(series, sourceName, search, shelves,
                 (category, offset, limit, token) => _store.QueryAsync(source, kind, category, search,
-                    false, false, offset, limit, token), cts.Token);
+                    false, false, offset, limit, token), cts.Token,
+                categories.Skip(1).Where(c => !string.IsNullOrWhiteSpace(c)).ToArray(), featured, preserveHero);
             _catalog.NowPlaying(_current?.Name);
         }
         catch (OperationCanceledException) { }
         catch
         {
-            if (version == _catalogVersion && !cts.IsCancellationRequested)
+            if (version == _catalogVersion && !cts.IsCancellationRequested && CatalogVisible &&
+                source == SelectedSource?.Id && (series ? "series" : "movie") == _section)
+            {
                 _catalog.Render(series, sourceName, search, [], (_, _, _, _) =>
-                    Task.FromResult(new WXPlayer.Core.Page([], 0)), cts.Token);
+                    Task.FromResult(new WXPlayer.Core.Page([], 0)), cts.Token, featured: preserveHero ? _catalogHeroItems : [], preserveHero: preserveHero);
+                if (!preserveHero) { _catalogHeroContext = null; _catalogHeroItems = []; }
+            }
         }
     }
 

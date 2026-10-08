@@ -68,11 +68,11 @@ internal sealed partial class CatalogView : ScrollViewer
         _resume.Visibility = string.IsNullOrEmpty(title) ? Visibility.Collapsed : Visibility.Visible;
     }
 
-    internal void Loading(bool series)
+    internal void Loading(bool series, bool preserveHero = false)
     {
         _renderVersion++;
         SelectSegment(series);
-        _hero.Visibility = Visibility.Collapsed;
+        _hero.Visibility = preserveHero && _hero.Children.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         _filterBar.Children.Clear();
         _heading.Text = "KÜTÜPHANEN";
         _description.Text = "Kütüphaneniz hazırlanıyor…";
@@ -83,7 +83,8 @@ internal sealed partial class CatalogView : ScrollViewer
     }
 
     internal void Render(bool series, string source, string search, IReadOnlyList<CatalogShelf> shelves,
-        Func<string?, int, int, CancellationToken, Task<WXPlayer.Core.Page>> fetch, CancellationToken token)
+        Func<string?, int, int, CancellationToken, Task<WXPlayer.Core.Page>> fetch, CancellationToken token,
+        IReadOnlyList<string>? categories = null, IReadOnlyList<ContentItem>? featured = null, bool preserveHero = false)
     {
         int version = ++_renderVersion;
         Shelves = shelves;
@@ -92,11 +93,37 @@ internal sealed partial class CatalogView : ScrollViewer
         int total = shelves.FirstOrDefault()?.Page.Total ?? 0;
         _description.Text = source + "  ·  " + total.ToString("N0") + (series ? " dizi" : " film");
         _shelves.Children.Clear();
-        BuildHero(shelves.FirstOrDefault()?.Page.Items ?? []);
+        if (!preserveHero) BuildHero(featured ?? shelves.FirstOrDefault()?.Page.Items ?? []);
         _filterBar.Children.Clear();
         var all = new Button { Content = "Tümü", Style = (Style)Resources["CatalogSelectedChip"] };
         all.Click += (_, _) => ScrollToTop();
         _filterBar.Children.Add(all);
+        var sections = new Dictionary<string, FrameworkElement>();
+        var pending = new HashSet<string>();
+        foreach (string category in categories ?? shelves.Where(s => s.Category is not null).Select(s => s.Category!).ToArray())
+        {
+            var chip = new Button { Content = category, Style = (Style)Resources["CatalogChip"], Margin = new Thickness(0, 0, 9.6, 9.6) };
+            System.Windows.Automation.AutomationProperties.SetName(chip, category);
+            chip.Click += async (_, _) =>
+            {
+                if (token.IsCancellationRequested || version != _renderVersion) return;
+                if (sections.TryGetValue(category, out var section)) { section.BringIntoView(); return; }
+                if (!pending.Add(category)) return;
+                chip.IsEnabled = false;
+                try
+                {
+                    var page = await fetch(category, 0, 24, token);
+                    if (token.IsCancellationRequested || version != _renderVersion) return;
+                    var shelf = new CatalogShelf(category, category, page);
+                    var added = BuildShelf(shelf, fetch, token, version);
+                    sections[category] = added; added.BringIntoView();
+                }
+                catch (OperationCanceledException) { }
+                catch { if (version == _renderVersion && !token.IsCancellationRequested) _description.Text = "Bazı içerikler yüklenemedi. Kaydırarak yeniden deneyin."; }
+                finally { pending.Remove(category); chip.IsEnabled = true; }
+            };
+            _filterBar.Children.Add(chip);
+        }
         ScrollToTop();
         if (total == 0)
         {
@@ -110,10 +137,13 @@ internal sealed partial class CatalogView : ScrollViewer
             return;
         }
         foreach (var shelf in shelves.Where(s => s.Page.Items.Count > 0))
-            BuildShelf(shelf, fetch, token, version);
+        {
+            var section = BuildShelf(shelf, fetch, token, version);
+            if (shelf.Category is not null) sections[shelf.Category] = section;
+        }
     }
 
-    private void BuildShelf(CatalogShelf shelf,
+    private FrameworkElement BuildShelf(CatalogShelf shelf,
         Func<string?, int, int, CancellationToken, Task<WXPlayer.Core.Page>> fetch, CancellationToken token, int version)
     {
         var section = new StackPanel { Margin = new Thickness(0, 32, 0, 0) };
@@ -149,12 +179,6 @@ internal sealed partial class CatalogView : ScrollViewer
         section.MouseEnter += (_, _) => RevealArrows(true);
         section.MouseLeave += (_, _) => RevealArrows(section.IsKeyboardFocusWithin);
         section.IsKeyboardFocusWithinChanged += (_, _) => RevealArrows(section.IsMouseOver || section.IsKeyboardFocusWithin);
-        if (shelf.Category is not null)
-        {
-            var chip = new Button { Content = shelf.Title, Style = (Style)Resources["CatalogChip"], Margin = new Thickness(0, 0, 9.6, 0) };
-            chip.Click += (_, _) => section.BringIntoView();
-            _filterBar.Children.Add(chip);
-        }
         int loaded = 0;
         bool loading = false;
         void AddCards(IEnumerable<ContentItem> items)
@@ -184,7 +208,8 @@ internal sealed partial class CatalogView : ScrollViewer
             catch
             {
                 // A failed page stays available for the next navigation attempt.
-                _description.Text = "Bazı içerikler yüklenemedi. Kaydırarak yeniden deneyin.";
+                if (!token.IsCancellationRequested && version == _renderVersion)
+                    _description.Text = "Bazı içerikler yüklenemedi. Kaydırarak yeniden deneyin.";
             }
             finally { loading = false; }
         }
@@ -201,6 +226,7 @@ internal sealed partial class CatalogView : ScrollViewer
                 await LoadMore();
         };
         scroll.Loaded += (_, _) => UpdateArrows();
+        return section;
     }
 
     private Grid Card(ContentItem item) => BuildCardPresentation(item);

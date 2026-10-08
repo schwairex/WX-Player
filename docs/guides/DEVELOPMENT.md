@@ -56,8 +56,8 @@ alınmaz. Yerel teslim düzeni için [sürüm teslim kılavuzuna](RELEASE-DELIVE
 
 - WPF `x:Class`, C# namespace, olay adları, Binding yolları ve kaynak anahtarları
   klasör düzeninden bağımsızdır; yalnız klasör değişti diye yeniden adlandırmayın.
-- Paylaşılan temalar `Themes/` altındadır. Temayı C#’tan yüklerken proje kökünü
-  hedefleyen `pack://application:,,,/WXPlayer;component/Themes/...` URI’sini kullanın.
+- Paylaşılan `*Theme.xaml` dosyaları eskisi gibi `src/WXPlayer.App/` kökündedir.
+  Mevcut göreli tema yollarını koruyun; yeni klasör eklemeyin.
 - Uygulama fontları ve ikonları `src/WXPlayer.App/Assets/` altında kalır.
 - Tasarım kuralları [DESIGN_SYSTEM](../design/DESIGN_SYSTEM.md) ve
   [UI_MODERNIZATION](../design/UI_MODERNIZATION.md) belgelerindedir.

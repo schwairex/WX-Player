@@ -16,6 +16,11 @@ internal static class SmokeTest
         var results=new Dictionary<string,object>();
         try
         {
+            if(App.Arguments.Contains("--experience1713-layout-only"))
+            {
+                await Experience1713Smoke.RunAsync(window,store,settings,results);results["success"]=true;
+                File.WriteAllText(Path.Combine(App.DataDirectory,"smoke-results.json"),JsonSerializer.Serialize(results,new JsonSerializerOptions{WriteIndented=true}));window.Close();return;
+            }
             if(App.Arguments.Contains("--utility1712-layout-only"))
             {
                 await Utility1712Smoke.RunAsync(window,store,engine,settings,results);results["success"]=true;
@@ -133,7 +138,8 @@ internal static class SmokeTest
             results["unifiedLibraryPanel"]=window.LibraryPanel.IsAncestorOf(window.SearchBox)&&window.LibraryPanel.IsAncestorOf(window.CategoryPicker)&&window.LibraryPanel.IsAncestorOf(window.ChannelList);
             results["summaryInSidebar"]=window.Sidebar.IsAncestorOf(window.StatsBar);
             double oldWidth=window.Width,oldHeight=window.Height;window.Width=900;window.Height=650;await Task.Delay(150);window.UpdateLayout();
-            results["compactSettingsVisible"]=window.SettingsNav.TranslatePoint(new Point(0,window.SettingsNav.ActualHeight),window.Root).Y<=window.Root.ActualHeight;results["smallWindowGuideVisible"]=window.GuidePanel.ActualHeight>=175&&window.GuidePanel.TranslatePoint(new Point(0,window.GuidePanel.ActualHeight),window.Root).Y<=window.Root.ActualHeight;
+            double minimumGuide=Window.GetWindow(window.ControlsBorder)!=window?190-16:175; // shared 1.7.10 layout: 190 row, 16 top margin
+            results["compactSettingsVisible"]=window.SettingsNav.TranslatePoint(new Point(0,window.SettingsNav.ActualHeight),window.Root).Y<=window.Root.ActualHeight;results["smallWindowGuideVisible"]=window.GuidePanel.ActualHeight>=minimumGuide&&window.GuidePanel.TranslatePoint(new Point(0,window.GuidePanel.ActualHeight),window.Root).Y<=window.Root.ActualHeight;
             SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-small.png"));window.Width=oldWidth;window.Height=oldHeight;await Task.Delay(150);
             foreach(string key in new[]{"searchTextVisible","searchFiltersChannels","unifiedLibraryPanel","summaryInSidebar","smallWindowGuideVisible","compactSettingsVisible"})if(!Equals(results[key],true))throw new Exception("1.3 layout regression: "+key);
             var sourceWindow=new SourceWindow(window);sourceWindow.Show();await Task.Delay(150);SaveWindow(sourceWindow,Path.Combine(App.DataDirectory,"WX-Player-source.png"));sourceWindow.Close();
@@ -153,7 +159,8 @@ internal static class SmokeTest
                 results["rendererIsEmbedded"]=engine.Player.Hwnd==window.Video.RenderingHandle&&window.Video.RenderingHandle!=IntPtr.Zero;
                 results["noDetachedOverlayInNormalView"]=window.SmokeNoVideoOverlay;
                 var typeface=new Typeface(window.FontFamily,FontStyles.Normal,FontWeights.Normal,FontStretches.Normal);
-                results["embeddedInterFont"]=typeface.TryGetGlyphTypeface(out var glyph)&&glyph.FontUri.ToString().Contains("Inter-Regular",StringComparison.OrdinalIgnoreCase);
+                string expectedFont=Window.GetWindow(window.ControlsBorder)!=window?"Manrope":"Inter-Regular";
+                results["embeddedThemeFont"]=typeface.TryGetGlyphTypeface(out var glyph)&&glyph.FontUri.ToString().Contains(expectedFont,StringComparison.OrdinalIgnoreCase);
                 SaveWindow(window,Path.Combine(App.DataDirectory,"WX-Player-playing-ui.png"));
                 window.Activate();await Task.Delay(250);results["playingWindowCaptured"]=WindowCapture.Save(window,Path.Combine(App.DataDirectory,"WX-Player-playing-native.png"));
                 var original=FullscreenPlacement.WindowBounds(window);IntPtr originalHost=window.Video.RenderingHandle;
@@ -206,7 +213,7 @@ internal static class SmokeTest
                 window.SmokeFit();results["fitPreservesAspectRatio"]=string.IsNullOrEmpty(engine.Player.CropGeometry)&&string.IsNullOrEmpty(engine.Player.AspectRatio);window.SmokeFit();
                 window.SmokeFullscreen();await Task.Delay(500);window.UpdateLayout();
                 var restored=FullscreenPlacement.WindowBounds(window);results["windowPlacementRestored"]=original.Left==restored.Left&&original.Top==restored.Top&&original.Width==restored.Width&&original.Height==restored.Height;
-                results["normalUiRestoredAfterFullscreen"]=window.Sidebar.IsVisible&&window.ControlsBorder.Parent==window.ViewingPanel&&window.SmokeNoVideoOverlay;
+                results["normalUiRestoredAfterFullscreen"]=window.Sidebar.IsVisible&&window.SmokeEmbeddedPlayerReady&&window.SmokeNoVideoOverlay;
                 results["normalCropCleared"]=string.IsNullOrEmpty(engine.Player.CropGeometry);
                 var priorGuideHeight=window.GuideRow.Height;
                 window.GuideRow.Height=new GridLength(Math.Max(190,window.GuideRow.ActualHeight+80));window.UpdateLayout();await Task.Delay(150);
@@ -214,7 +221,7 @@ internal static class SmokeTest
                 results["guideResizeKeepsNativeSurfaceSized"]=guideHost.Width==guideRender.Width&&guideHost.Height==guideRender.Height;
                 results["mainRenderWindowTitleHidden"]=GetWindowTextLength(window.Video.RenderingHandle)==0;
                 window.GuideRow.Height=priorGuideHeight;window.UpdateLayout();
-                foreach(var key in new[]{"rendererIsEmbedded","noDetachedOverlayInNormalView","embeddedInterFont","fullscreenCoversMonitor","fullscreenVideoFillsClient","fullscreenNativeSurfaceFillsHost","fullscreenKeepsNativeHandle","fullscreenHasFillCrop","fullscreenControlsAutoHide","fullscreenControlsReveal","fitPreservesAspectRatio","windowPlacementRestored","normalUiRestoredAfterFullscreen","normalCropCleared","guideResizeKeepsNativeSurfaceSized","mainRenderWindowTitleHidden"})
+                foreach(var key in new[]{"rendererIsEmbedded","noDetachedOverlayInNormalView","embeddedThemeFont","fullscreenCoversMonitor","fullscreenVideoFillsClient","fullscreenNativeSurfaceFillsHost","fullscreenKeepsNativeHandle","fullscreenHasFillCrop","fullscreenControlsAutoHide","fullscreenControlsReveal","fitPreservesAspectRatio","windowPlacementRestored","normalUiRestoredAfterFullscreen","normalCropCleared","guideResizeKeepsNativeSurfaceSized","mainRenderWindowTitleHidden"})
                     if(!Equals(results[key],true))throw new Exception("UI regression failed: "+key);
                 window.WindowState=WindowState.Maximized;await Task.Delay(500);var maximized=FullscreenPlacement.WindowBounds(window);
                 window.SmokeFullscreen();await Task.Delay(200);window.SmokeFullscreen();
@@ -302,7 +309,7 @@ internal static class SmokeTest
                 await store.ImportAsync(homeSource,HomeItems(),null,default);await store.FavoriteAsync("home-1",true);await store.RememberAsync("home-2");
                 await window.SmokeRefreshAsync(homeSource.Id);await window.SmokeBrowseAsync("home");window.UpdateLayout();
                 // A newer async artwork render can supersede the awaited render (especially on a cold self-contained launch).
-                await WaitUntil(()=>!window.SmokeHome.IsLoadingArtwork&&window.SmokeHome.Items.Count==36&&window.SmokeHome.Items.All(i=>i.SourceId==homeSource.Id),TimeSpan.FromSeconds(6));
+                try { await WaitUntil(()=>!window.SmokeHome.IsLoadingArtwork&&window.SmokeHome.Items.Count==36&&window.SmokeHome.Items.All(i=>i.SourceId==homeSource.Id),TimeSpan.FromSeconds(6)); } catch { results["homeFixtureDiagnostic"]=new { Source=(window.SourcePicker.SelectedItem as SourceConfig)?.Id, Search=window.SearchBox.Text, Loading=window.SmokeHome.IsLoadingArtwork, Count=window.SmokeHome.Items.Count, Sources=window.SmokeHome.Items.Select(i=>i.SourceId).Distinct().ToArray(), Status=window.StatusText.Text }; throw; }
                 // 1.6.1 expanded discovery shelves to 48; this fixture has 24 movies + 12 series.
                 results["homeShelvesBoundedAndIsolated"]=window.SmokeHome.Items.Count==36&&window.SmokeHome.Items.Count(i=>i.Kind==ContentKind.Movie)==24&&window.SmokeHome.Items.Count(i=>i.Kind==ContentKind.Series)==12&&window.SmokeHome.Items.All(i=>i.SourceId==homeSource.Id);
                 results["homeFavoritesAndHistory"]=window.SmokeHome.Items.Any(i=>i.Id=="home-1"&&i.IsFavorite)&&window.SmokeHome.Items.Any(i=>i.Id=="home-2");

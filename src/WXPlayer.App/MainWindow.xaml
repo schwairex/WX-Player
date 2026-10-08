@@ -146,7 +146,7 @@
           <Button x:Name="SettingsNav" Style="{StaticResource Nav}" Click="Settings_Click">
             <ui:IconLabel Icon="settings" Label="Ayarlar" />
           </Button>
-      <TextBlock x:Name="VersionLabel" Text="WX PLAYER  /  1.7.12" FontSize="9" Foreground="{StaticResource LiveMuted}" Margin="12,12,0,0" />
+      <TextBlock x:Name="VersionLabel" Text="WX PLAYER  /  1.7.13" FontSize="9" Foreground="{StaticResource LiveMuted}" Margin="12,12,0,0" />
         </StackPanel>
         <Grid />
       </DockPanel>

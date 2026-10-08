@@ -165,12 +165,14 @@
     <Setter Property="MinHeight" Value="0" />
     <Setter Property="Padding" Value="44.8,0,48,0" />
     <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <Setter Property="TextAlignment" Value="Left" />
     <Setter Property="FocusVisualStyle" Value="{StaticResource CatalogFocus}" />
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="TextBox">
           <ui:CatalogPillBorder Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="999">
-            <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="Center" Margin="{TemplateBinding Padding}" />
+            <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="Center" HorizontalAlignment="Stretch" />
           </ui:CatalogPillBorder>
         </ControlTemplate>
       </Setter.Value>

@@ -73,6 +73,7 @@ public sealed record PlaybackTarget(string Url, string UserAgent = "", string Re
 
 public sealed class PlayerSettings
 {
+    public string? LastSourceId { get; set; }
     public bool DiscordRichPresence { get; set; }
     public bool DiscoverArtwork { get; set; } = true;
     public Dictionary<string,string> LastRecommendation { get; set; } = new();

@@ -1,0 +1,224 @@
+{
+  "baseline": "1.7.12",
+  "current": "1.7.13",
+  "files": [
+    {
+      "file": "src/WXPlayer.App/DiscordConfiguration.cs",
+      "identical": true,
+      "sha256": "9fee3dcea0c3d89a52fa8c34c349f04323048c194f60e307c79a78c7c830942b"
+    },
+    {
+      "file": "src/WXPlayer.App/DiscordPresenceSmoke.cs",
+      "identical": true,
+      "sha256": "bc987c17757470b53e975ef8100b7a1a87b4e4eb38265c3244e70dc130751a5f"
+    },
+    {
+      "file": "src/WXPlayer.App/FullscreenPlacement.cs",
+      "identical": true,
+      "sha256": "f36136c36e7a74ef488d6ac3e0b8cd510bc80cdcf8be6cb4b12bafe5a7fee421"
+    },
+    {
+      "file": "src/WXPlayer.App/FullscreenV2.xaml",
+      "identical": true,
+      "sha256": "c583e60306eb1a1313ac141e0dceefe80d3d87c2d2dac289b4fb8e726cd840bf"
+    },
+    {
+      "file": "src/WXPlayer.App/FullscreenV2Smoke.cs",
+      "identical": true,
+      "sha256": "f0bcccecf9e21916d0b64351338f30baee2b6ebe44c13e94d32c5a29c381292a"
+    },
+    {
+      "file": "src/WXPlayer.App/MainWindow.Discord.cs",
+      "identical": true,
+      "sha256": "6b5739a00f0a91a245b4259f806a4ef6672d71caa553cff57e495d554786100b"
+    },
+    {
+      "file": "src/WXPlayer.App/MainWindow.Fullscreen.cs",
+      "identical": true,
+      "sha256": "57c2d180ee53c1d6a2cb4c24be3e6f08d1fc8c5e02522ab16a70dbca51fd2400"
+    },
+    {
+      "file": "src/WXPlayer.App/MainWindow.FullscreenV2.cs",
+      "identical": true,
+      "sha256": "9e1af742af449efe27537974781814cf8c65bd9f5e4fa302edd25b20af50f72e"
+    },
+    {
+      "file": "src/WXPlayer.App/MiniPlayerWindow.cs",
+      "identical": true,
+      "sha256": "0ac3c86cce8888dd232e16dadb826e676125aa507e063944af9d8e3572650cb1"
+    },
+    {
+      "file": "src/WXPlayer.App/NativeVideoHost.cs",
+      "identical": true,
+      "sha256": "dff2ee1b5c6841742640176015be0d91ba792d4d29de78f8db3be8b1c23c60c1"
+    },
+    {
+      "file": "src/WXPlayer.App/PlaybackEngine.cs",
+      "identical": true,
+      "sha256": "38946594635ccd3f0aa043accec6d2a2ee43ffc30bb02191505636dce6b71a4c"
+    },
+    {
+      "file": "src/WXPlayer.App/PremiumWindow.cs",
+      "identical": true,
+      "sha256": "f786b52f38331d6cded2a644cc41c9f03cadcbd5213b0779b8450f5d15ad044b"
+    },
+    {
+      "file": "src/WXPlayer.App/SettingsWindow.Appearance.cs",
+      "identical": true,
+      "sha256": "d8c5903d15285d606241a6bc352d76bf5eb0f0d6fa0076fd6343ed99d1ddc4a1"
+    },
+    {
+      "file": "src/WXPlayer.App/SettingsWindow.cs",
+      "identical": true,
+      "sha256": "9b0b06a64b1f39de126592998e478d924b603a477c874bc67708d778d506847c"
+    },
+    {
+      "file": "src/WXPlayer.App/StatisticsWindow.cs",
+      "identical": true,
+      "sha256": "41c96a32cb09526630ee8bf7d59f66d8346a87ee65617eb3dfebe0980a4d37e9"
+    },
+    {
+      "file": "src/WXPlayer.App/TracksWindow.cs",
+      "identical": true,
+      "sha256": "4b63574587e78c1a6ebd337aa26069bce052a0a4851ef88e2686223c97ae0e8a"
+    },
+    {
+      "file": "src/WXPlayer.Core/ArtworkDiscovery.cs",
+      "identical": true,
+      "sha256": "05319f922050a4b8bdb9475e6bdc0383e377e7597109eb1b764a9eaec2011ecc"
+    },
+    {
+      "file": "src/WXPlayer.Core/CatalogClassifier.cs",
+      "identical": true,
+      "sha256": "a5ec348b462f9b0a9331cd45e826f61271843284d894965f58a30aaa8eda20f6"
+    },
+    {
+      "file": "src/WXPlayer.Core/DiscordIpcConnection.cs",
+      "identical": true,
+      "sha256": "6941cc617fdf8f9bfde15b186c4e047ad9598615572433b6ea4ffa58d537fca7"
+    },
+    {
+      "file": "src/WXPlayer.Core/DiscordPresenceService.cs",
+      "identical": true,
+      "sha256": "0995d1e5209b6efaa608988aa7eadfd261518d1a16672c5e2cccfb1216266717"
+    },
+    {
+      "file": "src/WXPlayer.Core/DiscordPresenceState.cs",
+      "identical": true,
+      "sha256": "2e3107d7df4b1949e6534f4a0ef67f52526c64d074af3c73398c189234e2f7dd"
+    },
+    {
+      "file": "src/WXPlayer.Core/EpgService.cs",
+      "identical": true,
+      "sha256": "2019817a505e87847341a1ae5ac06d78cb3902964dd057b66ebc0b0074e968d0"
+    },
+    {
+      "file": "src/WXPlayer.Core/EpisodeNavigation.cs",
+      "identical": true,
+      "sha256": "1fa4e343ac5eeeec7ea4171e4d815a9b35110e69233eaec15e10ba9d0266b6a4"
+    },
+    {
+      "file": "src/WXPlayer.Core/GitHubUpdater.cs",
+      "identical": true,
+      "sha256": "372910e12cfd68a3535f637e43165db854c49e9eb9587c65f5fb24d0c499cbef"
+    },
+    {
+      "file": "src/WXPlayer.Core/LibraryStore.Catalog.cs",
+      "identical": true,
+      "sha256": "a57b2c404f1cf5ca0cbc6ca001c61dbee73df76acf27049f3d864ebe03da88fa"
+    },
+    {
+      "file": "src/WXPlayer.Core/LibraryStore.Epg.cs",
+      "identical": true,
+      "sha256": "b3a236b31e585af59494a388a5c00efd046c5cfb09a87882638155d848c3740e"
+    },
+    {
+      "file": "src/WXPlayer.Core/LibraryStore.cs",
+      "identical": true,
+      "sha256": "38e8c0cf2e49831ba46b915e96584798d3684959e0a3d00fba6056479a5eb64a"
+    },
+    {
+      "file": "src/WXPlayer.Core/PlaybackOptions.cs",
+      "identical": true,
+      "sha256": "5ecce1bf6b1f4c222f3fa5da1e61062c6c6035c8d3f7202a1a3afec768b5ee7a"
+    },
+    {
+      "file": "src/WXPlayer.Core/PlaybackProgressPolicy.cs",
+      "identical": true,
+      "sha256": "1582a9615fea84db2ef213e47c3c82f7d79bf0f805a4eb8c60e1d98b4e731517"
+    },
+    {
+      "file": "src/WXPlayer.Core/PlaylistParser.cs",
+      "identical": true,
+      "sha256": "8b7b28f9d87a92d421e0dd6562f3937c1371afc031d4dd076b79627ebc533db0"
+    },
+    {
+      "file": "src/WXPlayer.Core/ProviderClient.Epg.cs",
+      "identical": true,
+      "sha256": "bcbad15c6865f8f7974532c2f809f52b55f9d4d5160f9c9f2750dde890393313"
+    },
+    {
+      "file": "src/WXPlayer.Core/ProviderClient.cs",
+      "identical": true,
+      "sha256": "a8e0714662b0599df065d8f3bab4eeec514f93ad5ee8998d38b054be93dd2d1b"
+    },
+    {
+      "file": "src/WXPlayer.Core/WXPlayer.Core.csproj",
+      "identical": true,
+      "sha256": "69a9ac87a1512ffe04f1f7ee0e45e71aed5b56a5f471cd9d3eb87f14b04a4ab8"
+    },
+    {
+      "file": "src/WXPlayer.Core/XmlTvParser.cs",
+      "identical": true,
+      "sha256": "3d2139c031aab5ef38c9a28a861ef29aa49e85322beb20ce3e14dc4c6943ed8a"
+    },
+    {
+      "file": "tests/WXPlayer.Tests/DiscordIpcTests.cs",
+      "identical": true,
+      "sha256": "9a183db03e0acf3671fa5f8864fff595a43dbae124234025ee29c1db7b2adf6e"
+    },
+    {
+      "file": "tests/WXPlayer.Tests/DiscordPresenceTests.cs",
+      "identical": true,
+      "sha256": "535c36725f4aed50d209f913db0f76c6245e7215a13196ddb2e0731f92170b9f"
+    },
+    {
+      "file": "tools/Launcher.cs",
+      "identical": true,
+      "sha256": "4f51fc651902f51756a4b73f5299b1fb06c65360ab8c7ca4d504bd17a2746beb"
+    },
+    {
+      "file": "tools/build.ps1",
+      "identical": true,
+      "sha256": "6a4f20deb1c42562ee27069c4760940ca760f1f49481339085149ed4e4fd727b"
+    },
+    {
+      "file": "tools/package-source.ps1",
+      "identical": true,
+      "sha256": "b9c381bc5000e7ec772caab39e761ffc4e27870bcff14998d2b57c7a18127341"
+    },
+    {
+      "file": "tools/test-updater.ps1",
+      "identical": true,
+      "sha256": "9cd69a004277363ade587185f801fc1602841a26c1211d7b2949009f14e89a95"
+    }
+  ],
+  "allProtectedIdentical": true,
+  "sourceValidationCallbackIdentical": true,
+  "appResourcesIdentical": true,
+  "logoPngExactInput": true,
+  "mainWindowProtectedMethods": [
+    {
+      "method": "private async Task PlayItemAsync",
+      "identical": true
+    },
+    {
+      "method": "private void ToggleFullscreen",
+      "identical": true
+    },
+    {
+      "method": "private async void Window_Closing",
+      "identical": true
+    }
+  ]
+}
