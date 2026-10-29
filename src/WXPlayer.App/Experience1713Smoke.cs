@@ -92,6 +92,8 @@ internal static class Experience1713Smoke
                 ((Button)w.SmokeCatalog.ResumeControl).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             await Settle();
             Check(section + "UsesModernPlayer", Field<bool>(w, "_liveShellAttached") && w.ContentGrid.IsVisible && w.GuidePanel.Background?.ToString() == "#00FFFFFF");
+            // 1.7.14 hides idle chrome; reveal it as a user would before inspecting its controls.
+            Field<Window>(w,"_liveControls").RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice,Environment.TickCount){RoutedEvent=Mouse.PreviewMouseMoveEvent});
             Check(section + "OriginalControlsRetained", w.PlayButton.IsVisible && w.FullscreenButton.IsVisible && w.RecordButton.Parent is not null);
         }
         Settings1711Smoke.Save(w, "shared-player-1713.png");

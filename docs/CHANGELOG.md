@@ -2,6 +2,7 @@
 
 | Sürüm | Başlıca değişiklik |
 | --- | --- |
+| **[1.7.14](RELEASE-NOTES-1.7.14.md)** | İstatistik/ses rozetleri; normal oynatıcıda 3 saniye sonra gizlenen kontroller; F8 ve kalıcı ayarla Rahat mod, küçük ekran sınırı ve ölçeklenen diyalog/popup'lar. |
 | **[1.7.13](releases/notes/RELEASE-NOTES-1.7.13.md)** | HTML referanslı Kaynak ekle/düzenle; tüm oynatıcı sayfalarında ortak görünüm; arama hizası, tüm kaynak kategorileri ve sabit arama afişi; son kaynakla Ana sayfa açılışı ve yeni logo. |
 | **[1.7.12](releases/notes/RELEASE-NOTES-1.7.12.md)** | HTML referanslı Yayın istatistikleri, Mini oynatıcı ve Ses/altyazılar görünümü; sabit teknik özet, sade mini kontroller, ortak seçici/kart stilleri. Mevcut oynatma, seçim ve veri akışları korunur. |
 | **[1.7.11](releases/notes/RELEASE-NOTES-1.7.11.md)** | Tüm sayfalarda ortak Canlı TV sidebarı; HTML referanslı beş bölümlü Ayarlar görünümü; sade video başlığı ve tam ekran kaynak rozeti; diğer uygulamaların öne gelmesini engelleyen üstte tutma davranışı düzeltildi. |

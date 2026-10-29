@@ -43,7 +43,8 @@ internal static class Settings1711Smoke
             settings.Show(); await Task.Delay(150);
             Check("settingsWindowSizeAndFont", settings.Width == 850 && settings.Height == 760 && settings.FontFamily.Source.Contains("Manrope"));
             Check("settingsSharpText", TextOptions.GetTextFormattingMode(settings) == TextFormattingMode.Ideal && TextOptions.GetTextRenderingMode(settings) == TextRenderingMode.ClearType);
-            Check("settingsAllEightOriginalToggles", Descendants<CheckBox>(settings).Count() == 8 && Descendants<CheckBox>(settings).All(c => !string.IsNullOrEmpty(AutomationProperties.GetName(c))));
+            Check("settingsAllEightOriginalToggles", Descendants<CheckBox>(settings).Count(c=>AutomationProperties.GetName(c)!="Rahat mod") == 8 && Descendants<CheckBox>(settings).All(c => !string.IsNullOrEmpty(AutomationProperties.GetName(c))));
+            Check("settingsComfortToggleAdded",Descendants<CheckBox>(settings).Count(c=>AutomationProperties.GetName(c)=="Rahat mod")==1);
             var nav = Descendants<Button>(settings).Where(b => b.Content is IconLabel).ToArray();
             Check("settingsFiveFixedSections", nav.Select(b => ((IconLabel)b.Content).Label).SequenceEqual(new[] { "Oynatma", "Kısayollar", "Kütüphane", "Çevrimiçi", "Güncellemeler" }));
             var left = nav[0].PointToScreen(new Point());
@@ -54,6 +55,7 @@ internal static class Settings1711Smoke
                 Save(settings, "WXPlayer-1.7.11-settings-" + i + ".png");
             }
             settings.SmokeShowShortcuts(); settings.UpdateLayout(); await Task.Delay(100);
+            Check("settingsComfortShortcutListed",Descendants<TextBlock>(settings).Any(t=>t.Text=="F8"&&t.IsVisible));
             var last = Descendants<TextBlock>(settings).Single(t => t.Text == "Önceki / sonraki kanal");
             Check("shortcutsHookSelectsAndRevealsLastCard", NavigationVisual.GetIsSelected(nav[1]) && last.IsVisible && last.PointToScreen(new Point()).Y < settings.PointToScreen(new Point(0, settings.ActualHeight - 50)).Y);
             settings.Width = 540; settings.UpdateLayout(); await Task.Delay(150);

@@ -31,10 +31,12 @@ internal static class Live1710Smoke
         async IAsyncEnumerable<Programme> Guide()
         {
             var now = DateTimeOffset.Now;
-            yield return new("live1710-epg", "Geçmiş program", "Gerçek EPG alanı", now.AddHours(-1), now.AddMinutes(-15));
-            yield return new("live1710-epg", "Şimdi yayında", "EPG açıklaması", now.AddMinutes(-15), now.AddMinutes(30));
-            yield return new("live1710-epg", "Sonraki program", "Sonraki açıklama", now.AddMinutes(30), now.AddHours(1));
-            yield return new("live1710-epg", "Akşam programı", "Dördüncü açıklama", now.AddHours(1), now.AddHours(2));
+            // Keep the fixture's future rows inside today's guide, including late-night runs.
+            var step=TimeSpan.FromTicks(Math.Min(TimeSpan.FromMinutes(15).Ticks,(new DateTimeOffset(DateTime.Today.AddDays(1))-now).Ticks/8));
+            yield return new("live1710-epg", "Geçmiş program", "Gerçek EPG alanı", now-step*4, now-step);
+            yield return new("live1710-epg", "Şimdi yayında", "EPG açıklaması", now-step, now+step);
+            yield return new("live1710-epg", "Sonraki program", "Sonraki açıklama", now+step, now+step*3);
+            yield return new("live1710-epg", "Akşam programı", "Dördüncü açıklama", now+step*3, now+step*5);
             await Task.Yield();
         }
         await store.ImportEpgAsync(source.Id, Guide(), default); await window.SmokeRefreshAsync(source.Id);

@@ -56,7 +56,7 @@
         <ContentPresenter Margin="{TemplateBinding Padding}" VerticalAlignment="Center" HorizontalAlignment="Stretch" Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}" IsHitTestVisible="False"/>
         <ui:SvgIcon x:Name="Arrow" Icon="chevron-down" Width="16.8" Height="16.8" Foreground="{StaticResource LiveMuted}" HorizontalAlignment="Right" Margin="0,0,16,0" IsHitTestVisible="False" RenderTransformOrigin=".5,.5"><ui:SvgIcon.RenderTransform><RotateTransform/></ui:SvgIcon.RenderTransform></ui:SvgIcon>
         <Popup x:Name="PART_Popup" Placement="Bottom" VerticalOffset="6.4" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" Focusable="False">
-          <Border Background="{StaticResource UtilityPopup}" BorderBrush="{StaticResource LiveLine}" BorderThickness="1" CornerRadius="16" Padding="5.6" MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}" MaxHeight="{TemplateBinding MaxDropDownHeight}">
+          <Border ui:ComfortPresentation.ScalePopup="True" Background="{StaticResource UtilityPopup}" BorderBrush="{StaticResource LiveLine}" BorderThickness="1" CornerRadius="16" Padding="5.6" MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}" MaxHeight="{TemplateBinding MaxDropDownHeight}">
             <ScrollViewer CanContentScroll="True"><ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"/></ScrollViewer>
           </Border>
         </Popup>

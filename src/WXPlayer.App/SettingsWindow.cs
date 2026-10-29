@@ -24,6 +24,11 @@ internal sealed partial class SettingsWindow : PremiumWindow
             int index=_tabs.Count;button.Click+=(_,_)=>SelectTab(index);nav.Children.Add(button);_tabs.Add((button,page));return page;
         }
         var playback=Page("Oynatma","play");var shortcuts=Page("Kısayollar","keyboard");var library=Page("Kütüphane","library");var online=Page("Çevrimiçi","globe");var updatePage=Page("Güncellemeler","refresh");
+        var appearance=SettingsCard(playback,"Görünüm");
+        var comfort=new CheckBox{Content="Rahat mod",IsChecked=settings.ComfortMode};SettingsToggle(appearance,comfort,"Arayüzü büyüterek uzaktan daha rahat okunmasını sağlar.");
+        bool knownComfort=settings.ComfortMode;
+        void ComfortChanged(){if(knownComfort==settings.ComfortMode)return;knownComfort=settings.ComfortMode;comfort.IsChecked=knownComfort;}
+        ComfortPresentation.Changed+=ComfortChanged;Closed+=(_,_)=>ComfortPresentation.Changed-=ComfortChanged;
         var video=SettingsCard(playback,"Görüntü ve performans","Donanım ve önbellek tercihleri sonraki yayında uygulanır.");
         var gpu=new CheckBox{Content="GPU donanım ivmesi",IsChecked=settings.HardwareAcceleration};SettingsToggle(video,gpu);
         var output=new ComboBox{ItemsSource=new[]{"Direct3D 11","Direct3D 9","Otomatik"},SelectedIndex=settings.VideoOutput=="direct3d11"?0:settings.VideoOutput=="direct3d9"?1:2,Style=SettingsStyle("SettingsOutput"),Width=158};SettingsRow(video,"Windows video çıkışı",output);
@@ -44,7 +49,9 @@ internal sealed partial class SettingsWindow : PremiumWindow
         foreach(var (key,label) in new[]{("Space","Oynat / duraklat"),("F / Esc","Tam ekran / çıkış"),("P","Mini oynatıcı"),("← / →","10 saniye geri / ileri"),("↑ / ↓","Ses seviyesi"),("M","Sesi kapat / aç"),("Z","Görüntüyü sığdır / doldur"),("I","Yayın istatistikleri"),("Ctrl + K","Kütüphanede ara"),("Ctrl + B","Menüyü daralt / genişlet"),("PgUp / PgDn","Önceki / sonraki kanal")})
         {
             SettingsShortcut(keyGrid,keyIndex++,key,label);
-        }        var sources=SettingsCard(library,"Bağlı kaynaklar","Kayıtlı kaynakları düzenleyin veya tek tek kaldırın.");
+        }
+        SettingsShortcut(keyGrid,keyIndex++,"F8","Rahat mod");
+        var sources=SettingsCard(library,"Bağlı kaynaklar","Kayıtlı kaynakları düzenleyin veya tek tek kaldırın.");
         var sourceRows=new StackPanel();sources.Children.Add(sourceRows);
         var message=Text("",12,"#C5F27A");library.Children.Add(message);
         async Task Execute(Func<Task> task){IsEnabled=false;try{await task();await LoadSources();message.Text="İşlem tamamlandı.";}catch{message.Text="İşlem tamamlanamadı. Devam eden yüklemeyi bitirip tekrar deneyin.";}finally{IsEnabled=true;}}
@@ -82,7 +89,7 @@ internal sealed partial class SettingsWindow : PremiumWindow
             if(!int.TryParse(cache.Text,out int value)||value is <200 or >10000){error.Text="Önbellek: 200–10000 ms";SelectTab(0);return;}
             try{var full=Path.GetFullPath(folder.Text);if(full.Contains('\''))throw new ArgumentException();Directory.CreateDirectory(full);settings.RecordingFolder=full;}catch{error.Text="Kayıt klasörü geçersiz.";SelectTab(0);return;}
             settings.NetworkCacheMs=value;settings.HardwareAcceleration=gpu.IsChecked==true;settings.AdaptiveCache=adaptive.IsChecked==true;settings.FullscreenFill=fill.IsChecked==true;settings.AutoUpdate=automatic.IsChecked==true;settings.VideoOutput=output.SelectedIndex==0?"direct3d11":output.SelectedIndex==1?"direct3d9":"any";
-            settings.DiscoverArtwork=discover.IsChecked==true;settings.DiscordRichPresence=discord.IsChecked==true;settings.MiniPlayerEnabled=mini.IsChecked==true;settings.ChannelHealthCheck=health.IsChecked==true;App.SaveSettings(settings);Saved=true;Close();
+            settings.DiscoverArtwork=discover.IsChecked==true;settings.DiscordRichPresence=discord.IsChecked==true;settings.MiniPlayerEnabled=mini.IsChecked==true;settings.ChannelHealthCheck=health.IsChecked==true;settings.ComfortMode=comfort.IsChecked==true;App.SaveSettings(settings);ComfortPresentation.ApplySettings();Saved=true;Close();
         },true);save.Margin=new(11.2,0,0,0);Footer.Children.Add(save);
         SelectTab(0);Loaded+=async(_,_)=>{try{await LoadSources();}catch{message.Text="Kaynaklar okunamadı.";}};
     }

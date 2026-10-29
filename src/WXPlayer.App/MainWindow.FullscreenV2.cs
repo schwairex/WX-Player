@@ -41,7 +41,7 @@ public partial class MainWindow
     {
         var button = new Button { Style = (Style)FindResource(prominent ? "FullscreenPlayButton" : "FullscreenIconButton"), Content = new SvgIcon(icon) { Width = prominent ? 27.2 : 22.4, Height = prominent ? 27.2 : 22.4, StrokeThickness = prominent ? 0 : 1.8 }, ToolTip = new ToolTip { Content = label, Style = (Style)FindResource("FullscreenToolTip"), Placement = PlacementMode.Top, VerticalOffset = -9.6 } };
         if (icon is "rewind-10" or "forward-10") { var content = new Grid(); var glyph = (SvgIcon)button.Content; button.Content = null; content.Children.Add(glyph); content.Children.Add(new TextBlock { Text = "10", FontSize = 8, FontWeight = FontWeights.ExtraBold, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center }); button.Content = content; }
-        ((ToolTip)button.ToolTip).Opened += (_, _) => { var tip = (ToolTip)button.ToolTip; double scale = (_fullscreenRoot?.LayoutTransform as ScaleTransform)?.ScaleX ?? 1; tip.LayoutTransform = new ScaleTransform(scale, scale); }; ToolTipService.SetInitialShowDelay(button, 0); System.Windows.Automation.AutomationProperties.SetName(button, label); button.Click += (_, _) => action(); return button;
+        ComfortPresentation.RegisterPopup((ToolTip)button.ToolTip,button,true); ToolTipService.SetInitialShowDelay(button, 0); System.Windows.Automation.AutomationProperties.SetName(button, label); button.Click += (_, _) => action(); return button;
     }
     private static LinearGradientBrush Fade(Color first, Color last) => new(first, last, 90);
     private static readonly Color FsTransparent = Color.FromArgb(0, 0, 0, 0);
@@ -129,7 +129,7 @@ public partial class MainWindow
     private void UpdateFullscreenViewport()
     {
         if (_fullscreenRoot is null || _floatingControls is null || _floatingControls.ActualWidth <= 0) return;
-        double width = _floatingControls.ActualWidth, height = _floatingControls.ActualHeight, scale = Math.Clamp(.0062 * width + 8, 14, 22) / 16;
+        double width = _floatingControls.ActualWidth, height = _floatingControls.ActualHeight, scale = Math.Clamp(.0062 * width + 8, 14, 22) / 16 * ComfortPresentation.Factor;
         _fullscreenRoot.Width = width / scale; _fullscreenRoot.Height = height / scale; if (_fullscreenRoot.LayoutTransform is not ScaleTransform transform || Math.Abs(transform.ScaleX - scale) > .0001) _fullscreenRoot.LayoutTransform = new ScaleTransform(scale, scale);
         if (_fsDrawer is not null) { _fsDrawer.MaxHeight = Math.Max(1, height / scale - 267.2); _fsDrawer.Width = width <= 720 ? Math.Max(1, width / scale - 32) : 416; _fsDrawer.Margin = new Thickness(width <= 720 ? 16 : 0, 83.2, width <= 720 ? 16 : 24, 0); }
         if (_fsToast is not null) _fsToast.Margin = new Thickness(0, height / scale * .38, 0, 0); foreach (var element in _fsCompactHidden) element.Visibility = width <= 720 ? Visibility.Collapsed : Visibility.Visible;
@@ -211,6 +211,7 @@ public partial class MainWindow
         if (_fsPopup?.PlacementTarget == anchor && _fsPopup.IsOpen) { CloseFullscreenPopup(); return; } CloseFullscreenPopup(); double scale = (_fullscreenRoot?.LayoutTransform as ScaleTransform)?.ScaleX ?? 1;
         var surface = new Border { MinWidth = 208, Padding = new Thickness(8), CornerRadius = new CornerRadius(16), Background = Fs("--glass"), BorderBrush = Fs("--line"), BorderThickness = new Thickness(1), Child = content, LayoutTransform = new ScaleTransform(scale, scale) }; surface.SetValue(TextElement.FontFamilyProperty, FindResource("FullscreenFont")); surface.SetValue(TextElement.ForegroundProperty, Fs("--ink")); surface.PreviewKeyDown += Window_KeyDown;
         _fsPopup = new Popup { AllowsTransparency = true, StaysOpen = false, PlacementTarget = anchor, Placement = PlacementMode.Top, VerticalOffset = -12.8 * scale, Child = surface };
+        ComfortPresentation.RegisterPopup(surface,anchor,true);
         _fsPopup.Opened += (_, _) => content.Children.OfType<Button>().FirstOrDefault()?.Focus();
         _fsPopup.Closed += (_, _) => { if (_fullscreen && !_closing && anchor.IsVisible) anchor.Focus(); RestartControlsTimer(); };
         _fsPopup.IsOpen = true; _hideControls.Stop();

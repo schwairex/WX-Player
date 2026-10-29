@@ -207,7 +207,7 @@
               </ToggleButton.Template>
             </ToggleButton>
             <Popup x:Name="PART_Popup" IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom" AllowsTransparency="True" Focusable="False">
-              <Border Background="{StaticResource --p2}" BorderBrush="{StaticResource --line}" BorderThickness="1" CornerRadius="9.6" Padding="8" MinWidth="172">
+              <Border ui:ComfortPresentation.ScalePopup="True" Background="{StaticResource --p2}" BorderBrush="{StaticResource --line}" BorderThickness="1" CornerRadius="9.6" Padding="8" MinWidth="172">
                 <ScrollViewer MaxHeight="320">
                   <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" />
                 </ScrollViewer>

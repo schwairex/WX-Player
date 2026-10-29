@@ -25,7 +25,7 @@ internal sealed partial class SettingsWindow
         AutomationProperties.SetName(_settingsScroll, "Ayarlar");
         void Scale()
         {
-            double scale = Math.Clamp(.005 * ActualWidth + 8, 14, 20) / 16;
+            double scale = Math.Clamp(.005 * ComfortPresentation.NormalWidth(this) + 8, 14, 20) / 16;
             Body.LayoutTransform = new ScaleTransform(scale, scale); Footer.LayoutTransform = new ScaleTransform(scale, scale);
             UpdateShortcutLayout();
         }

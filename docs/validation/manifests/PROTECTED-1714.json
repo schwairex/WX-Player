@@ -1,0 +1,52 @@
+[
+  {
+    "Path": "src/WXPlayer.App/DiscordConfiguration.cs",
+    "SHA256": "9fee3dcea0c3d89a52fa8c34c349f04323048c194f60e307c79a78c7c830942b",
+    "Unchanged": true
+  },
+  {
+    "Path": "src/WXPlayer.App/LiveBuffer.cs",
+    "SHA256": "c52326d78c6bb2297a9a391849b437ae48ad3a52eea0c2804d37640646091f6e",
+    "Unchanged": true
+  },
+  {
+    "Path": "src/WXPlayer.App/PlaybackEngine.cs",
+    "SHA256": "38946594635ccd3f0aa043accec6d2a2ee43ffc30bb02191505636dce6b71a4c",
+    "Unchanged": true
+  },
+  {
+    "Path": "src/WXPlayer.Core/EpgService.cs",
+    "SHA256": "2019817a505e87847341a1ae5ac06d78cb3902964dd057b66ebc0b0074e968d0",
+    "Unchanged": true
+  },
+  {
+    "Path": "src/WXPlayer.Core/LibraryStore.Catalog.cs",
+    "SHA256": "a57b2c404f1cf5ca0cbc6ca001c61dbee73df76acf27049f3d864ebe03da88fa",
+    "Unchanged": true
+  },
+  {
+    "Path": "src/WXPlayer.Core/LibraryStore.cs",
+    "SHA256": "38e8c0cf2e49831ba46b915e96584798d3684959e0a3d00fba6056479a5eb64a",
+    "Unchanged": true
+  },
+  {
+    "Path": "src/WXPlayer.Core/LibraryStore.Epg.cs",
+    "SHA256": "b3a236b31e585af59494a388a5c00efd046c5cfb09a87882638155d848c3740e",
+    "Unchanged": true
+  },
+  {
+    "Path": "src/WXPlayer.Core/ProviderClient.cs",
+    "SHA256": "a8e0714662b0599df065d8f3bab4eeec514f93ad5ee8998d38b054be93dd2d1b",
+    "Unchanged": true
+  },
+  {
+    "Path": "src/WXPlayer.Core/ProviderClient.Epg.cs",
+    "SHA256": "bcbad15c6865f8f7974532c2f809f52b55f9d4d5160f9c9f2750dde890393313",
+    "Unchanged": true
+  },
+  {
+    "Path": "src/WXPlayer.Core/XmlTvParser.cs",
+    "SHA256": "3d2139c031aab5ef38c9a28a861ef29aa49e85322beb20ce3e14dc4c6943ed8a",
+    "Unchanged": true
+  }
+]

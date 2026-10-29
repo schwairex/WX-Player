@@ -18,6 +18,7 @@
     </Storyboard></BeginStoryboard></Trigger.EnterActions><Trigger.ExitActions><StopStoryboard BeginStoryboardName="EqualizerAnimation"/></Trigger.ExitActions></Trigger></ControlTemplate.Triggers>
   </ControlTemplate>
   <Style x:Key="FullscreenToolTip" TargetType="ToolTip">
+    <Setter Property="ui:ComfortPresentation.ScalePopup" Value="True"/>
     <Setter Property="FontFamily" Value="{StaticResource FullscreenFont}"/><Setter Property="FontSize" Value="12.48"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="Foreground" Value="{StaticResource --ink}"/><Setter Property="Padding" Value="11.2,6.4"/>
     <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ToolTip"><Border Background="#DD000000" CornerRadius="9.6" Padding="{TemplateBinding Padding}"><ContentPresenter/></Border></ControlTemplate></Setter.Value></Setter>
   </Style>
