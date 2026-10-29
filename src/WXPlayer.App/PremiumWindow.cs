@@ -22,6 +22,7 @@ internal class PremiumWindow : Window
         var labels=new StackPanel{VerticalAlignment=VerticalAlignment.Center};labels.Children.Add(new TextBlock{Text=title,FontSize=24,FontWeight=FontWeights.SemiBold});labels.Children.Add(new TextBlock{Text=subtitle,Foreground=Brush("TextMutedBrush"),FontSize=12,Margin=new(0,6,0,0),TextWrapping=TextWrapping.Wrap});head.Children.Add(labels);root.Children.Add(head);
         Grid.SetRow(Body,1);root.Children.Add(Body);Footer.Margin=new(0,24,0,0);Grid.SetRow(Footer,2);root.Children.Add(Footer);
         PreviewKeyDown+=(_,e)=>{if(e.Key==Key.Escape){Close();e.Handled=true;}};
+        ComfortPresentation.Attach(this);
     }
     [DllImport("dwmapi.dll")]private static extern int DwmSetWindowAttribute(IntPtr hwnd,int attr,ref int value,int size);
     internal static SolidColorBrush Brush(string value)=>value.StartsWith('#')?(SolidColorBrush)new BrushConverter().ConvertFromString(value)!:(SolidColorBrush)Application.Current.FindResource(value);

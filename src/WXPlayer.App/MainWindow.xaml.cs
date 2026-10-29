@@ -48,7 +48,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         ArtworkService.Enabled=_settings.DiscoverArtwork&&!App.Arguments.Contains("--smoke");
-        InitializeComponent();InitializeLiveAppearance();InitializeHome();InitializeCatalog();InitializeSeries();VersionLabel.Text="WX PLAYER  /  "+UpdateController.Current.ToString(3);
+        InitializeComponent();InitializeComfortPresentation();InitializeLiveAppearance();InitializeHome();InitializeCatalog();InitializeSeries();VersionLabel.Text="WX PLAYER  /  "+UpdateController.Current.ToString(3);
         Loaded+=async(_,_)=>await InitializeAsync();
         SourceInitialized+=(_,_)=>{try{int dark=1;DwmSetWindowAttribute(new WindowInteropHelper(this).Handle,20,ref dark,sizeof(int));}catch{/* Older Windows falls back to the system title bar. */}};
         SeekSlider.InteractionCommitted+=async(_,_)=>{if(!_ready)return;if(_engine.HasLiveBuffer)await SafeAsync(()=>_engine.RewindLiveAsync((1-SeekSlider.Value)*_engine.BufferedSeconds,_life.Token));else if(_engine.Player.IsSeekable){await FinishClipBeforeSeekAsync();_engine.Player.Position=(float)SeekSlider.Value;_discordForceTiming=true;}};

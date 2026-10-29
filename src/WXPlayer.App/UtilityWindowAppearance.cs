@@ -42,7 +42,7 @@ internal static class UtilityWindowAppearance
         }
         void Scale()
         {
-            double scale = Math.Clamp(.005 * window.ActualWidth + 8, 14, 20) / 16;
+            double scale = Math.Clamp(.005 * ComfortPresentation.NormalWidth(window) + 8, 14, 20) / 16;
             window.Body.LayoutTransform = new ScaleTransform(scale, scale); window.Footer.LayoutTransform = new ScaleTransform(scale, scale);
         }
         window.Loaded += (_, _) => Scale(); window.SizeChanged += (_, _) => Scale();
@@ -53,8 +53,8 @@ internal static class UtilityWindowAppearance
     {
         var content = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
         if (dot) content.Children.Add(new Ellipse { Width = 7.2, Height = 7.2, Fill = Brush(owner, ink), Margin = new Thickness(0, 0, 6.4, 0), VerticalAlignment = VerticalAlignment.Center });
-        var label = Text(owner, text, 11.84, ink); label.FontWeight = FontWeights.Bold; content.Children.Add(label);
-        var pill = new Border { Background = Brush(owner, background), CornerRadius = new CornerRadius(999), Padding = new Thickness(12, 5.6, 12, 5.6), Child = content, VerticalAlignment = VerticalAlignment.Center };
+        var label = Text(owner, text, 11.84, ink); label.FontWeight = FontWeights.Bold; label.TextWrapping = TextWrapping.NoWrap; content.Children.Add(label);
+        var pill = new CatalogPillBorder { Background = Brush(owner, background), Padding = new Thickness(12, 5.6, 12, 5.6), Child = content, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center };
         AutomationProperties.SetName(pill, text); return pill;
     }
     internal static Button Action(PremiumWindow owner, string text, Action callback)

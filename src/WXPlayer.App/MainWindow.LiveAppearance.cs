@@ -38,6 +38,7 @@ public partial class MainWindow
         StateChanged += LiveLocationChanged;
         LayoutUpdated += LiveLayoutUpdated;
         PreviewKeyDown += LiveVisualKeyDown;
+        Closing += LiveOwnerClosing;
         Closed += LiveOwnerClosed;
     }
     private void LiveOwnerClosed(object? sender, EventArgs e)
@@ -45,6 +46,7 @@ public partial class MainWindow
         LocationChanged -= LiveLocationChanged; StateChanged -= LiveLocationChanged;
         LayoutUpdated -= LiveLayoutUpdated; PreviewKeyDown -= LiveVisualKeyDown;
         Closed -= LiveOwnerClosed;
+        Closing -= LiveOwnerClosing;
         DetachLiveAppearance();
     }
     private void LiveLocationChanged(object? sender, EventArgs e) => PositionLiveControls();
@@ -102,6 +104,7 @@ public partial class MainWindow
     private void DetachLiveAppearance()
     {
         if (!_liveShellAttached) return;
+        StopEmbeddedAutoHide();
         _liveShellAttached = false;
         if (_liveGearPopup is not null) _liveGearPopup.IsOpen = false;
         if (_liveControls is { } controls)
@@ -217,7 +220,7 @@ public partial class MainWindow
         LiveSet(ListColumn, ColumnDefinition.WidthProperty, new GridLength(narrow ? 288 : 360)); LiveSet(GapColumn, ColumnDefinition.WidthProperty, new GridLength(25.6));
         LiveSet(ViewingPanel, FrameworkElement.MarginProperty, new Thickness(0, 0, 25.6, 19.2)); LiveSet(TopBar, FrameworkElement.MarginProperty, new Thickness(0, 0, 25.6, 0));
         if (_guideHeight is null) LiveSet(GuideRow, RowDefinition.HeightProperty, new GridLength(190));
-        if (_liveOverlayRoot is not null) _liveOverlayRoot.LayoutTransform = new ScaleTransform(scale, scale);
+        if (_liveOverlayRoot is not null) _liveOverlayRoot.LayoutTransform = new ScaleTransform(scale*ComfortPresentation.Factor, scale*ComfortPresentation.Factor);
         LiveSet(VolumeSlider, FrameworkElement.WidthProperty, narrow ? 64d : 88d);
         PositionLiveControls();
     }
@@ -276,6 +279,7 @@ public partial class MainWindow
         var rightButtons = (StackPanel)FullscreenButton.Parent; rightButtons.Children.Insert(0, toggle); _liveRestore.Add(() => rightButtons.Children.Remove(toggle));
         _liveGearPopup = new Popup { PlacementTarget = toggle, Placement = PlacementMode.Top, VerticalOffset = -12.8, AllowsTransparency = true, StaysOpen = false, Child = new Border { Background = LiveBrush("LiveGlass"), BorderBrush = LiveBrush("LiveLine"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(17.6), Padding = new Thickness(12.8), Width = 272, Child = menuActions } };
         _liveGearPopup.SetBinding(Popup.IsOpenProperty, new Binding("IsChecked") { Source = toggle, Mode = BindingMode.TwoWay });
+        ComfortPresentation.RegisterPopup((FrameworkElement)_liveGearPopup.Child,toggle);
         TextElement.SetFontFamily(_liveGearPopup.Child, (FontFamily)FindResource("LiveFont")); TextElement.SetForeground(_liveGearPopup.Child, LiveBrush("LiveInk"));
         TextOptions.SetTextFormattingMode(_liveGearPopup, TextFormattingMode.Ideal); TextOptions.SetTextRenderingMode(_liveGearPopup, TextRenderingMode.ClearType);
         root.Children.Add(_liveGearPopup);
@@ -286,7 +290,7 @@ public partial class MainWindow
         _liveControls.PreviewMouseDown += LiveOverlayPointerDown; _liveControls.PreviewMouseWheel += LiveOverlayWheel;
         var bridge = new Control { Width = 1, Height = 1, Opacity = 0, Focusable = true, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top, FocusVisualStyle = null };
         AutomationProperties.SetName(bridge, "Oynatıcı kontrolleri");
-        KeyboardFocusChangedEventHandler enter = (_, _) => { if (_liveControls?.IsVisible == true) { _liveControls.Activate(); PreviousChannelButton.Focus(); } };
+        KeyboardFocusChangedEventHandler enter = (_, _) => { if (_liveControls?.IsVisible == true) { _liveAutoHide?.KeyboardEntry(); _liveControls.Activate(); PreviousChannelButton.Focus(); } };
         bridge.GotKeyboardFocus += enter;
         ViewingPanel.Children.Insert(1, bridge);
         _liveRestore.Add(() => { bridge.GotKeyboardFocus -= enter; ViewingPanel.Children.Remove(bridge); });
@@ -312,6 +316,7 @@ public partial class MainWindow
     private void UpdateLiveVisuals()
     {
         if (!_liveShellAttached) return;
+        UpdateEmbeddedAutoHide();
         if (_embeddedLibraryCount is not null)
         {
             _embeddedLibraryCount.Text = _section == "live" ? LiveCount.Text + " kanal" : ResultsCount.Text;

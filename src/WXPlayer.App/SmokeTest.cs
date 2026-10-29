@@ -16,6 +16,21 @@ internal static class SmokeTest
         var results=new Dictionary<string,object>();
         try
         {
+            if(App.Arguments.Any(a=>a is "--comfort1714-layout-only" or "--comfort1714-baseline-only" or "--comfort1714-restore-only"))
+            {
+                await Comfort1714Smoke.RunAsync(window,store,engine,settings,results);results["success"]=true;
+                File.WriteAllText(Path.Combine(App.DataDirectory,"smoke-results.json"),JsonSerializer.Serialize(results,new JsonSerializerOptions{WriteIndented=true}));window.Close();return;
+            }
+            if(App.Arguments.Contains("--hwnd1714-prototype-only"))
+            {
+                await Hwnd1714Prototype.RunAsync(window,store,engine,results);results["success"]=true;
+                File.WriteAllText(Path.Combine(App.DataDirectory,"smoke-results.json"),JsonSerializer.Serialize(results,new JsonSerializerOptions{WriteIndented=true}));window.Close();return;
+            }
+            if(App.Arguments.Contains("--embedded1714-layout-only"))
+            {
+                await Experience1714Smoke.RunEmbeddedAsync(window,store,engine,results);results["success"]=true;
+                File.WriteAllText(Path.Combine(App.DataDirectory,"smoke-results.json"),JsonSerializer.Serialize(results,new JsonSerializerOptions{WriteIndented=true}));window.Close();return;
+            }
             if(App.Arguments.Contains("--experience1713-layout-only"))
             {
                 await Experience1713Smoke.RunAsync(window,store,settings,results);results["success"]=true;

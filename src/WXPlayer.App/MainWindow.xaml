@@ -67,6 +67,7 @@
     </DataTemplate>
     </ResourceDictionary>
   </Window.Resources>
+  <Border x:Name="ComfortRoot">
   <Grid x:Name="Root" Background="{StaticResource BackgroundBaseBrush}">
     <Grid.ColumnDefinitions>
       <ColumnDefinition x:Name="NavColumn" Width="76" />
@@ -457,6 +458,7 @@
       </Grid>
     </Grid>
   </Grid>
+  </Border>
 </Window>
 
 

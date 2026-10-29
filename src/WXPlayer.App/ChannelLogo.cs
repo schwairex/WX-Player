@@ -19,8 +19,10 @@ public sealed class ChannelLogo : Grid
     public Thickness ImagePadding {get=>_image.Margin;set=>_image.Margin=value;}
     private readonly Image _image=new(){Stretch=Stretch.Uniform,Margin=new Thickness(4)};
     private readonly TextBlock _letters=new(){HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center,FontWeight=FontWeights.SemiBold,FontSize=13,Foreground=Brushes.LightSteelBlue};
-    private int _version;
-    public ChannelLogo(){Children.Add(_letters);Children.Add(_image);Loaded+=(_,_)=>Refresh();Unloaded+=(_,_)=>_version++;}
+    private int _version, _requestedDecodeWidth;
+    private bool _comfortSubscribed;
+    public ChannelLogo(){Children.Add(_letters);Children.Add(_image);Loaded+=(_,_)=>{if(!_comfortSubscribed){ComfortPresentation.Changed+=ComfortChanged;_comfortSubscribed=true;}Refresh();};Unloaded+=(_,_)=>{_version++;if(_comfortSubscribed){ComfortPresentation.Changed-=ComfortChanged;_comfortSubscribed=false;}};}
+    private void ComfortChanged(){if(IsLoaded&&ComfortPresentation.ArtworkWidth(this,DecodeWidth)!=_requestedDecodeWidth)Refresh();}
     private static void Changed(DependencyObject obj,DependencyPropertyChangedEventArgs args){var logo=(ChannelLogo)obj;logo._letters.Text=logo.Initials;if(logo.IsLoaded)logo.Refresh();}
     private async void Refresh()
     {
@@ -29,7 +31,8 @@ public sealed class ChannelLogo : Grid
         {await ArtworkService.PopulateAsync(item);if(version!=_version||!IsLoaded)return;}
         string url=Url;
         if(DataContext is WXPlayer.Core.ContentItem credit&&credit.ArtworkCredit.Length>0)ToolTip=credit.ArtworkCredit;
-        var bitmap=await ArtworkCache.GetAsync(url,DecodeWidth);
+        _requestedDecodeWidth=ComfortPresentation.ArtworkWidth(this,DecodeWidth);
+        var bitmap=await ArtworkCache.GetAsync(url,_requestedDecodeWidth);
         if(version!=_version||!IsLoaded)return;_image.Source=bitmap;_letters.Visibility=bitmap is null?Visibility.Visible:Visibility.Collapsed;
     }
     internal bool HasImage=>_image.Source is not null;

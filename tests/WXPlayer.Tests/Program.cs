@@ -5,6 +5,16 @@ using System.Text.Json;
 using WXPlayer.Core;
 
 var results=new List<object>();int failures=0;
+await Test("1.7.14 comfort setting defaults off and persists compatibly",()=>{
+    var property=typeof(PlayerSettings).GetProperty("ComfortMode");
+    Assert(property is not null&&property.PropertyType==typeof(bool),"comfort setting available");
+    var old=JsonSerializer.Deserialize<PlayerSettings>("{\"Volume\":46}")!;
+    Assert(property!.GetValue(old) is false&&old.Volume==46,"old settings default off and retain fields");
+    property.SetValue(old,true);var restored=JsonSerializer.Deserialize<PlayerSettings>(JsonSerializer.Serialize(old))!;
+    Assert(property.GetValue(restored) is true&&restored.Volume==46,"on survives restart");
+    property.SetValue(restored,false);Assert(property.GetValue(JsonSerializer.Deserialize<PlayerSettings>(JsonSerializer.Serialize(restored))!) is false,"off survives restart");
+    return Task.CompletedTask;
+});
 async Task Test(string name,Func<Task> test){var sw=Stopwatch.StartNew();try{await test();results.Add(new{name,passed=true,ms=sw.ElapsedMilliseconds});Console.WriteLine("PASS "+name+" "+sw.ElapsedMilliseconds+" ms");}catch(Exception ex){failures++;results.Add(new{name,passed=false,error=ex.ToString()});Console.WriteLine("FAIL "+name+": "+ex.Message);}}
 void Assert(bool value,string why){if(!value)throw new Exception(why);}
 async Task<List<T>> Collect<T>(IAsyncEnumerable<T> input){var list=new List<T>();await foreach(var x in input)list.Add(x);return list;}

@@ -55,6 +55,8 @@ internal static class Utility1712Smoke
         Check("statisticsMeasurementsBeforeEngineAndTracks",Field<StackPanel>(stats,"_cards").Children[0] is StackPanel first&&Has(first,"Akış ölçümleri")&&Field<StackPanel>(stats,"_cards").Children[1] is StackPanel second&&Has(second,"Oynatma ve motor"));
         Check("statisticsAllOriginalMetricsPresent",new[]{"ÇÖZÜNÜRLÜK","KAYNAK FPS","SES","Giriş bit hızı","Tampon doluluğu","Okunan veri","Çözülen / gösterilen kare","Kaybedilen kare","Akış bozulması / süreksizlik","Durum","Motor / video çıkışı","Donanım çözme tercihi","Ağ önbelleği","Codec","Parça bit hızı"}.All(text=>Has(stats,text)));
         Check("statisticsSelectedAudioPill",Has(stats,"SEÇİLİ")&&!Texts(stats).Any(t=>t.Text=="Ses · Seçili"));
+        var statisticsPills=Settings1711Smoke.Descendants<Border>(stats).Where(b=>b.Child is StackPanel p&&p.Children.OfType<TextBlock>().Any(t=>t.Text is "Oynuyor" or "SEÇİLİ")).ToArray();
+        Check("statisticsBadgesUseCapsuleRadius",statisticsPills.Length>=2&&statisticsPills.All(b=>b.ActualHeight>0&&Math.Abs(b.CornerRadius.TopLeft-b.ActualHeight/2)<.1));
         Check("statisticsNoUnknownLanguage",!Texts(stats).Any(t=>t.Text.Contains("???")));
         Check("statisticsNoPrivateAddressInVisualTree",Settings1711Smoke.Descendants<FrameworkElement>(stats).All(e=>!new[]{e.ToolTip?.ToString()??"",AutomationProperties.GetName(e),e is TextBlock text?text.Text:""}.Any(s=>s.Contains("private-token")||s.Contains("secret")||s.Contains("password=hidden"))));
         Check("statisticsManropeAndClearType",stats.FontFamily.Source.Contains("Manrope")&&TextOptions.GetTextFormattingMode(stats)==TextFormattingMode.Ideal&&TextOptions.GetTextRenderingMode(stats)==TextRenderingMode.ClearType);
@@ -72,6 +74,8 @@ internal static class Utility1712Smoke
         Check("tracksSelectedPickerRawTooltip",tracks.AudioPicker.SelectedItem is TracksWindow.Choice choice&&tracks.AudioPicker.ToolTip?.ToString()==choice.Label);
         Check("tracksAccessibleStatusAndPickers",AutomationProperties.GetName(tracks.AudioPicker)=="Ses parçası"&&AutomationProperties.GetName(tracks.SubtitlePicker)=="Altyazı"&&AutomationProperties.GetLiveSetting(Field<TextBlock>(tracks,"_status"))==AutomationLiveSetting.Polite);
         Check("tracksSharedSettingsStyleAndFormats",((Style)tracks.FindResource("UtilityTrackPicker")).BasedOn==tracks.FindResource("SettingsOutput")&&new[]{"SRT","ASS","SSA","VTT","SUB"}.All(text=>Has(tracks,text)));
+        var trackPills=Settings1711Smoke.Descendants<Border>(tracks).Where(b=>b.Child is StackPanel p&&p.Children.OfType<TextBlock>().Any(t=>t.Text is "SES PARÇASI" or "YERLEŞİK VEYA HARİCİ")).ToArray();
+        Check("tracksBadgesUseCapsuleRadius",trackPills.Length==2&&trackPills.All(b=>b.ActualHeight>0&&Math.Abs(b.CornerRadius.TopLeft-b.ActualHeight/2)<.1));
         Check("tracksPlainStatusNoBox",Field<TextBlock>(tracks,"_status").Parent is Grid g&&g.Background is null);
         SafeVisuals(tracks);Settings1711Smoke.Save(tracks,"WXPlayer-1.7.12-tracks.png");
         tracks.AudioPicker.IsDropDownOpen=true;await Task.Delay(120);
