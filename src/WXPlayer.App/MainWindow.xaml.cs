@@ -440,6 +440,7 @@ public partial class MainWindow : Window
     }
     private void Window_KeyDown(object sender,KeyEventArgs e)
     {
+        if(TryFilmPaneKey(e))return;
         if(!_ready)return;if(e.Key==Key.B&&Keyboard.Modifiers.HasFlag(ModifierKeys.Control)){SidebarToggle_Click(this,new RoutedEventArgs());e.Handled=true;return;}if(_fullscreen)RevealFullscreenControls();if(e.Key==Key.K&&Keyboard.Modifiers.HasFlag(ModifierKeys.Control)){if(_fullscreen)ToggleFullscreen();if(_section=="home"){_home.Search.Focus();_home.Search.SelectAll();}else if(CatalogVisible){_catalog.Search.Focus();_catalog.Search.SelectAll();}else{SearchBox.Focus();SearchBox.SelectAll();}e.Handled=true;return;}
         if(Keyboard.FocusedElement is TextBoxBase or PasswordBox or ComboBox)return;
         if(_fullscreen&&e.Key==Key.R&&e.IsRepeat){e.Handled=true;return;}

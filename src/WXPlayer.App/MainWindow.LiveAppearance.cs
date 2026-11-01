@@ -103,6 +103,7 @@ public partial class MainWindow
     }
     private void DetachLiveAppearance()
     {
+        DetachFilmAppearance();
         if (!_liveShellAttached) return;
         StopEmbeddedAutoHide();
         _liveShellAttached = false;
@@ -154,6 +155,7 @@ public partial class MainWindow
     }
     private void SetLiveAppearance()
     {
+        if(!FilmWatchingVisible)DetachFilmAppearance();
         if (!EmbeddedPlayerVisible || _closing) return;
         if (!_liveShellAttached)
         {
@@ -319,7 +321,7 @@ public partial class MainWindow
         UpdateEmbeddedAutoHide();
         if (_embeddedLibraryCount is not null)
         {
-            _embeddedLibraryCount.Text = _section == "live" ? LiveCount.Text + " kanal" : ResultsCount.Text;
+            _embeddedLibraryCount.Text = FilmWatchingVisible ? MovieCount.Text + " içerik" : _section == "live" ? LiveCount.Text + " kanal" : ResultsCount.Text;
             _embeddedLibraryCount.Visibility = ActualWidth <= 1000 ? Visibility.Collapsed : Visibility.Visible;
         }
         LiveSet(SearchHint, TextBlock.TextProperty, _section is "live" or "epg" ? "Kanal ara" : "Bu kütüphanede ara");
@@ -329,6 +331,7 @@ public partial class MainWindow
         if (_engine is not null && _engine.IsReplay)
         { LiveSet(LiveEdgeButton, Control.BackgroundProperty, LiveBrush("LiveInk")); LiveSet(LiveEdgeButton, Control.ForegroundProperty, LiveBrush("LiveDarkInk")); LiveSet(LiveEdgeButton, Control.PaddingProperty, new Thickness(12.8, 5.6, 12.8, 5.6)); }
         else { LiveSet(LiveEdgeButton, Control.BackgroundProperty, Brushes.Transparent); LiveSet(LiveEdgeButton, Control.ForegroundProperty, LiveBrush("LiveOnAir")); LiveSet(LiveEdgeButton, Control.PaddingProperty, new Thickness(0)); }
+        UpdateFilmAppearance();
     }
     [DllImport("user32.dll", EntryPoint = "SetWindowPos")]
     private static extern bool LiveSetWindowPos(IntPtr hwnd, IntPtr after, int x, int y, int width, int height, uint flags);
