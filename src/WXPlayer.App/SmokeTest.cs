@@ -16,6 +16,11 @@ internal static class SmokeTest
         var results=new Dictionary<string,object>();
         try
         {
+            if(App.Arguments.Any(a=>a is "--film1715-layout-only" or "--film1715-baseline-only" or "--film1715-format-only"))
+            {
+                await FilmWatching1715Smoke.RunAsync(window,store,engine,results);results["success"]=true;
+                File.WriteAllText(Path.Combine(App.DataDirectory,"smoke-results.json"),JsonSerializer.Serialize(results,new JsonSerializerOptions{WriteIndented=true}));window.Close();return;
+            }
             if(App.Arguments.Any(a=>a is "--comfort1714-layout-only" or "--comfort1714-baseline-only" or "--comfort1714-restore-only"))
             {
                 await Comfort1714Smoke.RunAsync(window,store,engine,settings,results);results["success"]=true;
