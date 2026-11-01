@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
@@ -31,7 +31,8 @@ public partial class MainWindow
     private void UpdateFilmAppearance()
     {
         if(_filmUpdating)return;
-        if(!FilmWatchingVisible){DetachFilmAppearance();return;}
+        if(!LibraryWatchingVisible){DetachFilmAppearance();return;}
+        if(_filmScope is not null&&_libraryScopeSeries!=SeriesWatchingVisible)DetachFilmAppearance();
         if(!_liveShellAttached||_liveOverlayRoot is null)return;
         _filmUpdating=true;
         try
@@ -49,6 +50,8 @@ public partial class MainWindow
             scope.Set(GuidePanel,VisibilityProperty,Visibility.Collapsed);scope.Set(GuideSplitter,VisibilityProperty,Visibility.Collapsed);
             LibraryPresentation.SetPlayingItem(ChannelList,_current);
             scope.Set(ChannelList,LibraryPresentation.CategoryDetailsVisibleProperty,CategoryPicker.SelectedIndex==0);
+            if(FilmWatchingVisible)
+            {
             // Keep the real last displayed instance when filtering hides the playing film.
             // The existing favorite handler updates that instance, not other query copies.
             var shown=ChannelList.Items.OfType<ContentItem>().FirstOrDefault(x=>x.Equals(_current));
@@ -61,6 +64,8 @@ public partial class MainWindow
             _filmNext!.Visibility=!_filmNarrow&&nextItem is not null&&!nextItem.Equals(_current)?Visibility.Visible:Visibility.Collapsed;
             _filmNextLabel!.Text=nextItem is null?"":"Sıradaki · "+LibraryDisplay.Title(nextItem.Name);
             _filmFavorite!.Visibility=_filmNarrow?Visibility.Collapsed:Visibility.Visible;
+            }
+            else UpdateSeriesWatchingPresentation();
             bool connecting=PlaybackBadge.Text=="BAĞLANIYOR";
             _filmConnecting!.Visibility=connecting?Visibility.Visible:Visibility.Collapsed;
             if(_engine.Player.State==LibVLCSharp.Shared.VLCState.Paused&&_engine.Player.Length>0)
@@ -76,10 +81,10 @@ public partial class MainWindow
     }
     private void AttachFilmAppearance()
     {
-        var s=_filmScope=new FilmVisualScope();
+        var s=_filmScope=new FilmVisualScope();_libraryScopeSeries=SeriesWatchingVisible;
         _filmCategoryColumn=new ColumnDefinition();ContentGrid.ColumnDefinitions.Insert(0,_filmCategoryColumn);s.Undo(()=>ContentGrid.ColumnDefinitions.Remove(_filmCategoryColumn));
         s.Set(LibraryPanel,Grid.ColumnProperty,1);s.Set(ViewingPanel,Grid.ColumnProperty,3);s.Set(TopBar,Grid.ColumnProperty,3);
-        _filmCategories=new LibraryCategoryPane(CategoryPicker){HorizontalAlignment=HorizontalAlignment.Left};Grid.SetRowSpan(_filmCategories,2);Panel.SetZIndex(_filmCategories,12);s.Add(ContentGrid,_filmCategories);
+        _filmCategories=new LibraryCategoryPane(CategoryPicker,SeriesWatchingVisible?"Dizi kategorileri":"Film kategorileri"){HorizontalAlignment=HorizontalAlignment.Left};Grid.SetRowSpan(_filmCategories,2);Panel.SetZIndex(_filmCategories,12);s.Add(ContentGrid,_filmCategories);
         s.Set(CategoryPicker,VisibilityProperty,Visibility.Collapsed);s.Set(ChannelList,ItemsControl.ItemTemplateProperty,FindResource("LibraryMovieTemplate"));s.Set(ChannelList,ItemsControl.ItemContainerStyleProperty,FindResource("LibraryMovieRow"));
         s.Set(ChannelList,MarginProperty,new Thickness(9.6,1.6,8,9.6));
         var listHead=new Grid{Margin=new Thickness(1.6,0,1.6,12.8)};listHead.ColumnDefinitions.Add(new());listHead.ColumnDefinitions.Add(new(){Width=GridLength.Auto});
@@ -92,12 +97,20 @@ public partial class MainWindow
         _filmPager=(FrameworkElement)PageLabel.Parent;s.Set(_filmPager,MarginProperty,new Thickness(16,11.2,16,11.2));
         if(_liveGearPopup?.Child is Border{Child:Panel menu})
             foreach(var action in new[]{LibrarySummaryButton,SourceOptionsButton}){s.Move(action,menu,menu.Children.Count);FilmButton(action,"LiveMenuAction");}
-        _filmInfo=BuildFilmInfo();Grid.SetRow(_filmInfo,2);s.Add(ViewingPanel,_filmInfo);
+        if(FilmWatchingVisible){_filmInfo=BuildFilmInfo();Grid.SetRow(_filmInfo,2);s.Add(ViewingPanel,_filmInfo);}
 
         var title=(StackPanel)NowTitle.Parent;
         s.Set(NowTitle,VisibilityProperty,Visibility.Collapsed);
         var displayTitle=FilmText("",20.8,"LiveInk");displayTitle.FontWeight=FontWeights.ExtraBold;displayTitle.Margin=new Thickness(0,11.2,0,0);
         displayTitle.SetBinding(TextBlock.TextProperty,new Binding("Text"){Source=NowTitle,Converter=(IValueConverter)FindResource("LibraryText"),ConverterParameter="Title"});displayTitle.SetBinding(ToolTipProperty,new Binding("Text"){Source=NowTitle});s.Add(title,displayTitle,1);
+        if(SeriesWatchingVisible)
+        {
+            _seriesHeading=displayTitle;BindingOperations.ClearBinding(displayTitle,TextBlock.TextProperty);
+            title.Children.Remove(displayTitle);var heading=new Grid{HorizontalAlignment=HorizontalAlignment.Left};heading.ColumnDefinitions.Add(new());heading.ColumnDefinitions.Add(new(){Width=GridLength.Auto});s.Add(title,heading,1);s.Add(heading,displayTitle);
+            _seriesCode=FilmText("",9.92,"LiveCaption");var code=new Border{Background=LiveBrush("LiveRaised"),CornerRadius=new CornerRadius(4.8),Padding=new Thickness(5.6,.8,5.6,.8),Margin=new Thickness(9.6,11.2,0,0),Child=_seriesCode,VerticalAlignment=VerticalAlignment.Center};Grid.SetColumn(code,1);code.SetBinding(VisibilityProperty,new Binding("Text"){Source=_seriesCode,Converter=new FilmEmptyVisibility()});s.Add(heading,code);
+            _seriesCaption=FilmText("",13.6,"LiveCaption");_seriesCaption.Margin=new Thickness(0,2.4,0,0);s.Add(title,_seriesCaption,2);
+            AttachSeriesWatchingPresentation(s);
+        }
         if(_liveProgrammeCaption is not null)s.Set(_liveProgrammeCaption,VisibilityProperty,Visibility.Collapsed);
         s.Move(CatalogBackButton,title,0);FilmButton(CatalogBackButton,"LibraryBackButton");s.Set(CatalogBackButton,VisibilityProperty,Visibility.Visible);s.Set(CatalogBackButton,HorizontalAlignmentProperty,HorizontalAlignment.Left);
         var timeline=(Grid)SeekSlider.Parent;
@@ -177,7 +190,8 @@ public partial class MainWindow
     }
     private bool TryFilmPaneKey(KeyEventArgs e)
     {
-        if(!FilmWatchingVisible||_filmCategories is null||Keyboard.Modifiers!=ModifierKeys.None)return false;
+        if(!LibraryWatchingVisible||_filmCategories is null||Keyboard.Modifiers!=ModifierKeys.None)return false;
+        if(SeriesWatchingVisible&&_seriesPanel.TryWatchingKey(e))return true;
         bool categories=_filmCategories.Picker.IsKeyboardFocusWithin,items=ChannelList.IsKeyboardFocusWithin;
         if(!categories&&!items)return false;
         if(e.Key==Key.Enter&&Keyboard.FocusedElement is ButtonBase)return false;
@@ -186,8 +200,8 @@ public partial class MainWindow
         {
             if(list.Items.Count>0){list.SelectedIndex=Math.Clamp(list.SelectedIndex+(e.Key==Key.Down?1:-1),0,list.Items.Count-1);list.ScrollIntoView(list.SelectedItem);if(list.ItemContainerGenerator.ContainerFromIndex(list.SelectedIndex) is ListBoxItem row)row.Focus();}
         }
-        else if(e.Key==Key.Right){if(categories){ChannelList.Focus();}else{_liveAutoHide?.KeyboardEntry();_liveControls?.Activate();PreviousChannelButton.Focus();}}
-        else if(e.Key==Key.Left){if(items){_filmDrawer=_filmNarrow;UpdateFilmAppearance();_filmCategories.Picker.Focus();}else MovieNav.Focus();}
+        else if(e.Key==Key.Right){if(categories){ChannelList.Focus();}else{_liveAutoHide?.KeyboardEntry();_liveControls?.Activate();if(!PreviousChannelButton.Focus())PlayButton.Focus();}}
+        else if(e.Key==Key.Left){if(items){_filmDrawer=_filmNarrow;UpdateFilmAppearance();_filmCategories.Picker.Focus();}else (SeriesWatchingVisible?SeriesNav:MovieNav).Focus();}
         else if(e.Key==Key.Enter){if(categories){_filmDrawer=false;UpdateFilmAppearance();ChannelList.Focus();}else Channel_DoubleClick(ChannelList,new MouseButtonEventArgs(Mouse.PrimaryDevice,Environment.TickCount,MouseButton.Left));}
         else if(e.Key==Key.Escape&&_filmDrawer){_filmDrawer=false;UpdateFilmAppearance();_filmCategoryToggle?.Focus();}
         else return false;
@@ -203,7 +217,7 @@ public partial class MainWindow
         public object Convert(object value,Type targetType,object parameter,System.Globalization.CultureInfo culture)=>value is true?"Favorilerde":"Favorilere ekle";
         public object ConvertBack(object value,Type targetType,object parameter,System.Globalization.CultureInfo culture)=>Binding.DoNothing;
     }
-    private sealed class FilmVisualScope : IDisposable
+    internal sealed class FilmVisualScope : IDisposable
     {
         private readonly List<Action> _undo=[];private readonly HashSet<(DependencyObject,DependencyProperty)> _saved=[];
         private void Capture(DependencyObject target,DependencyProperty property)
@@ -214,6 +228,12 @@ public partial class MainWindow
         }
         internal void Set(DependencyObject target,DependencyProperty property,object value){Capture(target,property);if(!Equals(target.GetValue(property),value))target.SetValue(property,value);}
         internal void Clear(DependencyObject target,DependencyProperty property){Capture(target,property);target.ClearValue(property);}
+        internal void Bind(DependencyObject target,DependencyProperty property,BindingBase binding){Capture(target,property);BindingOperations.SetBinding(target,property,binding);}
+        internal void Resource(FrameworkElement target,object key,object value)
+        {
+            bool had=target.Resources.Contains(key);object? previous=had?target.Resources[key]:null;
+            target.Resources[key]=value;_undo.Add(()=>{if(had)target.Resources[key]=previous;else target.Resources.Remove(key);});
+        }
         internal void Undo(Action action)=>_undo.Add(action);
         internal void Add(Panel panel,UIElement child,int index=-1){if(index<0)panel.Children.Add(child);else panel.Children.Insert(index,child);_undo.Add(()=>panel.Children.Remove(child));}
         internal void Move(FrameworkElement child,Panel panel,int index)

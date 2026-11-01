@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Data;
@@ -43,7 +43,7 @@ public sealed class LibraryTextConverter : IValueConverter
 }
 public sealed class LibraryPlayingConverter : IMultiValueConverter
 {
-    public object Convert(object[] values,Type targetType,object parameter,CultureInfo culture)=>values.Length==2&&values[0] is ContentItem a&&values[1] is ContentItem b&&a.Equals(b);
+    public object Convert(object[] values,Type targetType,object parameter,CultureInfo culture)=>values.Length==2&&values[0] is ContentItem a&&values[1] is ContentItem b&&(a.Equals(b)||(a.Kind==ContentKind.Series&&b.Kind==ContentKind.Episode&&a.SourceId==b.SourceId&&a.Id.Length>0&&a.Id==b.SeriesId));
     public object[] ConvertBack(object value,Type[] targetTypes,object parameter,CultureInfo culture)=>throw new NotSupportedException();
 }
 public sealed class LibraryGroupHeaderConverter : IMultiValueConverter
@@ -59,6 +59,9 @@ public sealed class LibraryGroupHeaderConverter : IMultiValueConverter
 }
 public static class LibraryPresentation
 {
+    public static readonly DependencyProperty PlaybackPositionProperty=DependencyProperty.RegisterAttached("PlaybackPosition",typeof(double),typeof(LibraryPresentation),new PropertyMetadata(0d));
+    public static double GetPlaybackPosition(DependencyObject target)=>(double)target.GetValue(PlaybackPositionProperty);
+    public static void SetPlaybackPosition(DependencyObject target,double value)=>target.SetValue(PlaybackPositionProperty,value);
     public static readonly DependencyProperty CategoryDetailsVisibleProperty=DependencyProperty.RegisterAttached("CategoryDetailsVisible",typeof(bool),typeof(LibraryPresentation),new FrameworkPropertyMetadata(true,FrameworkPropertyMetadataOptions.Inherits));
     public static bool GetCategoryDetailsVisible(DependencyObject target)=>(bool)target.GetValue(CategoryDetailsVisibleProperty);
     public static void SetCategoryDetailsVisible(DependencyObject target,bool value)=>target.SetValue(CategoryDetailsVisibleProperty,value);

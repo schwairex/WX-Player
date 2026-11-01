@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Media;
@@ -16,6 +16,11 @@ internal static class SmokeTest
         var results=new Dictionary<string,object>();
         try
         {
+            if(App.Arguments.Any(a=>a.StartsWith("--series1716-",StringComparison.Ordinal)))
+            {
+                await SeriesWatching1716Smoke.RunAsync(window,store,engine,results);results["success"]=true;
+                File.WriteAllText(Path.Combine(App.DataDirectory,"smoke-results.json"),JsonSerializer.Serialize(results,new JsonSerializerOptions{WriteIndented=true}));window.Close();return;
+            }
             if(App.Arguments.Any(a=>a is "--film1715-layout-only" or "--film1715-baseline-only" or "--film1715-format-only"))
             {
                 await FilmWatching1715Smoke.RunAsync(window,store,engine,results);results["success"]=true;

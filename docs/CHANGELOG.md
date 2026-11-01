@@ -2,6 +2,7 @@
 
 | Sürüm | Başlıca değişiklik |
 | --- | --- |
+| **[1.7.16](RELEASE-NOTES-1.7.16.md)** | Ortak Film katmanıyla dizi izleme görünümü; aynı sezon seçicisine bağlı haplar, sanallaştırılmış yatay bölüm kartları ve odak koruması; mevcut bölüm/oynatma mantığı aynı. |
 | **[1.7.15](RELEASE-NOTES-1.7.15.md)** | Film izleme ekranında kategori/liste/oynatıcı bölmeleri, Film bilgisi, dar kategori çekmecesi ve ortak stiller; mevcut oynatma ve Canlı TV/Diziler korunur. |
 | **[1.7.14](RELEASE-NOTES-1.7.14.md)** | İstatistik/ses rozetleri; normal oynatıcıda 3 saniye sonra gizlenen kontroller; F8 ve kalıcı ayarla Rahat mod, küçük ekran sınırı ve ölçeklenen diyalog/popup'lar. |
 | **[1.7.13](releases/notes/RELEASE-NOTES-1.7.13.md)** | HTML referanslı Kaynak ekle/düzenle; tüm oynatıcı sayfalarında ortak görünüm; arama hizası, tüm kaynak kategorileri ve sabit arama afişi; son kaynakla Ana sayfa açılışı ve yeni logo. |

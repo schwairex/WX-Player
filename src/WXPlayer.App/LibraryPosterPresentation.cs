@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -22,6 +22,7 @@ public sealed class LibraryPosterPresentation : Grid
         _logo.SetBinding(ChannelLogo.UrlProperty,new Binding("Logo"));Children.Add(_logo);
         _fallback.Children.Add(_outline);_fallback.Children.Add(_icon);Children.Add(_fallback);
         _image=_logo.Children.OfType<Image>().Single();_source=DependencyPropertyDescriptor.FromProperty(Image.SourceProperty,typeof(Image));
+        DataContextChanged+=(_,_)=>_icon.Icon=DataContext is WXPlayer.Core.ContentItem{Kind:WXPlayer.Core.ContentKind.Series}?"series":"catalog-film";
         Loaded+=LoadedPoster;Unloaded+=UnloadedPoster;SizeChanged+=(_,_)=>Geometry();
     }
     private void LoadedPoster(object sender,RoutedEventArgs e)
