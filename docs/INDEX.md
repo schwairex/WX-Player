@@ -21,6 +21,8 @@
 - [Tasarım sistemi](design/DESIGN_SYSTEM.md)
 - [UI modernizasyon kuralları](design/UI_MODERNIZATION.md)
 - [Tüm sürüm geçmişi](CHANGELOG.md)
+- [1.7.16 sürüm notları](RELEASE-NOTES-1.7.16.md)
+- [1.7.16 doğrulama raporu](TEST-REPORT-1.7.16.md)
 - [1.7.15 sürüm notları](RELEASE-NOTES-1.7.15.md)
 - [1.7.15 doğrulama raporu](TEST-REPORT-1.7.15.md)
 - [1.7.14 sürüm notları](RELEASE-NOTES-1.7.14.md)

@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Markup;
 using System.Windows.Media;
@@ -6,7 +6,7 @@ using WXPlayer.Core;
 
 namespace WXPlayer.App;
 
-internal sealed class SeriesEpisodePanel : Border
+internal sealed partial class SeriesEpisodePanel : Border
 {
     internal ComboBox Seasons { get; } = new() { MinWidth=156, MinHeight=38 };
     internal ListBox Episodes { get; } = new() { BorderThickness=new Thickness(0) };

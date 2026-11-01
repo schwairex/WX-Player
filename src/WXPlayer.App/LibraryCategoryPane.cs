@@ -10,7 +10,7 @@ namespace WXPlayer.App;
 internal sealed class LibraryCategoryPane : Border
 {
     internal readonly ListBox Picker=new(){BorderThickness=new Thickness(0),Background=System.Windows.Media.Brushes.Transparent,Margin=new Thickness(9.6,0,9.6,12.8),IsSynchronizedWithCurrentItem=false};
-    internal LibraryCategoryPane(ComboBox original)
+    internal LibraryCategoryPane(ComboBox original,string name="Film kategorileri")
     {
         BorderThickness=new Thickness(0,0,1,0);
         SetResourceReference(BackgroundProperty,"LibraryCategoryBackground");SetResourceReference(BorderBrushProperty,"LiveLine");
@@ -22,7 +22,7 @@ internal sealed class LibraryCategoryPane : Border
         Picker.Resources[typeof(ScrollBar)]=original.FindResource("LiveScrollBar");
         VirtualizingPanel.SetIsVirtualizing(Picker,true);VirtualizingPanel.SetVirtualizationMode(Picker,VirtualizationMode.Recycling);
         ScrollViewer.SetCanContentScroll(Picker,true);ScrollViewer.SetHorizontalScrollBarVisibility(Picker,ScrollBarVisibility.Disabled);
-        AutomationProperties.SetName(Picker,"Film kategorileri");Grid.SetRow(Picker,1);grid.Children.Add(Picker);
+        AutomationProperties.SetName(Picker,name);Grid.SetRow(Picker,1);grid.Children.Add(Picker);
     }
     internal void Disconnect()
     {

@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Windows.Interop;
 using System.Windows;
@@ -155,7 +155,7 @@ public partial class MainWindow
     }
     private void SetLiveAppearance()
     {
-        if(!FilmWatchingVisible)DetachFilmAppearance();
+        if(!LibraryWatchingVisible)DetachFilmAppearance();
         if (!EmbeddedPlayerVisible || _closing) return;
         if (!_liveShellAttached)
         {
@@ -292,7 +292,7 @@ public partial class MainWindow
         _liveControls.PreviewMouseDown += LiveOverlayPointerDown; _liveControls.PreviewMouseWheel += LiveOverlayWheel;
         var bridge = new Control { Width = 1, Height = 1, Opacity = 0, Focusable = true, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top, FocusVisualStyle = null };
         AutomationProperties.SetName(bridge, "Oynatıcı kontrolleri");
-        KeyboardFocusChangedEventHandler enter = (_, _) => { if (_liveControls?.IsVisible == true) { _liveAutoHide?.KeyboardEntry(); _liveControls.Activate(); PreviousChannelButton.Focus(); } };
+        KeyboardFocusChangedEventHandler enter = (_, _) => { if (_liveControls?.IsVisible == true) { _liveAutoHide?.KeyboardEntry(); _liveControls.Activate(); if(!PreviousChannelButton.Focus())PlayButton.Focus(); } };
         bridge.GotKeyboardFocus += enter;
         ViewingPanel.Children.Insert(1, bridge);
         _liveRestore.Add(() => { bridge.GotKeyboardFocus -= enter; ViewingPanel.Children.Remove(bridge); });
@@ -321,7 +321,7 @@ public partial class MainWindow
         UpdateEmbeddedAutoHide();
         if (_embeddedLibraryCount is not null)
         {
-            _embeddedLibraryCount.Text = FilmWatchingVisible ? MovieCount.Text + " içerik" : _section == "live" ? LiveCount.Text + " kanal" : ResultsCount.Text;
+            _embeddedLibraryCount.Text = FilmWatchingVisible ? MovieCount.Text + " içerik" : SeriesWatchingVisible ? SeriesCount.Text + " içerik" : _section == "live" ? LiveCount.Text + " kanal" : ResultsCount.Text;
             _embeddedLibraryCount.Visibility = ActualWidth <= 1000 ? Visibility.Collapsed : Visibility.Visible;
         }
         LiveSet(SearchHint, TextBlock.TextProperty, _section is "live" or "epg" ? "Kanal ara" : "Bu kütüphanede ara");
